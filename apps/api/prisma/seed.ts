@@ -17,6 +17,7 @@ const prisma = new PrismaClient();
 const AREAS = [
   {
     slug: 'alta-montana',
+    codigo: 'AM',
     nombre: 'Alta Montaña',
     color: '#2b4c6f',
     descripcion: 'Ascensos a los volcanes y cumbres mayores de México por encima de los 4,000 m.',
@@ -25,6 +26,7 @@ const AREAS = [
   },
   {
     slug: 'media-montana',
+    codigo: 'MM',
     nombre: 'Media Montaña',
     color: '#3f6b4a',
     descripcion: 'Excursionismo y senderismo en cerros y sierras, la puerta de entrada al montañismo.',
@@ -33,6 +35,7 @@ const AREAS = [
   },
   {
     slug: 'ciclismo-de-montana',
+    codigo: 'CM',
     nombre: 'Ciclismo de Montaña',
     color: '#9c5518',
     descripcion: 'Rodadas en terracería, singletrack y travesías de varios días en bicicleta.',
@@ -41,6 +44,7 @@ const AREAS = [
   },
   {
     slug: 'escalada-en-roca',
+    codigo: 'ER',
     nombre: 'Escalada en Roca',
     color: '#8c2f39',
     descripcion: 'Escalada deportiva y tradicional en pared, con enfoque en seguridad y aseguramiento.',
@@ -49,6 +53,7 @@ const AREAS = [
   },
   {
     slug: 'boulder',
+    codigo: 'BO',
     nombre: 'Boulder',
     color: '#5c6b3f',
     descripcion: 'Escalada sin cuerda a baja altura, en muro techado y en roca natural.',
@@ -57,6 +62,7 @@ const AREAS = [
   },
   {
     slug: 'canonismo',
+    codigo: 'CN',
     nombre: 'Cañonismo',
     color: '#1f6f7a',
     descripcion: 'Descenso de cañones y barrancos combinando rapel, nado y destrepe.',
@@ -65,6 +71,7 @@ const AREAS = [
   },
   {
     slug: 'espeleologia',
+    codigo: 'EP',
     nombre: 'Espeleología',
     color: '#5b3f7a',
     descripcion: 'Exploración, topografía y estudio de cuevas y sistemas subterráneos.',
@@ -73,6 +80,7 @@ const AREAS = [
   },
   {
     slug: 'fotografia-de-montana',
+    codigo: 'FM',
     nombre: 'Fotografía de Montaña',
     color: '#55606b',
     descripcion: 'Registro visual de las actividades y del entorno natural de la asociación.',
@@ -99,6 +107,7 @@ async function main() {
     where: { slug: 'cim' },
     create: {
       slug: 'cim',
+      codigo: 'CIM',
       nombre: 'Curso Introductorio al Montañismo (CIM)',
       kind: 'CIM',
       descripcion:
@@ -109,35 +118,38 @@ async function main() {
         'Ser mayor de edad o contar con autorización del tutor. No se requiere experiencia previa. Traer ropa deportiva, calzado de suela firme, agua y lonche.',
       duracionHoras: 20,
     },
-    update: {},
+    update: { codigo: "CIM" },
   });
   console.log('  Curso CIM');
 
   // --- Cursos tecnicos por area -------------------------------------------
-  const CURSOS_POR_AREA: Record<string, { slug: string; nombre: string; horas: number }[]> = {
+  // Los códigos son PROVISIONALES: se generaron con la inicial de cada palabra
+  // significativa del nombre. Se reemplazan por el catálogo oficial cuando llegue.
+  const CURSOS_POR_AREA: Record<string, { slug: string; nombre: string; horas: number; codigo: string }[]> = {
     'alta-montana': [
-      { slug: 'progresion-en-nieve-y-hielo', nombre: 'Progresión en nieve y hielo', horas: 24 },
-      { slug: 'aclimatacion-y-mal-de-montana', nombre: 'Aclimatación y mal agudo de montaña', horas: 8 },
+      { slug: 'progresion-en-nieve-y-hielo', nombre: 'Progresión en nieve y hielo', horas: 24, codigo: 'CPNH' },
+      { slug: 'aclimatacion-y-mal-de-montana', nombre: 'Aclimatación y mal agudo de montaña', horas: 8, codigo: 'CAMM' },
     ],
     'media-montana': [
-      { slug: 'orientacion-mapa-y-brujula', nombre: 'Orientación con mapa y brújula', horas: 12 },
-      { slug: 'campismo-y-armado-de-mochila', nombre: 'Campismo y armado de mochila', horas: 8 },
+      { slug: 'orientacion-mapa-y-brujula', nombre: 'Orientación con mapa y brújula', horas: 12, codigo: 'COMB' },
+      { slug: 'campismo-y-armado-de-mochila', nombre: 'Campismo y armado de mochila', horas: 8, codigo: 'CCAM' },
     ],
     'ciclismo-de-montana': [
-      { slug: 'mecanica-basica-en-ruta', nombre: 'Mecánica básica en ruta', horas: 8 },
+      { slug: 'mecanica-basica-en-ruta', nombre: 'Mecánica básica en ruta', horas: 8, codigo: 'CMBR' },
     ],
     'escalada-en-roca': [
-      { slug: 'nudos-y-aseguramiento', nombre: 'Nudos y aseguramiento', horas: 12 },
-      { slug: 'escalada-tradicional', nombre: 'Escalada tradicional', horas: 24 },
+      { slug: 'curso-basico-de-escalada-en-roca', nombre: 'Curso Básico de Escalada en Roca', horas: 40, codigo: 'CBER' },
+      { slug: 'nudos-y-aseguramiento', nombre: 'Nudos y aseguramiento', horas: 12, codigo: 'CNA' },
+      { slug: 'escalada-tradicional', nombre: 'Escalada tradicional', horas: 24, codigo: 'CET' },
     ],
-    boulder: [{ slug: 'tecnica-de-movimiento', nombre: 'Técnica de movimiento en boulder', horas: 10 }],
-    canonismo: [{ slug: 'rapel-y-progresion-acuatica', nombre: 'Rapel y progresión acuática', horas: 16 }],
+    boulder: [{ slug: 'tecnica-de-movimiento', nombre: 'Técnica de movimiento en boulder', horas: 10, codigo: 'CTMB' }],
+    canonismo: [{ slug: 'rapel-y-progresion-acuatica', nombre: 'Rapel y progresión acuática', horas: 16, codigo: 'CRPA' }],
     espeleologia: [
-      { slug: 'tecnica-vertical-sobre-cuerda', nombre: 'Técnica vertical sobre cuerda (TSA)', horas: 20 },
-      { slug: 'topografia-de-cavernas', nombre: 'Topografía de cavernas', horas: 12 },
+      { slug: 'tecnica-vertical-sobre-cuerda', nombre: 'Técnica vertical sobre cuerda (TSA)', horas: 20, codigo: 'CTVC' },
+      { slug: 'topografia-de-cavernas', nombre: 'Topografía de cavernas', horas: 12, codigo: 'CTC' },
     ],
     'fotografia-de-montana': [
-      { slug: 'fotografia-de-paisaje-en-altura', nombre: 'Fotografía de paisaje en altura', horas: 10 },
+      { slug: 'fotografia-de-paisaje-en-altura', nombre: 'Fotografía de paisaje en altura', horas: 10, codigo: 'CFPA' },
     ],
   };
 
@@ -150,12 +162,13 @@ async function main() {
         where: { slug: c.slug },
         create: {
           slug: c.slug,
+          codigo: c.codigo,
           nombre: c.nombre,
           kind: 'TECNICO',
           duracionHoras: c.horas,
           areaId: area.id,
         },
-        update: { areaId: area.id },
+        update: { areaId: area.id, codigo: c.codigo },
       });
       totalCursos++;
     }
@@ -212,6 +225,7 @@ async function main() {
         return {
           editionId: edicion.id,
           areaId: area.id,
+          kind: 'SALIDA_1_DIA' as const,
           titulo: `Salida de ${area.nombre}`,
           descripcion: `Sesion introductoria de ${area.nombre}.`,
           fechaInicio,
@@ -221,6 +235,51 @@ async function main() {
     console.log(`  Edicion ${clave} con ${areas.length} salidas`);
   } else {
     console.log(`  Edicion ${clave} (ya tenia actividades)`);
+  }
+
+  // --- Edición de ejemplo de un curso técnico ------------------------------
+  // Muestra el formato de clave (CBER_2026A) y las seis clases de sesión con
+  // las que se arma un programa. Sirve de referencia viva del modelo.
+  const cber = await prisma.course.findUnique({ where: { slug: 'curso-basico-de-escalada-en-roca' } });
+
+  if (cber) {
+    const anioCurso = hoy.getFullYear();
+    const claveCber = `${cber.codigo}_${anioCurso}A`;
+
+    const edCber = await prisma.courseEdition.upsert({
+      where: { clave: claveCber },
+      create: {
+        clave: claveCber,
+        courseId: cber.id,
+        fechaInicio: new Date(anioCurso, 8, 14, 18, 0),
+        fechaFin: new Date(anioCurso, 10, 8, 14, 0),
+        cupo: 16,
+        costo: 1200,
+        sede: 'Los Dinamos y ESIA Zacatenco',
+        estado: 'INSCRIPCIONES_ABIERTAS',
+      },
+      update: {},
+    });
+
+    const yaTieneProg = await prisma.editionActivity.count({ where: { editionId: edCber.id } });
+    if (yaTieneProg === 0) {
+      const d = (mes: number, dia: number, h: number, m = 0) => new Date(anioCurso, mes, dia, h, m);
+      await prisma.editionActivity.createMany({
+        data: [
+          { editionId: edCber.id, kind: 'CLASE_TEORICA', titulo: 'Nudos, arneses y cadena de seguridad', fechaInicio: d(8, 14, 18), fechaFin: d(8, 14, 21), lugar: 'Aula 3, ESIA Zacatenco' },
+          { editionId: edCber.id, kind: 'CLASE_TEORICA', titulo: 'Aseguramiento y comandos de escalada', fechaInicio: d(8, 21, 18), fechaFin: d(8, 21, 21), lugar: 'Aula 3, ESIA Zacatenco' },
+          { editionId: edCber.id, kind: 'SALIDA_1_DIA', titulo: 'Primera salida a roca', fechaInicio: d(8, 27, 7), fechaFin: d(8, 27, 18), lugar: 'Los Dinamos, Magdalena Contreras' },
+          { editionId: edCber.id, kind: 'SALIDA_1_DIA', titulo: 'Segunda salida: rapel y limpieza de vía', fechaInicio: d(9, 11, 7), fechaFin: d(9, 11, 18), lugar: 'Los Dinamos' },
+          { editionId: edCber.id, kind: 'CAMPAMENTO', titulo: 'Campamento de fin de semana', descripcion: 'Dos días de escalada con pernocta.', fechaInicio: d(9, 24, 6), fechaFin: d(9, 25, 19), lugar: 'Peña de Bernal, Querétaro' },
+          { editionId: edCber.id, kind: 'EXAMEN_TEORICO', titulo: 'Examen teórico', fechaInicio: d(10, 2, 18), fechaFin: d(10, 2, 20), lugar: 'Aula 3, ESIA Zacatenco' },
+          { editionId: edCber.id, kind: 'EXAMEN_PRACTICO', titulo: 'Examen práctico en pared', fechaInicio: d(10, 7, 7), fechaFin: d(10, 7, 18), lugar: 'Los Dinamos' },
+          { editionId: edCber.id, kind: 'PRESENTACION_FINAL', titulo: 'Presentación final y entrega de constancias', fechaInicio: d(10, 8, 11), fechaFin: d(10, 8, 14), lugar: 'Auditorio, ESIA Zacatenco' },
+        ],
+      });
+      console.log(`  Edicion ${claveCber} con 8 sesiones`);
+    } else {
+      console.log(`  Edicion ${claveCber} (ya tenia programa)`);
+    }
   }
 
   // --- Eventos de ejemplo --------------------------------------------------

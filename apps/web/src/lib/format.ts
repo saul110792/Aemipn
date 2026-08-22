@@ -81,6 +81,13 @@ export const ETIQUETAS: Record<string, string> = {
   PUBLICO: 'Público',
   MIEMBROS: 'Solo miembros',
   AREA: 'Privado del área',
+  CLASE_TEORICA: 'Clase teórica',
+  SALIDA_1_DIA: 'Salida de 1 día',
+  CAMPAMENTO: 'Campamento',
+  EXAMEN_TEORICO: 'Examen teórico',
+  EXAMEN_PRACTICO: 'Examen práctico',
+  PRESENTACION_FINAL: 'Presentación final',
+  OTRA: 'Otra',
   TECNICO: 'Técnico',
   CERTIFICACION: 'Certificación',
 };

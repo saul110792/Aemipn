@@ -58,6 +58,18 @@ enum EditionStatus {
   CANCELADA
 }
 
+/// Qué clase de sesión es una actividad dentro de una edición.
+/// Un curso técnico se arma combinando estas piezas.
+enum ActivityKind {
+  CLASE_TEORICA
+  SALIDA_1_DIA
+  CAMPAMENTO
+  EXAMEN_TEORICO
+  EXAMEN_PRACTICO
+  PRESENTACION_FINAL
+  OTRA
+}
+
 enum EnrollmentStatus {
   PREINSCRITO
   INSCRITO
@@ -198,8 +210,10 @@ model MembershipApplication {
 // ---------------------------------------------------------------------------
 
 model Area {
-  id          String  @id @default(cuid())
-  slug        String  @unique
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  /// Abreviatura del área. Provisional hasta recibir el catálogo oficial.
+  codigo      String?  @unique
   nombre      String
   descripcion String?
   /// Texto largo para la página informativa pública.
@@ -208,8 +222,8 @@ model Area {
   /// Fotos de la actividad del área, para el carrusel del sitio público.
   galeria     String[]
   color       String? // acento para la UI
-  orden       Int     @default(0)
-  activa      Boolean @default(true)
+  orden       Int      @default(0)
+  activa      Boolean  @default(true)
 
   miembros    AreaMembership[]
   cursos      Course[]
@@ -251,6 +265,9 @@ model AreaMembership {
 model Course {
   id            String     @id @default(cuid())
   slug          String     @unique
+  /// Abreviatura del curso; encabeza la clave de sus ediciones.
+  /// "Curso Básico de Escalada en Roca" -> CBER -> CBER_2026A
+  codigo        String?    @unique
   nombre        String
   kind          CourseKind @default(TECNICO)
   descripcion   String?
@@ -310,6 +327,7 @@ model EditionActivity {
   area      Area?         @relation(fields: [areaId], references: [id], onDelete: SetNull)
   areaId    String?
 
+  kind        ActivityKind @default(CLASE_TEORICA)
   titulo      String
   descripcion String?
   fechaInicio DateTime

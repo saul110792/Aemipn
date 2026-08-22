@@ -30,6 +30,7 @@ export interface SessionUser {
 export interface Area {
   id: string;
   slug: string;
+  codigo?: string | null;
   nombre: string;
   descripcion: string | null;
   contenido?: string | null;
@@ -64,6 +65,7 @@ export interface Member {
 export interface Course {
   id: string;
   slug: string;
+  codigo: string | null;
   nombre: string;
   kind: CourseKind;
   descripcion: string | null;
@@ -85,7 +87,10 @@ export interface CourseEdition {
   estado: EditionStatus;
   lugaresRestantes?: number | null;
   cupoRestante?: number | null;
-  course?: Pick<Course, 'nombre' | 'kind' | 'descripcion' | 'requisitos'>;
+  course?: Pick<Course, 'nombre' | 'kind' | 'descripcion' | 'requisitos'> & {
+    codigo?: string | null;
+    area?: Pick<Area, 'nombre' | 'slug' | 'color'> | null;
+  };
   actividades?: EditionActivity[];
   inscripciones?: Enrollment[];
   _count?: { inscripciones: number; actividades?: number };
@@ -93,6 +98,7 @@ export interface CourseEdition {
 
 export interface EditionActivity {
   id: string;
+  kind: ActivityKind;
   titulo: string;
   descripcion: string | null;
   fechaInicio: string;
@@ -129,6 +135,15 @@ export interface MembershipApplication {
   status: 'NUEVA' | 'EN_REVISION' | 'ACEPTADA' | 'RECHAZADA';
   createdAt: string;
 }
+
+export type ActivityKind =
+  | 'CLASE_TEORICA'
+  | 'SALIDA_1_DIA'
+  | 'CAMPAMENTO'
+  | 'EXAMEN_TEORICO'
+  | 'EXAMEN_PRACTICO'
+  | 'PRESENTACION_FINAL'
+  | 'OTRA';
 
 export type EventKind = 'CURSO' | 'TALLER' | 'SALIDA' | 'REUNION' | 'CONVOCATORIA' | 'OTRO';
 export type EventMode = 'PRESENCIAL' | 'EN_LINEA' | 'HIBRIDA';

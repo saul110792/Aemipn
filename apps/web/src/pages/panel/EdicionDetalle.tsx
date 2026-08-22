@@ -7,6 +7,7 @@ import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { etiqueta, fmtFechaHora, fmtMoneda, fmtRango, nombreCompleto } from '../../lib/format';
 import { useAuth } from '../../lib/auth';
 import { Icono, hayIcono } from '../../components/Icono';
+import { FormularioSesion } from '../../components/FormularioSesion';
 
 const ESTADOS_INSCRIPCION: EnrollmentStatus[] = [
   'PREINSCRITO', 'INSCRITO', 'ACREDITADO', 'NO_ACREDITADO', 'BAJA',
@@ -18,6 +19,7 @@ export function EdicionDetalle() {
   const { esAdmin } = useAuth();
   const qc = useQueryClient();
   const [busqueda, setBusqueda] = useState('');
+  const [agregandoSesion, setAgregandoSesion] = useState(false);
 
   const { data: edicion, isLoading, error } = useQuery({
     queryKey: ['edition', id],
@@ -99,17 +101,24 @@ export function EdicionDetalle() {
       <section className="tarjeta" style={{ marginBottom: '1.5rem' }}>
         <div className="tarjeta-cuerpo">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <h3 style={{ margin: 0 }}>Salidas</h3>
-            {esAdmin && esCim && (edicion.actividades?.length ?? 0) === 0 && (
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={() => generarSalidas.mutate()}
-                disabled={generarSalidas.isPending}
-              >
-                Generar una salida por área
-              </button>
-            )}
+            <h3 style={{ margin: 0 }}>Programa</h3>
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+              {esAdmin && esCim && (edicion.actividades?.length ?? 0) === 0 && (
+                <button
+                  type="button"
+                  className="btn btn-borde btn-sm"
+                  onClick={() => generarSalidas.mutate()}
+                  disabled={generarSalidas.isPending}
+                >
+                  Generar una salida por área
+                </button>
+              )}
+              {esAdmin && (
+                <button type="button" className="btn btn-sm" onClick={() => setAgregandoSesion((v) => !v)}>
+                  {agregandoSesion ? 'Cerrar' : 'Agregar sesión'}
+                </button>
+              )}
+            </div>
           </div>
 
           {generarSalidas.error != null && <ErrorAviso error={generarSalidas.error} />}
@@ -124,30 +133,44 @@ export function EdicionDetalle() {
               <table>
                 <thead>
                   <tr>
-                    <th>Área</th>
+                    <th>Tipo</th>
                     <th>Actividad</th>
                     <th>Cuándo</th>
                     <th>Lugar</th>
-                    <th>Responsable</th>
+                    <th>Área</th>
                   </tr>
                 </thead>
                 <tbody>
                   {edicion.actividades.map((a) => (
                     <tr key={a.id}>
                       <td>
-                        <span
-                          className="insignia"
-                          style={a.area?.color ? { background: a.area.color, color: '#fff' } : undefined}
-                        >
-                          {a.area && hayIcono(a.area.slug) && <Icono nombre={a.area.slug} />}
-                          {a.area?.nombre ?? 'General'}
-                        </span>
+                        <span className="insignia insignia-guinda">{etiqueta(a.kind)}</span>
                       </td>
-                      <td>{a.titulo}</td>
-                      <td className="texto-suave">{fmtFechaHora(a.fechaInicio)}</td>
-                      <td className="texto-suave">{a.lugar ?? '—'}</td>
+                      <td>
+                        <strong>{a.titulo}</strong>
+                        {a.descripcion && (
+                          <div className="texto-suave" style={{ fontSize: '0.82rem' }}>{a.descripcion}</div>
+                        )}
+                      </td>
                       <td className="texto-suave">
-                        {a.responsable ? `${a.responsable.nombre} ${a.responsable.apellidoPaterno}` : 'Sin asignar'}
+                        {fmtFechaHora(a.fechaInicio)}
+                        {a.fechaFin && new Date(a.fechaFin).toDateString() !== new Date(a.fechaInicio).toDateString() && (
+                          <div>hasta {fmtFechaHora(a.fechaFin)}</div>
+                        )}
+                      </td>
+                      <td className="texto-suave">{a.lugar ?? '—'}</td>
+                      <td>
+                        {a.area ? (
+                          <span
+                            className="insignia"
+                            style={a.area.color ? { background: a.area.color, color: '#fff' } : undefined}
+                          >
+                            {hayIcono(a.area.slug) && <Icono nombre={a.area.slug} />}
+                            {a.area.nombre}
+                          </span>
+                        ) : (
+                          <span className="texto-suave">—</span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -155,12 +178,16 @@ export function EdicionDetalle() {
               </table>
             </div>
           )}
+
+          {esAdmin && agregandoSesion && (
+            <FormularioSesion editionId={edicion.id} />
+          )}
         </div>
       </section>
 
       <section className="tarjeta">
         <div className="tarjeta-cuerpo">
-          <h3>Roster</h3>
+          <h3>Alumnos inscritos</h3>
 
           {esAdmin && (
             <div style={{ marginBottom: '1rem' }}>

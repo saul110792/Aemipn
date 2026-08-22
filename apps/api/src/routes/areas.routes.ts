@@ -11,6 +11,11 @@ areasRouter.use(requireAuth);
 
 const areaSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/, 'El slug solo admite minusculas, numeros y guiones'),
+  codigo: z
+    .string()
+    .regex(/^[A-Z0-9]{1,6}$/, 'El código va en mayúsculas, de 1 a 6 caracteres')
+    .optional()
+    .nullable(),
   nombre: z.string().min(1),
   descripcion: z.string().optional().nullable(),
   contenido: z.string().optional().nullable(),

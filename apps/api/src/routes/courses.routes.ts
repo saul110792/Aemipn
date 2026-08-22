@@ -5,12 +5,19 @@ import { asyncHandler } from '../lib/asyncHandler.js';
 import { notFound } from '../lib/errors.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { siguienteClave, sugerirCodigo } from '../lib/claves.js';
 
 export const coursesRouter = Router();
 coursesRouter.use(requireAuth);
 
 const courseSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/),
+  /// Encabeza la clave de cada edición: CBER -> CBER_2026A
+  codigo: z
+    .string()
+    .regex(/^[A-Z0-9]{2,8}$/, 'El código va en mayúsculas, de 2 a 8 caracteres')
+    .optional()
+    .nullable(),
   nombre: z.string().min(1),
   kind: z.enum(['CIM', 'TECNICO', 'CERTIFICACION', 'TALLER']).default('TECNICO'),
   descripcion: z.string().optional().nullable(),
@@ -62,7 +69,36 @@ coursesRouter.post(
   requireRole('ADMIN', 'STAFF'),
   validate(courseSchema),
   asyncHandler(async (req, res) => {
-    res.status(201).json(await prisma.course.create({ data: req.body }));
+    const data = req.body as z.infer<typeof courseSchema>;
+    // Sin código no se pueden generar claves de edición; se propone uno.
+    const codigo = data.codigo?.toUpperCase() || sugerirCodigo(data.nombre);
+    res.status(201).json(await prisma.course.create({ data: { ...data, codigo } }));
+  }),
+);
+
+/**
+ * GET /api/courses/:id/siguiente-clave?anio=2026
+ * Propone la clave de la próxima edición: <CODIGO>_<AÑO><LETRA>.
+ * Es una sugerencia; el formulario la deja editar.
+ */
+coursesRouter.get(
+  '/:id/siguiente-clave',
+  asyncHandler(async (req, res) => {
+    const curso = await prisma.course.findUnique({
+      where: { id: req.params.id },
+      include: { ediciones: { select: { clave: true } } },
+    });
+    if (!curso) throw notFound('Curso no encontrado');
+
+    const codigo = curso.codigo ?? sugerirCodigo(curso.nombre);
+    const anio = Number(req.query.anio) || new Date().getFullYear();
+
+    res.json({
+      clave: siguienteClave(codigo, anio, curso.ediciones.map((e) => e.clave)),
+      codigo,
+      anio,
+      codigoProvisional: !curso.codigo,
+    });
   }),
 );
 

@@ -11,7 +11,10 @@ editionsRouter.use(requireAuth);
 
 const editionBase = z.object({
     courseId: z.string().min(1),
-    clave: z.string().min(1, 'La clave es obligatoria (ej. "CIM 2026-1")'),
+    clave: z
+    .string()
+    .min(1, 'La clave es obligatoria')
+    .transform((v) => v.trim().toUpperCase()),
     fechaInicio: z.coerce.date(),
     fechaFin: z.coerce.date(),
     inscripcionesAbren: z.coerce.date().optional().nullable(),
@@ -38,6 +41,13 @@ const editionSchema = editionBase.refine(rangoValido, mensajeRango);
 const editionUpdateSchema = editionBase.partial().refine(rangoValido, mensajeRango);
 
 const activityBase = z.object({
+    /** Qué clase de sesión es. Determina cómo se agrupa el programa. */
+    kind: z
+      .enum([
+        'CLASE_TEORICA', 'SALIDA_1_DIA', 'CAMPAMENTO',
+        'EXAMEN_TEORICO', 'EXAMEN_PRACTICO', 'PRESENTACION_FINAL', 'OTRA',
+      ])
+      .default('CLASE_TEORICA'),
     areaId: z.string().optional().nullable(),
     titulo: z.string().min(1),
     descripcion: z.string().optional().nullable(),
@@ -199,6 +209,7 @@ editionsRouter.post(
       return {
         editionId: edition.id,
         areaId: area.id,
+        kind: 'SALIDA_1_DIA' as const,
         titulo: `Salida de ${area.nombre}`,
         descripcion: `Sesion introductoria de ${area.nombre} dentro de ${edition.clave}.`,
         fechaInicio,
