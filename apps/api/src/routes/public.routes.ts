@@ -9,6 +9,37 @@ import { validate } from '../middleware/validate.js';
 /** Rutas sin autenticacion: alimentan el sitio informativo y reciben solicitudes. */
 export const publicRouter = Router();
 
+/**
+ * GET /api/public/eventos — proximos eventos abiertos al publico.
+ * Solo los marcados PUBLICO y publicados; lo privado de area nunca sale de aqui.
+ */
+publicRouter.get(
+  '/eventos',
+  asyncHandler(async (req, res) => {
+    const { areaId, limite } = req.query as Record<string, string | undefined>;
+
+    res.json(
+      await prisma.event.findMany({
+        where: {
+          publicado: true,
+          visibilidad: 'PUBLICO',
+          ...(areaId ? { areaId } : {}),
+          OR: [{ fechaFin: { gte: new Date() } }, { fechaFin: null, fechaInicio: { gte: new Date() } }],
+        },
+        orderBy: { fechaInicio: 'asc' },
+        take: limite ? Math.min(Number(limite) || 20, 50) : 20,
+        select: {
+          id: true, titulo: true, descripcion: true, kind: true,
+          modalidad: true, lugar: true, urlVideoconferencia: true,
+          fechaInicio: true, fechaFin: true, imagenUrl: true,
+          cupo: true, costo: true, registroUrl: true,
+          area: { select: { nombre: true, slug: true, color: true } },
+        },
+      }),
+    );
+  }),
+);
+
 /** GET /api/public/areas — las disciplinas para la portada. */
 publicRouter.get(
   '/areas',
@@ -18,7 +49,7 @@ publicRouter.get(
       orderBy: { orden: 'asc' },
       select: {
         id: true, slug: true, nombre: true, descripcion: true,
-        imagenUrl: true, color: true,
+        imagenUrl: true, galeria: true, color: true,
         _count: { select: { miembros: { where: { activo: true } } } },
       },
     });
@@ -34,7 +65,7 @@ publicRouter.get(
       where: { slug: req.params.slug },
       select: {
         id: true, slug: true, nombre: true, descripcion: true, contenido: true,
-        imagenUrl: true, color: true,
+        imagenUrl: true, galeria: true, color: true,
         cursos: {
           where: { activo: true },
           select: { id: true, slug: true, nombre: true, descripcion: true, requisitos: true, duracionHoras: true },

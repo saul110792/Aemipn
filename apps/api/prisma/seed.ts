@@ -223,6 +223,90 @@ async function main() {
     console.log(`  Edicion ${clave} (ya tenia actividades)`);
   }
 
+  // --- Eventos de ejemplo --------------------------------------------------
+  // Uno de cada modalidad y visibilidad, para que el calendario y el panel
+  // tengan con que trabajar desde el primer arranque.
+  const dias = (n: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    d.setHours(9, 0, 0, 0);
+    return d;
+  };
+
+  const areaPorSlug = Object.fromEntries(areas.map((a) => [a.slug, a.id]));
+
+  const EVENTOS = [
+    {
+      titulo: 'Taller de nudos y aseguramiento',
+      descripcion: 'Sesión práctica de nudos básicos, encordamiento y aseguramiento con placa.',
+      kind: 'TALLER' as const,
+      modalidad: 'PRESENCIAL' as const,
+      lugar: 'Explanada de la ESIA Zacatenco',
+      fechaInicio: dias(12),
+      areaId: areaPorSlug['escalada-en-roca'],
+      visibilidad: 'PUBLICO' as const,
+      publicado: true,
+      cupo: 25,
+      costo: 0,
+    },
+    {
+      titulo: 'Charla en línea: preparación para alta montaña',
+      descripcion: 'Aclimatación, mal agudo de montaña y armado de mochila para 5,000 m.',
+      kind: 'CURSO' as const,
+      modalidad: 'EN_LINEA' as const,
+      urlVideoconferencia: 'https://meet.google.com/aemipn-alta-montana',
+      fechaInicio: dias(20),
+      areaId: areaPorSlug['alta-montana'],
+      visibilidad: 'PUBLICO' as const,
+      publicado: true,
+    },
+    {
+      titulo: 'Rodada de bienvenida al semestre',
+      descripcion: 'Rodada de nivel introductorio por la Sierra de Guadalupe. Trae tu bici y casco.',
+      kind: 'SALIDA' as const,
+      modalidad: 'HIBRIDA' as const,
+      lugar: 'Parque Sierra de Guadalupe, entrada Coacalco',
+      urlVideoconferencia: 'https://meet.google.com/aemipn-rodada-brief',
+      fechaInicio: dias(6),
+      areaId: areaPorSlug['ciclismo-de-montana'],
+      visibilidad: 'PUBLICO' as const,
+      publicado: true,
+      cupo: 30,
+    },
+    {
+      titulo: 'Junta de planeación de temporada',
+      descripcion: 'Calendario de salidas, presupuesto y compra de equipo del área.',
+      kind: 'REUNION' as const,
+      modalidad: 'EN_LINEA' as const,
+      urlVideoconferencia: 'https://meet.google.com/aemipn-espeleo-junta',
+      fechaInicio: dias(4),
+      areaId: areaPorSlug['espeleologia'],
+      visibilidad: 'AREA' as const,
+      publicado: true,
+    },
+    {
+      titulo: 'Asamblea general de la asociación',
+      descripcion: 'Informe de la mesa directiva y votación del calendario anual.',
+      kind: 'REUNION' as const,
+      modalidad: 'PRESENCIAL' as const,
+      lugar: 'Auditorio de la ESIA Zacatenco',
+      fechaInicio: dias(28),
+      areaId: null,
+      visibilidad: 'MIEMBROS' as const,
+      publicado: true,
+    },
+  ];
+
+  let eventosNuevos = 0;
+  for (const e of EVENTOS) {
+    const existe = await prisma.event.findFirst({ where: { titulo: e.titulo } });
+    if (!existe) {
+      await prisma.event.create({ data: e });
+      eventosNuevos++;
+    }
+  }
+  console.log(`  ${eventosNuevos} eventos`);
+
   // --- Administrador inicial ----------------------------------------------
   const adminEmail = env.SEED_ADMIN_EMAIL.toLowerCase();
 

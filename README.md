@@ -8,6 +8,8 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 **Sitio público** (sin autenticación)
 - Portada con las ocho áreas y la convocatoria vigente del CIM
 - Ficha de cada área: descripción, mesa (jefe y tesorero) y cursos que imparte
+- **Carrusel de áreas** con la foto de la actividad; las que aún no tienen foto muestran un panel ilustrado con su color y su icono
+- **Eventos**: próximos cursos, talleres y salidas, con fecha, área, y lugar o liga de videoconferencia según la modalidad
 - Página del CIM con fechas, cuota, requisitos y el desglose de salidas por área
 - Catálogo de cursos
 - Formulario "Únete" que genera una solicitud de ingreso
@@ -19,6 +21,8 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 - Solicitudes de ingreso: aceptar (crea el miembro y lo asigna a sus áreas de interés) o rechazar
 - Ediciones y CIM: roster con datos de emergencia a la mano, control de estado y de pago
 - Atajo para generar de golpe una salida por cada área en una edición del CIM
+- **Eventos**: alta con modalidad presencial / en línea / híbrida, y control de quién lo ve — público, solo miembros, o privado del área
+- **Textos e imágenes**: edita lo que ve el público de cada área y sube fotos al carrusel, sin tocar código
 
 ## Stack
 

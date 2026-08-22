@@ -261,3 +261,109 @@ tbody tr:hover { background: var(--guinda-100); }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ---------- Carrusel de areas ---------- */
+.carrusel { position: relative; margin: 1.5rem 0 0; }
+/* Se desplaza con transform y no con scroll: el scroll-snap cancelaba
+   cualquier desplazamiento programatico animado. */
+.carrusel-ventana { overflow: hidden; border-radius: 14px; }
+.carrusel-pista {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .carrusel-pista { transition: none; }
+}
+
+.carrusel-slide {
+  position: relative; flex: 0 0 100%;
+  min-height: 420px; display: flex; align-items: flex-end;
+  overflow: hidden; isolation: isolate;
+  user-select: none;
+}
+.carrusel-foto, .carrusel-ilustrado {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;
+}
+.carrusel-ilustrado { display: grid; place-items: center; }
+.carrusel-ilustrado svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.carrusel-ilustrado-icono { position: relative; color: rgba(255, 255, 255, 0.3); }
+.carrusel-ilustrado-icono .icono { width: 150px; height: 150px; }
+
+/* Velo para que el texto blanco siempre tenga contraste sobre la foto. */
+.carrusel-velo {
+  position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(0deg, rgba(20, 5, 12, 0.88) 0%, rgba(20, 5, 12, 0.5) 45%, rgba(20, 5, 12, 0.15) 100%);
+}
+.carrusel-texto { position: relative; z-index: 2; padding: 2rem; color: #fff; max-width: 62ch; }
+.carrusel-texto h3 { color: #fff; font-size: clamp(1.5rem, 3.2vw, 2.1rem); margin: 0.6rem 0 0.4rem; }
+.carrusel-texto p { color: rgba(255, 255, 255, 0.92); margin-bottom: 1.1rem; }
+
+.carrusel-flecha {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+  width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(255, 255, 255, 0.9); color: var(--guinda);
+  font-size: 1.8rem; line-height: 1; display: grid; place-items: center;
+  box-shadow: var(--sombra);
+}
+.carrusel-flecha:hover { background: #fff; }
+.carrusel-flecha.izq { left: 14px; }
+.carrusel-flecha.der { right: 14px; }
+
+.carrusel-puntos { display: flex; gap: 0.45rem; justify-content: center; margin-top: 0.9rem; flex-wrap: wrap; }
+.punto {
+  width: 10px; height: 10px; border-radius: 50%; border: none; cursor: pointer; padding: 0;
+  background: var(--roca-clara); transition: width 0.2s ease;
+}
+.punto.activo { width: 30px; border-radius: 999px; }
+
+@media (max-width: 640px) {
+  .carrusel-slide { min-height: 340px; }
+  .carrusel-texto { padding: 1.25rem; }
+  .carrusel-flecha { width: 36px; height: 36px; font-size: 1.4rem; }
+}
+
+/* ---------- Eventos ---------- */
+.evento { display: grid; grid-template-columns: 92px 1fr; gap: 1.1rem; align-items: start; }
+.evento-fecha {
+  background: var(--guinda); color: #fff; border-radius: 10px; text-align: center;
+  padding: 0.6rem 0.4rem; line-height: 1.15;
+}
+.evento-fecha .dia { font-family: var(--fuente-titulo); font-size: 1.75rem; font-weight: 800; display: block; }
+.evento-fecha .mes { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.evento-fecha .anio { font-size: 0.7rem; opacity: 0.75; }
+.evento-meta { display: flex; gap: 0.4rem 0.9rem; flex-wrap: wrap; color: var(--texto-suave); font-size: 0.88rem; margin: 0.4rem 0 0.6rem; }
+.evento-meta span { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+@media (max-width: 520px) {
+  .evento { grid-template-columns: 1fr; }
+  .evento-fecha { width: 92px; }
+}
+
+/* ---------- Biblioteca de imagenes ---------- */
+.galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+.galeria figure { margin: 0; position: relative; border: 1px solid var(--borde); border-radius: 10px; overflow: hidden; background: var(--blanco); }
+.galeria img { width: 100%; height: 108px; object-fit: cover; display: block; }
+.galeria figcaption { padding: 0.4rem 0.5rem; font-size: 0.75rem; color: var(--texto-suave); }
+.galeria .acciones { position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; }
+.galeria .acciones button {
+  border: none; cursor: pointer; border-radius: 6px; padding: 0.2rem 0.45rem;
+  font-size: 0.72rem; font-weight: 600; background: rgba(255, 255, 255, 0.93); color: var(--texto);
+}
+.galeria .acciones button:hover { background: #fff; }
+.galeria figure.elegida { outline: 3px solid var(--guinda-500); outline-offset: -1px; }
+
+.zona-soltar {
+  border: 2px dashed var(--borde); border-radius: var(--radio); padding: 1.5rem;
+  text-align: center; color: var(--texto-suave); background: var(--blanco);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.zona-soltar.encima { border-color: var(--guinda-500); background: var(--guinda-100); }
+
+.pestanas { display: flex; gap: 0.3rem; border-bottom: 1px solid var(--borde); margin-bottom: 1.25rem; flex-wrap: wrap; }
+.pestanas button {
+  border: none; background: none; cursor: pointer; padding: 0.6rem 0.9rem;
+  font: inherit; font-size: 0.93rem; font-weight: 600; color: var(--texto-suave);
+  border-bottom: 3px solid transparent; margin-bottom: -1px;
+}
+.pestanas button.activa { color: var(--guinda); border-bottom-color: var(--guinda); }

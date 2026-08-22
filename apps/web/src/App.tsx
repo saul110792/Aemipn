@@ -9,6 +9,7 @@ import { AreaDetalle } from './pages/AreaDetalle';
 import { Cim } from './pages/Cim';
 import { Cursos } from './pages/Cursos';
 import { Unete } from './pages/Unete';
+import { Eventos } from './pages/Eventos';
 import { Login } from './pages/Login';
 
 import { Dashboard } from './pages/panel/Dashboard';
@@ -18,6 +19,8 @@ import { Solicitudes } from './pages/panel/Solicitudes';
 import { AreasPanel } from './pages/panel/AreasPanel';
 import { CursosPanel } from './pages/panel/CursosPanel';
 import { Ediciones } from './pages/panel/Ediciones';
+import { Contenido } from './pages/panel/Contenido';
+import { EventosPanel } from './pages/panel/EventosPanel';
 import { EdicionDetalle } from './pages/panel/EdicionDetalle';
 
 /** Bloquea el panel a quien no haya iniciado sesion. */
@@ -36,6 +39,7 @@ export function App() {
         <Route index element={<Inicio />} />
         <Route path="areas" element={<Areas />} />
         <Route path="areas/:slug" element={<AreaDetalle />} />
+        <Route path="eventos" element={<Eventos />} />
         <Route path="cim" element={<Cim />} />
         <Route path="cursos" element={<Cursos />} />
         <Route path="unete" element={<Unete />} />
@@ -57,6 +61,8 @@ export function App() {
         <Route path="solicitudes" element={<Solicitudes />} />
         <Route path="areas" element={<AreasPanel />} />
         <Route path="cursos" element={<CursosPanel />} />
+        <Route path="eventos" element={<EventosPanel />} />
+        <Route path="contenido" element={<Contenido />} />
         <Route path="ediciones" element={<Ediciones />} />
         <Route path="ediciones/:id" element={<EdicionDetalle />} />
       </Route>

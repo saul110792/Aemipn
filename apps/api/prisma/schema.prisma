@@ -66,6 +66,30 @@ enum EnrollmentStatus {
   BAJA
 }
 
+/// Que clase de evento se publica en el calendario.
+enum EventKind {
+  CURSO
+  TALLER
+  SALIDA
+  REUNION
+  CONVOCATORIA
+  OTRO
+}
+
+/// Donde ocurre. Determina si se exige lugar fisico, liga de videoconferencia o ambos.
+enum EventMode {
+  PRESENCIAL
+  EN_LINEA
+  HIBRIDA
+}
+
+/// Quien puede verlo.
+enum EventVisibility {
+  PUBLICO /// cualquier visitante del sitio
+  MIEMBROS /// cualquier miembro con sesion
+  AREA /// solo los miembros del area a la que pertenece
+}
+
 enum PaymentStatus {
   PENDIENTE
   PARCIAL
@@ -113,12 +137,12 @@ model Member {
   escuela         String? // ESIA, ESCOM, ENCB, externo...
 
   // Datos que la logística de salidas necesita a la mano.
-  tipoSangre           String?
-  alergias             String?
-  padecimientos        String?
-  contactoEmergencia   String?
-  telefonoEmergencia   String?
-  numeroSeguroSocial   String?
+  tipoSangre         String?
+  alergias           String?
+  padecimientos      String?
+  contactoEmergencia String?
+  telefonoEmergencia String?
+  numeroSeguroSocial String?
 
   status       MemberStatus @default(ASPIRANTE)
   fechaIngreso DateTime     @default(now())
@@ -142,7 +166,7 @@ model Member {
 
 /// Solicitud pública de ingreso. Al aceptarse se convierte en Member.
 model MembershipApplication {
-  id              String  @id @default(cuid())
+  id              String   @id @default(cuid())
   nombre          String
   apellidoPaterno String
   apellidoMaterno String?
@@ -155,12 +179,12 @@ model MembershipApplication {
   experiencia     String?
   mensaje         String?
 
-  status    ApplicationStatus @default(NUEVA)
-  revisadaPor String?
-  revisadaEn  DateTime?
+  status        ApplicationStatus @default(NUEVA)
+  revisadaPor   String?
+  revisadaEn    DateTime?
   motivoRechazo String?
   /// Member creado a partir de esta solicitud, si fue aceptada.
-  memberId  String?
+  memberId      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -181,6 +205,8 @@ model Area {
   /// Texto largo para la página informativa pública.
   contenido   String?
   imagenUrl   String?
+  /// Fotos de la actividad del área, para el carrusel del sitio público.
+  galeria     String[]
   color       String? // acento para la UI
   orden       Int     @default(0)
   activa      Boolean @default(true)
@@ -188,6 +214,8 @@ model Area {
   miembros    AreaMembership[]
   cursos      Course[]
   actividades EditionActivity[]
+
+  eventos Event[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -197,15 +225,15 @@ model Area {
 
 /// Pertenencia de un miembro a un área, con su rol. Un miembro puede estar en varias.
 model AreaMembership {
-  id       String   @id @default(cuid())
-  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  id       String    @id @default(cuid())
+  member   Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
   memberId String
-  area     Area     @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  area     Area      @relation(fields: [areaId], references: [id], onDelete: Cascade)
   areaId   String
-  role     AreaRole @default(MIEMBRO)
-  desde    DateTime @default(now())
+  role     AreaRole  @default(MIEMBRO)
+  desde    DateTime  @default(now())
   hasta    DateTime?
-  activo   Boolean  @default(true)
+  activo   Boolean   @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -221,18 +249,18 @@ model AreaMembership {
 
 /// Catálogo: la definición de un curso, independiente de cuándo se imparte.
 model Course {
-  id          String     @id @default(cuid())
-  slug        String     @unique
-  nombre      String
-  kind        CourseKind @default(TECNICO)
-  descripcion String?
-  contenido   String?
-  requisitos  String?
+  id            String     @id @default(cuid())
+  slug          String     @unique
+  nombre        String
+  kind          CourseKind @default(TECNICO)
+  descripcion   String?
+  contenido     String?
+  requisitos    String?
   duracionHoras Int?
   /// null cuando el curso es transversal a toda la asociación (caso del CIM).
-  area        Area?      @relation(fields: [areaId], references: [id], onDelete: SetNull)
-  areaId      String?
-  activo      Boolean    @default(true)
+  area          Area?      @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  areaId        String?
+  activo        Boolean    @default(true)
 
   ediciones CourseEdition[]
 
@@ -251,13 +279,13 @@ model CourseEdition {
   /// Clave legible: "CIM 2026-1", "ESCALADA-2026-VERANO".
   clave    String @unique
 
-  fechaInicio DateTime
-  fechaFin    DateTime
-  inscripcionesAbren  DateTime?
+  fechaInicio          DateTime
+  fechaFin             DateTime
+  inscripcionesAbren   DateTime?
   inscripcionesCierran DateTime?
 
   cupo   Int?
-  costo  Decimal? @db.Decimal(10, 2)
+  costo  Decimal?      @db.Decimal(10, 2)
   sede   String?
   estado EditionStatus @default(BORRADOR)
   notas  String?
@@ -307,15 +335,15 @@ model Enrollment {
   edition   CourseEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
   editionId String
 
-  status        EnrollmentStatus @default(PREINSCRITO)
-  paymentStatus PaymentStatus    @default(PENDIENTE)
-  montoPagado   Decimal?         @db.Decimal(10, 2)
+  status         EnrollmentStatus @default(PREINSCRITO)
+  paymentStatus  PaymentStatus    @default(PENDIENTE)
+  montoPagado    Decimal?         @db.Decimal(10, 2)
   referenciaPago String?
 
-  fechaInscripcion DateTime  @default(now())
+  fechaInscripcion  DateTime  @default(now())
   fechaAcreditacion DateTime?
-  calificacion     String?
-  notas            String?
+  calificacion      String?
+  notas             String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -324,4 +352,65 @@ model Enrollment {
   @@index([editionId, status])
   @@index([paymentStatus])
   @@map("enrollments")
+}
+
+// ---------------------------------------------------------------------------
+// Eventos y contenido
+// ---------------------------------------------------------------------------
+
+/// Curso, taller, salida o reunion que se anuncia en el calendario.
+/// A diferencia de CourseEdition, no lleva inscripciones ni acreditacion:
+/// es difusion. Un evento puede apuntar a una edicion si se quiere inscribir.
+model Event {
+  id          String    @id @default(cuid())
+  titulo      String
+  descripcion String?
+  contenido   String?
+  kind        EventKind @default(TALLER)
+
+  modalidad           EventMode @default(PRESENCIAL)
+  /// Obligatorio si la modalidad es PRESENCIAL o HIBRIDA.
+  lugar               String?
+  /// Obligatorio si la modalidad es EN_LINEA o HIBRIDA.
+  urlVideoconferencia String?
+
+  fechaInicio DateTime
+  fechaFin    DateTime?
+
+  /// null cuando el evento es de toda la asociacion.
+  area   Area?   @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  areaId String?
+
+  visibilidad EventVisibility @default(PUBLICO)
+  publicado   Boolean         @default(false)
+
+  imagenUrl   String?
+  cupo        Int?
+  costo       Decimal? @db.Decimal(10, 2)
+  registroUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([publicado, visibilidad, fechaInicio])
+  @@index([areaId, fechaInicio])
+  @@map("events")
+}
+
+/// Archivo subido desde el panel. El archivo vive en apps/api/uploads y
+/// se sirve en /uploads/<nombre>; aqui queda su registro para la galeria.
+model MediaAsset {
+  id        String  @id @default(cuid())
+  url       String  @unique
+  filename  String
+  mime      String
+  size      Int
+  /// Texto alternativo, para que las fotos no queden mudas para un lector de pantalla.
+  alt       String?
+  subidoPor String?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("media_assets")
 }

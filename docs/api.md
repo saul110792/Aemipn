@@ -28,6 +28,7 @@ Las rutas protegidas esperan `Authorization: Bearer <accessToken>`.
 | GET | `/public/cim` | Convocatorias del CIM abiertas o en curso, con sus salidas. |
 | GET | `/public/cursos` | Catálogo con ediciones abiertas. |
 | POST | `/public/solicitudes` | Recibe el formulario "Únete". Máx. 5 por hora por IP. |
+| GET | `/public/eventos?areaId=&limite=` | Eventos **públicos** y publicados que aún no terminan. |
 
 ## Panel
 
@@ -59,6 +60,33 @@ Todas requieren sesión. `ADMIN`/`STAFF` donde se indica.
 | GET | `/applications?status=` | ADMIN, STAFF |
 | POST | `/applications/:id/aceptar` | ADMIN, STAFF |
 | POST | `/applications/:id/rechazar` | ADMIN, STAFF |
+| GET | `/events?areaId=&incluirPasados=` | sesión — filtrado por visibilidad |
+| GET | `/events/:id` | sesión — 403 si es privado de un área ajena |
+| POST/PATCH/DELETE | `/events` | ADMIN, STAFF **o jefe/tesorero del área del evento** |
+| GET | `/media` | ADMIN, STAFF |
+| POST | `/media` | ADMIN, STAFF — `multipart/form-data`, campo `archivo` |
+| PATCH | `/media/:id` | ADMIN, STAFF — edita el texto alternativo |
+| DELETE | `/media/:id` | ADMIN — borra el registro y el archivo |
+
+## Visibilidad de eventos
+
+Cada evento declara quién puede verlo, y la API lo hace cumplir en los tres caminos
+(listado, detalle por id y endpoint público):
+
+| Visibilidad | Quién lo ve |
+|---|---|
+| `PUBLICO` | Cualquier visitante. Es lo único que sale por `/public/eventos`. |
+| `MIEMBROS` | Cualquier miembro con sesión iniciada. |
+| `AREA` | Solo los miembros activos del área del evento. Un miembro de otra área recibe 403 aunque tenga el id. |
+
+ADMIN y STAFF ven todo, publicado o no.
+
+## Archivos subidos
+
+`POST /api/media` acepta un archivo por petición en el campo `archivo`. Solo JPG, PNG, WebP
+y AVIF, hasta 5 MB. El nombre en disco se genera con un aleatorio — nunca se usa el del
+usuario — y el archivo se sirve en `/uploads/<nombre>` con `X-Content-Type-Options: nosniff`
+y sin listado de directorio.
 
 `PATCH /areas/:areaId` usa `requireAreaRole`, que deja pasar a quien sea jefe **de esa área en
 particular** aunque no sea admin global. Es el mecanismo para delegar sin repartir permisos totales.

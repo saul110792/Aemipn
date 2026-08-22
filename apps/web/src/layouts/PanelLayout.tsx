@@ -64,9 +64,23 @@ export function PanelLayout() {
             Cursos
           </NavLink>
           <NavLink to="/panel/ediciones" className={clase}>
-            <Icono nombre="calendario" />
+            <Icono nombre="cursos" />
             Ediciones y CIM
           </NavLink>
+          <NavLink to="/panel/eventos" className={clase}>
+            <Icono nombre="calendario" />
+            Eventos
+          </NavLink>
+
+          {esAdmin && (
+            <>
+              <div className="grupo">Sitio público</div>
+              <NavLink to="/panel/contenido" className={clase}>
+                <Icono nombre="imagen" />
+                Textos e imágenes
+              </NavLink>
+            </>
+          )}
         </aside>
 
         <section className="panel-contenido">

@@ -9,3 +9,7 @@ build/
 .vite/
 coverage/
 apps/api/prisma/*.db
+
+# Imagenes subidas desde el panel (no van al repositorio)
+apps/api/uploads/*
+!apps/api/uploads/.gitkeep

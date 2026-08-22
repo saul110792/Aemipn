@@ -29,6 +29,16 @@ las crea todas de un golpe.
 Dar de baja a un miembro lo pasa a `status: BAJA` y desactiva su usuario, pero conserva su historial
 de cursos. Lo mismo con áreas y cursos (`activa` / `activo`).
 
+**Un evento no es una edición de curso.**
+`CourseEdition` lleva inscripciones, pagos y acreditación; es el expediente académico.
+`Event` es difusión: anuncia un taller, una salida o una junta, con su lugar o su liga de
+videoconferencia. Separarlos evita que anunciar una plática obligue a abrir un curso con roster.
+
+**La modalidad decide qué datos de ubicación son obligatorios.**
+Un evento `PRESENCIAL` exige `lugar`; uno `EN_LINEA` exige `urlVideoconferencia`; uno
+`HIBRIDA` exige ambos. Lo valida la API, no solo el formulario, así que no se puede publicar
+un taller en línea sin liga.
+
 ## Entidades
 
 | Modelo | Para qué |
@@ -42,6 +52,8 @@ de cursos. Lo mismo con áreas y cursos (`activa` / `activo`).
 | `CourseEdition` | Una impartición: fechas, cupo, costo, sede, estado. |
 | `EditionActivity` | Una salida o sesión dentro de una edición, con su área y responsable. |
 | `Enrollment` | Miembro ↔ edición: estado académico, estado de pago, calificación. |
+| `Event` | Curso, taller, salida o reunión que se anuncia. Lleva modalidad, ubicación y visibilidad. |
+| `MediaAsset` | Registro de cada imagen subida desde el panel. El archivo vive en `apps/api/uploads`. |
 
 ## Enums
 
@@ -52,6 +64,9 @@ de cursos. Lo mismo con áreas y cursos (`activa` / `activo`).
 - `EditionStatus`: `BORRADOR` · `INSCRIPCIONES_ABIERTAS` · `EN_CURSO` · `CONCLUIDA` · `CANCELADA`
 - `EnrollmentStatus`: `PREINSCRITO` · `INSCRITO` · `ACREDITADO` · `NO_ACREDITADO` · `BAJA`
 - `PaymentStatus`: `PENDIENTE` · `PARCIAL` · `PAGADO` · `EXENTO`
+- `EventKind`: `CURSO` · `TALLER` · `SALIDA` · `REUNION` · `CONVOCATORIA` · `OTRO`
+- `EventMode`: `PRESENCIAL` · `EN_LINEA` · `HIBRIDA`
+- `EventVisibility`: `PUBLICO` · `MIEMBROS` · `AREA`
 
 ## Relaciones
 

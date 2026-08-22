@@ -12,6 +12,9 @@ const conHora = new Intl.DateTimeFormat('es-MX', {
 });
 const moneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
 
+const soloHora = new Intl.DateTimeFormat('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+export const fmtHora = (v: string | Date) => soloHora.format(new Date(v));
 export const fmtFecha = (v: string | Date) => fechaLarga.format(new Date(v));
 export const fmtFechaCorta = (v: string | Date) => fechaCorta.format(new Date(v));
 export const fmtFechaHora = (v: string | Date) => conHora.format(new Date(v));
@@ -66,9 +69,20 @@ export const ETIQUETAS: Record<string, string> = {
   PAGADO: 'Pagado',
   EXENTO: 'Exento',
   CIM: 'CIM',
+  CURSO: 'Curso',
+  TALLER: 'Taller',
+  SALIDA: 'Salida',
+  REUNION: 'Reunión',
+  CONVOCATORIA: 'Convocatoria',
+  OTRO: 'Otro',
+  PRESENCIAL: 'Presencial',
+  EN_LINEA: 'En línea',
+  HIBRIDA: 'Híbrida',
+  PUBLICO: 'Público',
+  MIEMBROS: 'Solo miembros',
+  AREA: 'Privado del área',
   TECNICO: 'Técnico',
   CERTIFICACION: 'Certificación',
-  TALLER: 'Taller',
 };
 
 export const etiqueta = (v: string | null | undefined) => (v ? (ETIQUETAS[v] ?? v) : '—');

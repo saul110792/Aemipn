@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 import type { Area } from '../lib/types';
 import { Cargando, ErrorAviso } from '../components/Estado';
 import { TarjetaArea } from '../components/TarjetaArea';
+import { CarruselAreas } from '../components/CarruselAreas';
 
 export function Areas() {
   const { data, isLoading, error } = useQuery({
@@ -20,7 +21,10 @@ export function Areas() {
       {isLoading && <Cargando />}
       {error && <ErrorAviso error={error} />}
 
-      <div className="rejilla rejilla-3" style={{ marginTop: '1.5rem' }}>
+      {data && <CarruselAreas areas={data} />}
+
+      <h2 style={{ marginTop: '2.5rem' }}>Todas las disciplinas</h2>
+      <div className="rejilla rejilla-3" style={{ marginTop: '1.25rem' }}>
         {data?.map((area) => (
           <TarjetaArea key={area.id} area={area} />
         ))}

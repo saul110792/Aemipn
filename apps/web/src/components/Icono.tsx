@@ -21,7 +21,11 @@ export type NombreIcono =
   | 'cursos'
   | 'calendario'
   | 'brujula'
-  | 'pago';
+  | 'pago'
+  | 'lugar'
+  | 'video'
+  | 'imagen'
+  | 'texto';
 
 const TRAZOS: Record<NombreIcono, JSX.Element> = {
   // --- Areas ---
@@ -163,6 +167,33 @@ const TRAZOS: Record<NombreIcono, JSX.Element> = {
       <rect x="2.5" y="5" width="19" height="14" rx="2" />
       <path d="M2.5 10h19" />
       <path d="M6 15h4" />
+    </>
+  ),
+  lugar: (
+    <>
+      <path d="M12 21.5s7-6 7-11.5a7 7 0 10-14 0c0 5.5 7 11.5 7 11.5z" />
+      <circle cx="12" cy="10" r="2.6" />
+    </>
+  ),
+  video: (
+    <>
+      <rect x="2.5" y="6" width="13" height="12" rx="2.5" />
+      <path d="M15.5 10.5l6-3.2v9.4l-6-3.2z" />
+    </>
+  ),
+  imagen: (
+    <>
+      <rect x="3" y="4.5" width="18" height="15" rx="2.5" />
+      <circle cx="8.5" cy="9.5" r="1.6" />
+      <path d="M4 17l4.5-5 3.2 3.6 2.8-2.4L20 17.5" />
+    </>
+  ),
+  texto: (
+    <>
+      <path d="M4 6h16" />
+      <path d="M4 11h16" />
+      <path d="M4 16h10" />
+      <path d="M4 21h7" />
     </>
   ),
 };

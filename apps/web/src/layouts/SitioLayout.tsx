@@ -4,6 +4,7 @@ import { Marca } from '../components/Marca';
 
 const enlaces = [
   { to: '/areas', texto: 'Áreas' },
+  { to: '/eventos', texto: 'Eventos' },
   { to: '/cim', texto: 'CIM' },
   { to: '/cursos', texto: 'Cursos' },
   { to: '/unete', texto: 'Únete' },

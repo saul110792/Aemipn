@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
-import type { Area, CourseEdition } from '../lib/types';
+import type { Area, CourseEdition, Evento } from '../lib/types';
 import { fmtRango } from '../lib/format';
 import { TarjetaArea } from '../components/TarjetaArea';
 import { Icono } from '../components/Icono';
+import { TarjetaEvento } from '../components/TarjetaEvento';
 
 export function Inicio() {
   const { data: areas } = useQuery({
@@ -15,6 +16,11 @@ export function Inicio() {
   const { data: cim } = useQuery({
     queryKey: ['public', 'cim'],
     queryFn: () => api.get<CourseEdition[]>('/public/cim'),
+  });
+
+  const { data: eventos } = useQuery({
+    queryKey: ['public', 'eventos', 'portada'],
+    queryFn: () => api.get<Evento[]>('/public/eventos?limite=3'),
   });
 
   const proxima = cim?.[0];
@@ -73,7 +79,23 @@ export function Inicio() {
         </div>
       </section>
 
-      <section className="seccion" style={{ background: '#fff', borderTop: '1px solid var(--borde)' }}>
+      {eventos && eventos.length > 0 && (
+        <section className="seccion" style={{ background: '#fff', borderTop: '1px solid var(--borde)' }}>
+          <div className="contenedor">
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+              <h2 style={{ margin: 0 }}>Próximos eventos</h2>
+              <Link to="/eventos">Ver todos →</Link>
+            </div>
+            <div className="pila" style={{ marginTop: '1.25rem' }}>
+              {eventos.map((e) => (
+                <TarjetaEvento key={e.id} evento={e} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="seccion" style={{ background: 'var(--arena)', borderTop: '1px solid var(--borde)' }}>
         <div className="contenedor">
           <h2>¿Nunca has ido a la montaña?</h2>
           <p style={{ maxWidth: '62ch' }}>

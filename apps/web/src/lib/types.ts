@@ -34,6 +34,7 @@ export interface Area {
   descripcion: string | null;
   contenido?: string | null;
   imagenUrl: string | null;
+  galeria?: string[];
   color: string | null;
   orden?: number;
   activa?: boolean;
@@ -126,6 +127,42 @@ export interface MembershipApplication {
   experiencia: string | null;
   mensaje: string | null;
   status: 'NUEVA' | 'EN_REVISION' | 'ACEPTADA' | 'RECHAZADA';
+  createdAt: string;
+}
+
+export type EventKind = 'CURSO' | 'TALLER' | 'SALIDA' | 'REUNION' | 'CONVOCATORIA' | 'OTRO';
+export type EventMode = 'PRESENCIAL' | 'EN_LINEA' | 'HIBRIDA';
+export type EventVisibility = 'PUBLICO' | 'MIEMBROS' | 'AREA';
+
+export interface Evento {
+  id: string;
+  titulo: string;
+  descripcion: string | null;
+  contenido?: string | null;
+  kind: EventKind;
+  modalidad: EventMode;
+  lugar: string | null;
+  urlVideoconferencia: string | null;
+  fechaInicio: string;
+  fechaFin: string | null;
+  areaId?: string | null;
+  area: Pick<Area, 'nombre' | 'slug' | 'color'> | null;
+  visibilidad?: EventVisibility;
+  publicado?: boolean;
+  imagenUrl: string | null;
+  cupo: number | null;
+  costo: string | number | null;
+  registroUrl: string | null;
+}
+
+export interface MediaAsset {
+  id: string;
+  url: string;
+  filename: string;
+  mime: string;
+  size: number;
+  alt: string | null;
+  subidoPor: string | null;
   createdAt: string;
 }
 

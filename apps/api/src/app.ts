@@ -14,12 +14,15 @@ import { enrollmentsRouter } from './routes/enrollments.routes.js';
 import { applicationsRouter } from './routes/applications.routes.js';
 import { publicRouter } from './routes/public.routes.js';
 import { dashboardRouter } from './routes/dashboard.routes.js';
+import { eventsRouter } from './routes/events.routes.js';
+import { CARPETA_SUBIDAS, mediaRouter } from './routes/media.routes.js';
 
 export function createApp() {
   const app = express();
 
   app.set('trust proxy', 1);
-  app.use(helmet());
+  // Las imagenes subidas las pide el frontend desde otro origen en desarrollo.
+  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.use(
     cors({
       origin: env.CORS_ORIGIN.split(',').map((o) => o.trim()),
@@ -34,6 +37,17 @@ export function createApp() {
     res.json({ ok: true, servicio: 'aemipn-api', entorno: env.NODE_ENV }),
   );
 
+  // Archivos subidos desde el panel. Inmutables: el nombre lleva un aleatorio.
+  app.use(
+    '/uploads',
+    express.static(CARPETA_SUBIDAS, {
+      maxAge: '30d',
+      index: false,
+      dotfiles: 'ignore',
+      setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff'),
+    }),
+  );
+
   app.use('/api/public', publicRouter);
   app.use('/api/auth', authRouter);
   app.use('/api/dashboard', dashboardRouter);
@@ -43,6 +57,8 @@ export function createApp() {
   app.use('/api/editions', editionsRouter);
   app.use('/api/enrollments', enrollmentsRouter);
   app.use('/api/applications', applicationsRouter);
+  app.use('/api/events', eventsRouter);
+  app.use('/api/media', mediaRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

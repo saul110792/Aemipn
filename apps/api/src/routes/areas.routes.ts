@@ -14,7 +14,9 @@ const areaSchema = z.object({
   nombre: z.string().min(1),
   descripcion: z.string().optional().nullable(),
   contenido: z.string().optional().nullable(),
-  imagenUrl: z.string().url().optional().nullable(),
+  imagenUrl: z.string().optional().nullable(),
+  /// Fotos de la actividad para el carrusel publico.
+  galeria: z.array(z.string()).max(12, 'Máximo 12 fotos por área').optional(),
   color: z.string().optional().nullable(),
   orden: z.coerce.number().int().default(0),
   activa: z.boolean().default(true),
