@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { Marca } from '../components/Marca';
 
 const enlaces = [
   { to: '/areas', texto: 'Áreas' },
@@ -13,11 +14,11 @@ export function SitioLayout() {
 
   return (
     <div className="app">
+      <div className="pleca" />
       <nav className="nav">
         <div className="nav-inner">
           <Link to="/" className="marca">
-            AEMIPN
-            <span>Excursionismo y Montañismo · IPN</span>
+            <Marca />
           </Link>
           <div className="nav-links">
             {enlaces.map((e) => (

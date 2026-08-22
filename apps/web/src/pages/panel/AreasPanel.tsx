@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import type { Area } from '../../lib/types';
 import { Cargando, ErrorAviso } from '../../components/Estado';
+import { Icono, hayIcono } from '../../components/Icono';
 
 interface AreaConteo extends Area {
   _count: { miembros: number; cursos: number };
@@ -27,10 +28,18 @@ export function AreasPanel() {
           <article key={a.id} className="tarjeta">
             <div className="tarjeta-franja" style={{ background: a.color ?? undefined }} />
             <div className="tarjeta-cuerpo">
+              {hayIcono(a.slug) && (
+                <span className="medallon" style={{ background: `${a.color ?? '#611232'}1a`, color: a.color ?? 'var(--guinda)' }}>
+                  <Icono nombre={a.slug} className="icono icono-lg" />
+                </span>
+              )}
               <h3 style={{ fontSize: '1.05rem' }}>{a.nombre}</h3>
               <p className="texto-suave" style={{ fontSize: '0.9rem' }}>{a.descripcion}</p>
               <div style={{ display: 'flex', gap: '0.4rem' }}>
-                <span className="insignia">{a._count.miembros} miembros</span>
+                <span className="insignia">
+                  <Icono nombre="miembros" />
+                  {a._count.miembros} miembros
+                </span>
                 <span className="insignia">{a._count.cursos} cursos</span>
               </div>
             </div>

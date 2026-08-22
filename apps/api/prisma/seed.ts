@@ -9,12 +9,16 @@ import { env } from '../src/lib/env.js';
 
 const prisma = new PrismaClient();
 
-/** Las disciplinas de la asociacion, en el orden en que se muestran. */
+/**
+ * Las disciplinas de la asociacion, en el orden en que se muestran.
+ * Los colores son acentos profundos elegidos para convivir con el guinda
+ * institucional del IPN (#611232) sin competir con el.
+ */
 const AREAS = [
   {
     slug: 'alta-montana',
     nombre: 'Alta Montaña',
-    color: '#1e3a5f',
+    color: '#2b4c6f',
     descripcion: 'Ascensos a los volcanes y cumbres mayores de México por encima de los 4,000 m.',
     contenido:
       'El área de Alta Montaña se dedica al ascenso de las grandes cumbres del país: Iztaccíhuatl, Pico de Orizaba, Nevado de Toluca y La Malinche. Se trabaja aclimatación, progresión en nieve y hielo, uso de crampones y piolet, y manejo del mal agudo de montaña.',
@@ -22,7 +26,7 @@ const AREAS = [
   {
     slug: 'media-montana',
     nombre: 'Media Montaña',
-    color: '#2d6a4f',
+    color: '#3f6b4a',
     descripcion: 'Excursionismo y senderismo en cerros y sierras, la puerta de entrada al montañismo.',
     contenido:
       'Media Montaña organiza salidas de senderismo y excursionismo de un día o fin de semana. Es donde la mayoría de los miembros empieza: orientación con mapa y brújula, marcha en terreno irregular, armado de mochila y campamento.',
@@ -30,7 +34,7 @@ const AREAS = [
   {
     slug: 'ciclismo-de-montana',
     nombre: 'Ciclismo de Montaña',
-    color: '#bc6c25',
+    color: '#9c5518',
     descripcion: 'Rodadas en terracería, singletrack y travesías de varios días en bicicleta.',
     contenido:
       'El área de Ciclismo de Montaña realiza rodadas técnicas y de resistencia. Se enseña mecánica básica en ruta, manejo en descenso, lectura de terreno y planeación de travesías.',
@@ -38,7 +42,7 @@ const AREAS = [
   {
     slug: 'escalada-en-roca',
     nombre: 'Escalada en Roca',
-    color: '#9d0208',
+    color: '#8c2f39',
     descripcion: 'Escalada deportiva y tradicional en pared, con enfoque en seguridad y aseguramiento.',
     contenido:
       'Escalada en Roca cubre escalada deportiva y tradicional en formaciones naturales. Se forma en nudos, aseguramiento, montaje de reuniones, rapel y autorrescate básico.',
@@ -46,7 +50,7 @@ const AREAS = [
   {
     slug: 'boulder',
     nombre: 'Boulder',
-    color: '#3a5a40',
+    color: '#5c6b3f',
     descripcion: 'Escalada sin cuerda a baja altura, en muro techado y en roca natural.',
     contenido:
       'El área de Boulder trabaja tanto en modalidad indoor (rocódromo, entrenamiento y sesiones semanales) como outdoor (bloques de roca natural). Se enfoca en técnica de movimiento, fuerza de dedos, lectura de bloques y uso correcto del crash pad.',
@@ -54,7 +58,7 @@ const AREAS = [
   {
     slug: 'canonismo',
     nombre: 'Cañonismo',
-    color: '#0077b6',
+    color: '#1f6f7a',
     descripcion: 'Descenso de cañones y barrancos combinando rapel, nado y destrepe.',
     contenido:
       'Cañonismo desciende cañones acuáticos y secos. Combina técnicas de cuerda, natación en aguas rápidas y progresión en roca húmeda. Fuerte énfasis en lectura de hidrología y ventanas de temporada.',
@@ -62,7 +66,7 @@ const AREAS = [
   {
     slug: 'espeleologia',
     nombre: 'Espeleología',
-    color: '#5a189a',
+    color: '#5b3f7a',
     descripcion: 'Exploración, topografía y estudio de cuevas y sistemas subterráneos.',
     contenido:
       'El área de Espeleología explora y topografía cavernas y sótanos. Se practica técnica vertical sobre cuerda (TSA), progresión en pasajes estrechos y registro topográfico. Trabajo estrecho con la conservación del medio subterráneo.',
@@ -70,7 +74,7 @@ const AREAS = [
   {
     slug: 'fotografia-de-montana',
     nombre: 'Fotografía de Montaña',
-    color: '#6c757d',
+    color: '#55606b',
     descripcion: 'Registro visual de las actividades y del entorno natural de la asociación.',
     contenido:
       'Fotografía de Montaña documenta las salidas de todas las áreas y forma en técnica fotográfica en condiciones de montaña: luz de alta montaña, cuidado del equipo en frío y humedad, composición de paisaje y retrato en actividad.',

@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import type { Area, CourseEdition } from '../lib/types';
 import { fmtRango } from '../lib/format';
+import { TarjetaArea } from '../components/TarjetaArea';
+import { Icono } from '../components/Icono';
 
 export function Inicio() {
   const { data: areas } = useQuery({
@@ -28,10 +30,10 @@ export function Inicio() {
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1.5rem' }}>
             <Link to="/unete" className="btn btn-claro">
-              Quiero unirme
+              <Icono nombre="miembros" /> Quiero unirme
             </Link>
             <Link to="/cim" className="btn btn-verde">
-              Conocer el CIM
+              <Icono nombre="brujula" /> Conocer el CIM
             </Link>
           </div>
         </div>
@@ -40,7 +42,9 @@ export function Inicio() {
       {proxima && (
         <section style={{ background: '#fff', borderBottom: '1px solid var(--borde)', padding: '1.25rem 0' }}>
           <div className="contenedor" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <span className="insignia insignia-verde">Convocatoria abierta</span>
+            <span className="insignia insignia-verde">
+              <Icono nombre="calendario" /> Convocatoria abierta
+            </span>
             <strong>{proxima.clave}</strong>
             <span className="texto-suave">{fmtRango(proxima.fechaInicio, proxima.fechaFin)}</span>
             {proxima.lugaresRestantes !== null && proxima.lugaresRestantes !== undefined && (
@@ -63,16 +67,7 @@ export function Inicio() {
 
           <div className="rejilla rejilla-3" style={{ marginTop: '1.5rem' }}>
             {areas?.map((area) => (
-              <Link key={area.id} to={`/areas/${area.slug}`} className="tarjeta tarjeta-area">
-                <div className="tarjeta-franja" style={{ background: area.color ?? undefined }} />
-                <div className="tarjeta-cuerpo">
-                  <h3>{area.nombre}</h3>
-                  <p className="texto-suave" style={{ marginBottom: '0.75rem', fontSize: '0.93rem' }}>
-                    {area.descripcion}
-                  </p>
-                  <span className="insignia">{area._count?.miembros ?? 0} miembros</span>
-                </div>
-              </Link>
+              <TarjetaArea key={area.id} area={area} />
             ))}
           </div>
         </div>

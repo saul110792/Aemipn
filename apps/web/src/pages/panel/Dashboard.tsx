@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { etiqueta, fmtFechaHora, fmtRango } from '../../lib/format';
+import { Icono, hayIcono } from '../../components/Icono';
 import type { CourseEdition, EditionActivity } from '../../lib/types';
 
 interface Resumen {
@@ -31,22 +32,10 @@ export function Dashboard() {
       </div>
 
       <div className="rejilla rejilla-4">
-        <div className="metrica">
-          <div className="valor">{data.miembros.total}</div>
-          <div className="etiqueta">Miembros registrados</div>
-        </div>
-        <div className="metrica">
-          <div className="valor">{data.miembros.porStatus.ACTIVO ?? 0}</div>
-          <div className="etiqueta">Activos</div>
-        </div>
-        <div className="metrica">
-          <div className="valor">{data.solicitudesNuevas}</div>
-          <div className="etiqueta">Solicitudes por revisar</div>
-        </div>
-        <div className="metrica">
-          <div className="valor">{data.pagosPendientes}</div>
-          <div className="etiqueta">Pagos pendientes</div>
-        </div>
+        <Metrica icono="miembros" valor={data.miembros.total} etiqueta="Miembros registrados" />
+        <Metrica icono="brujula" valor={data.miembros.porStatus.ACTIVO ?? 0} etiqueta="Activos" />
+        <Metrica icono="solicitudes" valor={data.solicitudesNuevas} etiqueta="Solicitudes por revisar" />
+        <Metrica icono="pago" valor={data.pagosPendientes} etiqueta="Pagos pendientes" />
       </div>
 
       {data.solicitudesNuevas > 0 && (
@@ -60,8 +49,17 @@ export function Dashboard() {
       <div className="rejilla rejilla-4">
         {data.areas.map((a) => (
           <div key={a.id} className="metrica" style={{ borderLeft: `4px solid ${a.color ?? 'var(--roca)'}` }}>
-            <div className="valor">{a.miembros}</div>
-            <div className="etiqueta">{a.nombre}</div>
+            <div className="metrica-icono">
+              {hayIcono(a.slug) && (
+                <span style={{ color: a.color ?? 'var(--guinda)' }}>
+                  <Icono nombre={a.slug} className="icono icono-lg" />
+                </span>
+              )}
+              <div>
+                <div className="valor" style={{ fontSize: '1.6rem' }}>{a.miembros}</div>
+                <div className="etiqueta">{a.nombre}</div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -139,5 +137,30 @@ export function Dashboard() {
         </div>
       )}
     </>
+  );
+}
+
+/** Tarjeta de cifra con icono, para el bloque superior del resumen. */
+function Metrica({
+  icono,
+  valor,
+  etiqueta,
+}: {
+  icono: 'miembros' | 'brujula' | 'solicitudes' | 'pago';
+  valor: number;
+  etiqueta: string;
+}) {
+  return (
+    <div className="metrica">
+      <div className="metrica-icono">
+        <span style={{ color: 'var(--guinda-500)' }}>
+          <Icono nombre={icono} className="icono icono-lg" />
+        </span>
+        <div>
+          <div className="valor">{valor}</div>
+          <div className="etiqueta">{etiqueta}</div>
+        </div>
+      </div>
+    </div>
   );
 }

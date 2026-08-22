@@ -1,6 +1,8 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { etiqueta } from '../lib/format';
+import { Marca } from '../components/Marca';
+import { Icono } from '../components/Icono';
 
 export function PanelLayout() {
   const { user, logout, esAdmin } = useAuth();
@@ -15,11 +17,11 @@ export function PanelLayout() {
 
   return (
     <div className="app">
+      <div className="pleca" />
       <nav className="nav">
         <div className="nav-inner">
           <Link to="/panel" className="marca">
-            AEMIPN
-            <span>Panel de gestión</span>
+            <Marca subtitulo="Panel de gestión" />
           </Link>
           <div className="nav-links">
             <Link to="/">Ver sitio público</Link>
@@ -36,27 +38,33 @@ export function PanelLayout() {
       <div className="panel">
         <aside className="panel-lateral">
           <NavLink to="/panel" end className={clase}>
+            <Icono nombre="resumen" />
             Resumen
           </NavLink>
 
           <div className="grupo">Personas</div>
           <NavLink to="/panel/miembros" className={clase}>
+            <Icono nombre="miembros" />
             Miembros
           </NavLink>
           {esAdmin && (
             <NavLink to="/panel/solicitudes" className={clase}>
-              Solicitudes de ingreso
+              <Icono nombre="solicitudes" />
+              Solicitudes
             </NavLink>
           )}
 
           <div className="grupo">Actividad</div>
           <NavLink to="/panel/areas" className={clase}>
+            <Icono nombre="areas" />
             Áreas
           </NavLink>
           <NavLink to="/panel/cursos" className={clase}>
+            <Icono nombre="cursos" />
             Cursos
           </NavLink>
           <NavLink to="/panel/ediciones" className={clase}>
+            <Icono nombre="calendario" />
             Ediciones y CIM
           </NavLink>
         </aside>

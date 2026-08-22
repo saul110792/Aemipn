@@ -6,6 +6,7 @@ import type { CourseEdition, EnrollmentStatus, Member, Paginated, PaymentStatus 
 import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { etiqueta, fmtFechaHora, fmtMoneda, fmtRango, nombreCompleto } from '../../lib/format';
 import { useAuth } from '../../lib/auth';
+import { Icono, hayIcono } from '../../components/Icono';
 
 const ESTADOS_INSCRIPCION: EnrollmentStatus[] = [
   'PREINSCRITO', 'INSCRITO', 'ACREDITADO', 'NO_ACREDITADO', 'BAJA',
@@ -138,6 +139,7 @@ export function EdicionDetalle() {
                           className="insignia"
                           style={a.area?.color ? { background: a.area.color, color: '#fff' } : undefined}
                         >
+                          {a.area && hayIcono(a.area.slug) && <Icono nombre={a.area.slug} />}
                           {a.area?.nombre ?? 'General'}
                         </span>
                       </td>

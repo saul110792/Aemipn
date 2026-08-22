@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import type { Area } from '../lib/types';
 import { ErrorAviso } from '../components/Estado';
+import { Icono, hayIcono } from '../components/Icono';
 
 interface Formulario {
   nombre: string;
@@ -137,6 +138,11 @@ export function Unete() {
             {areas?.map((a) => (
               <label key={a.id} className="casilla">
                 <input type="checkbox" value={a.slug} {...register('areasInteres')} />
+                {hayIcono(a.slug) && (
+                  <span style={{ color: a.color ?? 'var(--guinda)' }}>
+                    <Icono nombre={a.slug} />
+                  </span>
+                )}
                 {a.nombre}
               </label>
             ))}

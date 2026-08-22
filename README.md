@@ -109,4 +109,5 @@ nunca necesita saber en qué host vive la API y no hay CORS de por medio.
 - [docs/modelo-de-datos.md](docs/modelo-de-datos.md) — entidades y por qué están así
 - [docs/api.md](docs/api.md) — todos los endpoints
 - [docs/postgres.md](docs/postgres.md) — instalar PostgreSQL en este equipo
+- [docs/identidad.md](docs/identidad.md) — paleta del IPN, tipografía, iconos y logotipo
 - [docs/n8n-fase-2.md](docs/n8n-fase-2.md) — qué automatizar y dónde engancharlo

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { Cargando, ErrorAviso } from '../components/Estado';
 import { etiqueta } from '../lib/format';
+import { Icono, hayIcono } from '../components/Icono';
 
 interface AreaPublica {
   id: string;
@@ -35,7 +36,17 @@ export function AreaDetalle() {
           <Link to="/areas" style={{ color: 'rgba(255,255,255,.8)', fontSize: '0.9rem' }}>
             ← Todas las áreas
           </Link>
-          <h1 style={{ marginTop: '0.75rem' }}>{data.nombre}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', marginTop: '0.75rem' }}>
+            {hayIcono(data.slug) && (
+              <span
+                className="medallon"
+                style={{ background: 'rgba(255,255,255,.16)', color: '#fff', marginBottom: 0, width: 56, height: 56 }}
+              >
+                <Icono nombre={data.slug} className="icono icono-lg" titulo={data.nombre} />
+              </span>
+            )}
+            <h1 style={{ margin: 0 }}>{data.nombre}</h1>
+          </div>
           <p>{data.descripcion}</p>
         </div>
       </header>

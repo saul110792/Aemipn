@@ -4,6 +4,7 @@ import { api } from '../lib/api';
 import type { CourseEdition } from '../lib/types';
 import { Cargando, ErrorAviso, Insignia } from '../components/Estado';
 import { etiqueta, fmtFechaHora, fmtMoneda, fmtRango } from '../lib/format';
+import { Icono, hayIcono } from '../components/Icono';
 
 export function Cim() {
   const { data, isLoading, error } = useQuery({
@@ -96,6 +97,7 @@ export function Cim() {
                                   className="insignia"
                                   style={{ background: a.area?.color ?? undefined, color: a.area?.color ? '#fff' : undefined }}
                                 >
+                                  {a.area && hayIcono(a.area.slug) && <Icono nombre={a.area.slug} />}
                                   {a.area?.nombre ?? 'General'}
                                 </span>
                               </td>
