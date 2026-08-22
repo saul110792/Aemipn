@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { Marca } from '../components/Marca';
+import { LogoIPN, Marca } from '../components/Marca';
 
 const enlaces = [
   { to: '/areas', texto: 'Áreas' },
@@ -73,7 +73,7 @@ export function SitioLayout() {
 
       <footer className="pie">
         <div className="contenedor pie-inner">
-          <div>
+          <div className="pie-texto">
             <strong>
               Asociación de Excursionismo y Montañismo del Instituto Politécnico Nacional
             </strong>
@@ -83,6 +83,11 @@ export function SitioLayout() {
             <p style={{ marginBottom: 0 }}>
               <Link to="/unete">Quiero unirme</Link> · <Link to="/login">Acceso de miembros</Link>
             </p>
+          </div>
+
+          {/* La asociación pertenece al Politécnico: su escudo cierra el pie. */}
+          <div className="pie-institucion">
+            <LogoIPN />
           </div>
         </div>
       </footer>

@@ -1,20 +1,34 @@
 # Archivos públicos
 
-Lo que esté en esta carpeta se sirve desde la raíz del sitio: `imagen.png` → `/imagen.png`.
+Lo que esté aquí se sirve desde la raíz del sitio: `imagen.png` → `/imagen.png`.
 
-## logo-ipn.png
+## Qué hay
 
-Coloca aquí el escudo del Instituto Politécnico Nacional con **ese nombre exacto**:
+| Archivo | Uso |
+|---|---|
+| `logo-ipn.svg` | Escudo oficial del IPN en color, tomado del sitio institucional (ipn.mx) |
+| `logo-ipn-blanco.svg` | La misma marca en monocromo blanco, para fondos oscuros. Es la que aparece en el pie del sitio |
 
-    apps/web/public/logo-ipn.png
+La variante blanca se generó del original cambiando los dos colores de relleno a blanco.
+Los trazos son idénticos; es la adaptación monocromática habitual para fondo oscuro, y hacía
+falta porque el guinda del escudo se pierde contra el guinda del pie.
 
-Aparece en la barra superior del sitio público y del panel, sobre una placa blanca
-para que el guinda del escudo contraste con el guinda de la barra.
+## Falta: escudo-aemipn.png
 
-Recomendado: PNG cuadrado con fondo transparente, de 256×256 px o más.
+El escudo **de la asociación** va en la barra superior. Colócalo aquí con ese nombre exacto:
 
-Si el archivo no está, la aplicación no se rompe: `<Emblema>` dibuja un escudo
-propio en SVG como respaldo (ver `src/components/Marca.tsx`).
+    apps/web/public/escudo-aemipn.png
 
-Cuando consigas el vector oficial (SVG) por tu canal institucional, guárdalo como
-`logo-ipn.svg` y cambia la extensión en `Marca.tsx`; escalará mejor y pesará menos.
+Recomendado: PNG cuadrado con fondo transparente, 256×256 px o más. Como la barra es guinda
+oscuro, conviene la versión **en blanco** del escudo.
+
+> El archivo `Escudo AEMIPN blanco.png` que está en Descargas sirve, pero trae una flecha roja
+> encima que hay que quitar antes de usarlo.
+
+Si el archivo no está, la aplicación no se rompe: `<Emblema>` en `src/components/Marca.tsx`
+dibuja un escudo propio en SVG como respaldo.
+
+## Jerarquía
+
+La barra lleva el escudo de la **AEMIPN**, porque el sitio es suyo. El pie lleva el escudo del
+**IPN**, la institución a la que pertenece.

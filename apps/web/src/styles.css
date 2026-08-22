@@ -522,3 +522,14 @@ tbody tr:hover { background: var(--guinda-100); }
   .pie a { display: inline-block; padding: 0.55rem 0; min-height: 44px; }
   .pie-inner p { margin-bottom: 0.25rem; }
 }
+
+/* Escudo institucional del IPN en el pie del sitio. */
+.logo-ipn { display: block; height: auto; max-width: 100%; opacity: 0.92; }
+.pie-institucion { display: flex; align-items: flex-start; }
+.pie-texto { max-width: 62ch; }
+
+@media (max-width: 860px) {
+  .pie-inner { flex-direction: column; gap: 1.5rem; }
+  .pie-institucion { padding-top: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.12); width: 100%; }
+  .logo-ipn { width: 190px; }
+}

@@ -31,7 +31,8 @@ objetivos táctiles de 44 px y el carrusel se controla deslizando. El panel de g
 orientado a escritorio — funciona en el teléfono, con el menú lateral desplazable y las tablas
 con desplazamiento propio, y avisa de que rinde mejor en pantalla grande.
 
-Para colocar el escudo del IPN, ver [apps/web/public/LEEME.md](apps/web/public/LEEME.md).
+El escudo del IPN ya está integrado en el pie. Falta el de la asociación en la barra: ver
+[apps/web/public/LEEME.md](apps/web/public/LEEME.md).
 
 ## Stack
 

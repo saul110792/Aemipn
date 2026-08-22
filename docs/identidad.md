@@ -72,17 +72,24 @@ Hay ocho de área (uno por disciplina, con el `slug` como llave) y ocho de inter
 área nueva no rompe nada: `hayIcono()` comprueba antes de dibujar y si no existe simplemente
 no se muestra icono.
 
-## Logotipo
+## Logotipos
 
-La barra superior muestra el **escudo del Instituto Politécnico Nacional**, que se carga desde
-`apps/web/public/logo-ipn.png`. Como el escudo es guinda y la barra también, va montado sobre
-una placa blanca de esquinas redondeadas; sin ella se perdería contra el fondo.
+El sitio usa dos marcas, con jerarquía deliberada: la barra superior lleva el escudo de la
+**AEMIPN**, porque el sitio es de la asociación; el pie lleva el escudo del **IPN**, la
+institución a la que pertenece.
 
-Si el archivo no está presente, `<Emblema>` en `components/Marca.tsx` dibuja un escudo propio
-en SVG como respaldo, de modo que la barra nunca se ve rota. El cambio a un vector oficial
-(`logo-ipn.svg`) es una línea en ese mismo archivo.
+| Archivo | Dónde |
+|---|---|
+| `escudo-aemipn.png` | Barra superior del sitio y del panel |
+| `logo-ipn-blanco.svg` | Pie del sitio |
+| `logo-ipn.svg` | Original en color, por si se necesita sobre fondo claro |
 
-Las instrucciones para colocarlo están en `apps/web/public/LEEME.md`.
+El escudo del IPN es el vector oficial publicado en ipn.mx (368×160, guinda `#762042`). La
+variante blanca se obtuvo cambiando sus dos colores de relleno a blanco: hacía falta porque el
+guinda del escudo desaparece contra el guinda del pie.
+
+Si `escudo-aemipn.png` no está presente, `<Emblema>` dibuja un escudo propio en SVG como
+respaldo, de modo que la barra nunca se ve rota. Instrucciones en `apps/web/public/LEEME.md`.
 
 ## Móvil
 

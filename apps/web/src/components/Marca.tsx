@@ -1,23 +1,22 @@
 import { useState } from 'react';
 
 /**
- * Escudo institucional. Usa el archivo del IPN colocado en
- * apps/web/public/logo-ipn.png. Si aún no está, cae en un escudo propio
- * dibujado en SVG para que la barra nunca se vea rota.
+ * Escudo de la AEMIPN para la barra superior.
+ * Carga /escudo-aemipn.png (o .svg) si está presente; si no, dibuja un escudo
+ * propio en SVG para que la barra nunca se vea rota.
  */
 export function Emblema({ tamano = 36 }: { tamano?: number }) {
   const [falloImagen, setFalloImagen] = useState(false);
 
   if (!falloImagen) {
     return (
-      <span className="emblema-placa" style={{ width: tamano, height: tamano }}>
-        <img
-          src="/logo-ipn.png"
-          alt="Instituto Politécnico Nacional"
-          className="emblema"
-          onError={() => setFalloImagen(true)}
-        />
-      </span>
+      <img
+        src="/escudo-aemipn.png"
+        alt=""
+        className="emblema"
+        style={{ width: tamano, height: tamano }}
+        onError={() => setFalloImagen(true)}
+      />
     );
   }
 
@@ -26,6 +25,7 @@ export function Emblema({ tamano = 36 }: { tamano?: number }) {
       width={tamano}
       height={tamano}
       viewBox="0 0 48 48"
+      className="emblema"
       role="img"
       aria-label="Emblema de la AEMIPN"
       fill="none"
@@ -58,5 +58,20 @@ export function Marca({ subtitulo = 'Excursionismo y Montañismo · IPN' }: { su
         <span>{subtitulo}</span>
       </span>
     </>
+  );
+}
+
+/**
+ * Escudo institucional del IPN, para el pie del sitio.
+ * `blanco` usa la variante monocromática, legible sobre el guinda oscuro.
+ */
+export function LogoIPN({ ancho = 210, blanco = true }: { ancho?: number; blanco?: boolean }) {
+  return (
+    <img
+      src={blanco ? '/logo-ipn-blanco.svg' : '/logo-ipn.svg'}
+      alt="Instituto Politécnico Nacional"
+      width={ancho}
+      className="logo-ipn"
+    />
   );
 }
