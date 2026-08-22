@@ -70,7 +70,8 @@ a:hover { text-decoration: underline; }
 :focus-visible { outline: 3px solid var(--guinda-500); outline-offset: 2px; border-radius: 4px; }
 
 .contenedor { max-width: var(--max); margin: 0 auto; padding: 0 1.25rem; }
-.seccion { padding: 3.5rem 0; }
+/* Solo vertical: la forma abreviada anularia el padding lateral de .contenedor. */
+.seccion { padding-top: 3.5rem; padding-bottom: 3.5rem; }
 .centrado { text-align: center; }
 .texto-suave { color: var(--texto-suave); }
 .pila > * + * { margin-top: 1rem; }
@@ -367,3 +368,157 @@ tbody tr:hover { background: var(--guinda-100); }
   border-bottom: 3px solid transparent; margin-bottom: -1px;
 }
 .pestanas button.activa { color: var(--guinda); border-bottom-color: var(--guinda); }
+
+/* ===========================================================================
+   Móvil
+   El sitio público se diseña para el teléfono; el panel de gestión se mantiene
+   orientado a escritorio pero sin romperse en pantallas chicas.
+   =========================================================================== */
+
+/* El escudo institucional conserva su proporción sea PNG o SVG. */
+/* El escudo del IPN es guinda y la barra tambien: va sobre placa blanca. */
+.emblema-placa {
+  display: grid; place-items: center; flex: none;
+  background: var(--blanco); border-radius: 9px; padding: 3px;
+}
+.emblema { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* Botón de menú: sólo existe en pantallas angostas. */
+.nav-boton {
+  display: none; margin-left: auto;
+  width: 44px; height: 44px; padding: 0;
+  background: transparent; border: none; cursor: pointer;
+  place-items: center; border-radius: 8px;
+}
+.nav-boton:hover { background: rgba(255, 255, 255, 0.1); }
+.hamburguesa { display: grid; gap: 5px; width: 22px; }
+.hamburguesa span {
+  display: block; height: 2px; width: 100%; background: var(--blanco); border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.15s ease;
+}
+.hamburguesa.abierta span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburguesa.abierta span:nth-child(2) { opacity: 0; }
+.hamburguesa.abierta span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.velo {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(20, 5, 12, 0.45); border: none; cursor: default;
+}
+
+.pie-inner { display: flex; gap: 1.5rem; justify-content: space-between; flex-wrap: wrap; }
+
+@media (max-width: 860px) {
+  .nav-inner { padding: 0.6rem 1rem; gap: 0.75rem; flex-wrap: nowrap; }
+  .nav-boton { display: grid; }
+
+  /* El menú baja como panel, no como lista apilada que empuja el contenido. */
+  .nav-links {
+    display: none;
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 45;
+    flex-direction: column; align-items: stretch; gap: 0;
+    margin: 0; padding: 0.5rem;
+    background: var(--guinda-800);
+    box-shadow: 0 12px 24px rgba(20, 5, 12, 0.35);
+  }
+  .nav-links.abierto { display: flex; }
+  .nav-links a {
+    padding: 0.85rem 0.9rem; border-radius: 8px; font-size: 1rem;
+  }
+  .nav-links a.activo { box-shadow: none; background: rgba(255, 255, 255, 0.1); }
+  .nav-links .nav-cta {
+    margin-top: 0.4rem; justify-content: center; padding: 0.75rem 1rem; font-size: 0.95rem;
+  }
+  .nav { position: sticky; }
+  .nav-inner { position: relative; }
+}
+
+@media (max-width: 640px) {
+  .contenedor { padding: 0 1rem; }
+  .seccion { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+
+  .marca-texto { font-size: 1.05rem; }
+  .marca-texto span { font-size: 0.62rem; }
+  .emblema-placa { width: 30px !important; height: 30px !important; padding: 2px; border-radius: 7px; }
+
+  .hero { padding: 2.75rem 0 2.5rem; }
+  .hero p { font-size: 1rem; }
+  .hero::after { height: 50px; }
+
+  /* Un botón por renglón: en el pulgar, media anchura es un blanco incómodo. */
+  .hero .btn, .acciones-apiladas .btn { width: 100%; }
+
+  .rejilla { gap: 1rem; }
+  .rejilla-3, .rejilla-4 { grid-template-columns: 1fr; }
+  .tarjeta-cuerpo { padding: 1.1rem; }
+
+  .metrica { padding: 1rem; }
+  .metrica .valor { font-size: 1.7rem; }
+
+  .campos-2 { grid-template-columns: 1fr; }
+  .casillas { grid-template-columns: 1fr; }
+
+  /* Objetivos táctiles: nada por debajo de 44 px de alto. */
+  .btn { min-height: 44px; }
+  .btn-sm { min-height: 38px; }
+  .campo input, .campo select, .campo textarea { min-height: 44px; font-size: 16px; }
+  .casilla { min-height: 44px; }
+
+  .barra-filtros { gap: 0.5rem; }
+  .barra-filtros input, .barra-filtros select { width: 100%; min-height: 44px; }
+  .barra-filtros input[type='search'] { min-width: 0; }
+
+  .panel-encabezado { align-items: flex-start; }
+  .panel-encabezado h1 { font-size: 1.35rem; }
+
+  .pie { padding: 2rem 0 1.5rem; }
+}
+
+/* La franja de la convocatoria en la portada: apilada y legible en el teléfono. */
+@media (max-width: 720px) {
+  .franja-cim { flex-direction: column; align-items: flex-start !important; gap: 0.5rem !important; }
+  .franja-cim .btn { margin-left: 0 !important; width: 100%; }
+}
+
+/* El carrusel se controla con el dedo; las flechas estorban en pantalla chica. */
+@media (max-width: 640px) {
+  .carrusel-flecha { display: none; }
+  .carrusel-slide { min-height: 300px; }
+  .carrusel-texto { padding: 1.1rem; }
+  .carrusel-texto h3 { font-size: 1.35rem; }
+  .carrusel-texto p { font-size: 0.95rem; }
+  .carrusel-ilustrado-icono .icono { width: 96px; height: 96px; }
+  .punto { width: 12px; height: 12px; }
+  .punto.activo { width: 32px; }
+}
+
+/* Panel de gestión: pensado para escritorio, utilizable en el teléfono. */
+@media (max-width: 640px) {
+  .panel-contenido { padding: 1rem; }
+  .panel-lateral { padding: 0.5rem; gap: 0.35rem; }
+  .panel-lateral a { padding: 0.6rem 0.75rem; font-size: 0.88rem; min-height: 40px; }
+  .evento { grid-template-columns: 1fr; }
+  .evento-fecha { width: 84px; }
+  /* Aviso de que el panel rinde mejor en pantalla grande. */
+  .nota-escritorio { display: block; }
+}
+.nota-escritorio { display: none; }
+
+/* Enlaces que son acciones, no prosa: con el dedo necesitan área propia.
+   Los enlaces dentro de un párrafo quedan exentos (WCAG 2.5.8). */
+@media (max-width: 640px) {
+  .marca { min-height: 44px; align-items: center; }
+
+  .evento-meta a {
+    display: inline-flex; align-items: center; min-height: 40px;
+    padding: 0.25rem 0.6rem; margin: -0.25rem 0;
+    background: var(--guinda-100); border-radius: 8px; font-weight: 600;
+  }
+
+  .enlace-accion {
+    display: inline-flex; align-items: center; min-height: 44px;
+    padding: 0.25rem 0; font-weight: 600;
+  }
+
+  .pie a { display: inline-block; padding: 0.55rem 0; min-height: 44px; }
+  .pie-inner p { margin-bottom: 0.25rem; }
+}

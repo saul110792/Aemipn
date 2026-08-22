@@ -24,6 +24,15 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 - **Eventos**: alta con modalidad presencial / en línea / híbrida, y control de quién lo ve — público, solo miembros, o privado del área
 - **Textos e imágenes**: edita lo que ve el público de cada área y sube fotos al carrusel, sin tocar código
 
+## Diseño móvil
+
+El sitio público está pensado para el teléfono: menú desplegable, botones de ancho completo,
+objetivos táctiles de 44 px y el carrusel se controla deslizando. El panel de gestión está
+orientado a escritorio — funciona en el teléfono, con el menú lateral desplazable y las tablas
+con desplazamiento propio, y avisa de que rinde mejor en pantalla grande.
+
+Para colocar el escudo del IPN, ver [apps/web/public/LEEME.md](apps/web/public/LEEME.md).
+
 ## Stack
 
 | Capa | Tecnología |

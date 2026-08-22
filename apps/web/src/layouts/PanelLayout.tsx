@@ -84,6 +84,11 @@ export function PanelLayout() {
         </aside>
 
         <section className="panel-contenido">
+          {/* El panel se diseñó para escritorio; en el teléfono se avisa sin bloquear. */}
+          <p className="nota-escritorio aviso aviso-info" style={{ fontSize: '0.85rem' }}>
+            El panel está pensado para pantalla grande. Aquí funciona, pero las tablas se
+            desplazan de lado.
+          </p>
           <Outlet />
         </section>
       </div>

@@ -34,7 +34,7 @@ export function Inicio() {
             Somos la Asociación de Excursionismo y Montañismo del IPN. Ocho disciplinas, una
             comunidad y un curso introductorio que abre la puerta a todas ellas.
           </p>
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1.5rem' }}>
+          <div className="acciones-apiladas" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1.5rem' }}>
             <Link to="/unete" className="btn btn-claro">
               <Icono nombre="miembros" /> Quiero unirme
             </Link>
@@ -47,7 +47,7 @@ export function Inicio() {
 
       {proxima && (
         <section style={{ background: '#fff', borderBottom: '1px solid var(--borde)', padding: '1.25rem 0' }}>
-          <div className="contenedor" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div className="contenedor franja-cim" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <span className="insignia insignia-verde">
               <Icono nombre="calendario" /> Convocatoria abierta
             </span>
@@ -84,7 +84,7 @@ export function Inicio() {
           <div className="contenedor">
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
               <h2 style={{ margin: 0 }}>Próximos eventos</h2>
-              <Link to="/eventos">Ver todos →</Link>
+              <Link to="/eventos" className="enlace-accion">Ver todos →</Link>
             </div>
             <div className="pila" style={{ marginTop: '1.25rem' }}>
               {eventos.map((e) => (

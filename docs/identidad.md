@@ -74,12 +74,23 @@ no se muestra icono.
 
 ## Logotipo
 
-`<Emblema>` en `components/Marca.tsx` es un **escudo con tres cumbres diseñado para la AEMIPN**,
-no el escudo oficial del IPN. El escudo del Politécnico es un activo institucional con reglas
-de uso propias; conviene obtener el archivo oficial por el canal que corresponda.
+La barra superior muestra el **escudo del Instituto Politécnico Nacional**, que se carga desde
+`apps/web/public/logo-ipn.png`. Como el escudo es guinda y la barra también, va montado sobre
+una placa blanca de esquinas redondeadas; sin ella se perdería contra el fondo.
 
-Cuando lo tengas, colócalo en `apps/web/public/` y sustituye el `<svg>` de `<Emblema>` por:
+Si el archivo no está presente, `<Emblema>` en `components/Marca.tsx` dibuja un escudo propio
+en SVG como respaldo, de modo que la barra nunca se ve rota. El cambio a un vector oficial
+(`logo-ipn.svg`) es una línea en ese mismo archivo.
 
-```tsx
-<img src="/logo-ipn.svg" alt="Instituto Politécnico Nacional" height={34} />
-```
+Las instrucciones para colocarlo están en `apps/web/public/LEEME.md`.
+
+## Móvil
+
+Puntos de corte: **860 px** activa el menú desplegable, **640 px** es el diseño de teléfono
+(una columna, botones de ancho completo, flechas del carrusel ocultas porque ahí se desliza).
+
+Los objetivos táctiles miden al menos 44 px de alto. Los campos de formulario usan 16 px de
+tipografía, que es el mínimo que evita que Safari en iOS haga zoom automático al enfocarlos.
+
+Los enlaces que son acciones —«Entrar a la videoconferencia», «Ver todos»— reciben área propia
+en móvil; los enlaces dentro de un párrafo quedan exentos, como permite WCAG 2.5.8.
