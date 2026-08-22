@@ -1,0 +1,97 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { prisma } from '../lib/prisma.js';
+import { asyncHandler } from '../lib/asyncHandler.js';
+import { notFound } from '../lib/errors.js';
+import { validate } from '../middleware/validate.js';
+import { requireAreaRole, requireAuth, requireRole } from '../middleware/auth.js';
+
+export const areasRouter = Router();
+areasRouter.use(requireAuth);
+
+const areaSchema = z.object({
+  slug: z.string().regex(/^[a-z0-9-]+$/, 'El slug solo admite minusculas, numeros y guiones'),
+  nombre: z.string().min(1),
+  descripcion: z.string().optional().nullable(),
+  contenido: z.string().optional().nullable(),
+  imagenUrl: z.string().url().optional().nullable(),
+  color: z.string().optional().nullable(),
+  orden: z.coerce.number().int().default(0),
+  activa: z.boolean().default(true),
+});
+
+areasRouter.get(
+  '/',
+  asyncHandler(async (_req, res) => {
+    const areas = await prisma.area.findMany({
+      orderBy: { orden: 'asc' },
+      include: {
+        _count: { select: { miembros: { where: { activo: true } }, cursos: true } },
+      },
+    });
+    res.json(areas);
+  }),
+);
+
+/** GET /api/areas/:areaId — incluye la mesa del area y su padron. */
+areasRouter.get(
+  '/:areaId',
+  asyncHandler(async (req, res) => {
+    const area = await prisma.area.findUnique({
+      where: { id: req.params.areaId },
+      include: {
+        miembros: {
+          where: { activo: true },
+          include: {
+            member: {
+              select: {
+                id: true, nombre: true, apellidoPaterno: true, apellidoMaterno: true,
+                email: true, telefono: true, status: true, fotoUrl: true,
+              },
+            },
+          },
+          orderBy: [{ role: 'asc' }],
+        },
+        cursos: { include: { _count: { select: { ediciones: true } } } },
+      },
+    });
+
+    if (!area) throw notFound('Area no encontrada');
+
+    // Separar la mesa directiva del area del resto del padron.
+    res.json({
+      ...area,
+      jefe: area.miembros.find((m) => m.role === 'JEFE_DE_AREA') ?? null,
+      tesorero: area.miembros.find((m) => m.role === 'TESORERO') ?? null,
+    });
+  }),
+);
+
+areasRouter.post(
+  '/',
+  requireRole('ADMIN'),
+  validate(areaSchema),
+  asyncHandler(async (req, res) => {
+    res.status(201).json(await prisma.area.create({ data: req.body }));
+  }),
+);
+
+/** El jefe de area puede editar la ficha informativa de su propia area. */
+areasRouter.patch(
+  '/:areaId',
+  requireAreaRole(['JEFE_DE_AREA']),
+  validate(areaSchema.partial()),
+  asyncHandler(async (req, res) => {
+    res.json(await prisma.area.update({ where: { id: req.params.areaId }, data: req.body }));
+  }),
+);
+
+areasRouter.delete(
+  '/:areaId',
+  requireRole('ADMIN'),
+  asyncHandler(async (req, res) => {
+    res.json(
+      await prisma.area.update({ where: { id: req.params.areaId }, data: { activa: false } }),
+    );
+  }),
+);

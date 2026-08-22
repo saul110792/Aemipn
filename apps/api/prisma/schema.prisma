@@ -1,0 +1,327 @@
+// AEMIPN — Asociación de Excursionismo y Montañismo del IPN
+// Modelo de datos: miembros, áreas (disciplinas), cursos y el CIM.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+/// Rol a nivel de toda la asociación (mesa directiva / acceso al panel).
+enum GlobalRole {
+  ADMIN // mesa directiva: ve y edita todo
+  STAFF // apoyo administrativo: captura, no borra
+  MIEMBRO // solo su propio perfil
+}
+
+/// Rol dentro de un área específica. Un miembro puede tener rol distinto por área.
+enum AreaRole {
+  JEFE_DE_AREA
+  TESORERO
+  MIEMBRO
+}
+
+enum MemberStatus {
+  ASPIRANTE // solicitud aprobada, aún sin completar requisitos
+  ACTIVO
+  INACTIVO // sin actividad en la temporada
+  BAJA
+}
+
+enum ApplicationStatus {
+  NUEVA
+  EN_REVISION
+  ACEPTADA
+  RECHAZADA
+}
+
+/// Tipo de curso. CIM es el curso introductorio que se imparte 3-4 veces al año.
+enum CourseKind {
+  CIM
+  TECNICO
+  CERTIFICACION
+  TALLER
+}
+
+enum EditionStatus {
+  BORRADOR
+  INSCRIPCIONES_ABIERTAS
+  EN_CURSO
+  CONCLUIDA
+  CANCELADA
+}
+
+enum EnrollmentStatus {
+  PREINSCRITO
+  INSCRITO
+  ACREDITADO
+  NO_ACREDITADO
+  BAJA
+}
+
+enum PaymentStatus {
+  PENDIENTE
+  PARCIAL
+  PAGADO
+  EXENTO
+}
+
+// ---------------------------------------------------------------------------
+// Acceso
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  role         GlobalRole @default(MIEMBRO)
+  activo       Boolean    @default(true)
+  ultimoAcceso DateTime?
+
+  /// Un usuario del panel normalmente corresponde a un miembro.
+  member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  memberId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Personas
+// ---------------------------------------------------------------------------
+
+model Member {
+  id              String  @id @default(cuid())
+  nombre          String
+  apellidoPaterno String
+  apellidoMaterno String?
+  email           String  @unique
+  telefono        String?
+
+  fechaNacimiento DateTime?
+  /// Boleta del IPN cuando aplica; los miembros externos no la tienen.
+  boleta          String?   @unique
+  escuela         String? // ESIA, ESCOM, ENCB, externo...
+
+  // Datos que la logística de salidas necesita a la mano.
+  tipoSangre           String?
+  alergias             String?
+  padecimientos        String?
+  contactoEmergencia   String?
+  telefonoEmergencia   String?
+  numeroSeguroSocial   String?
+
+  status       MemberStatus @default(ASPIRANTE)
+  fechaIngreso DateTime     @default(now())
+  fechaBaja    DateTime?
+  fotoUrl      String?
+  notas        String?
+
+  user        User?
+  areas       AreaMembership[]
+  enrollments Enrollment[]
+  /// Actividades del CIM u otras ediciones donde esta persona es responsable.
+  actividades EditionActivity[] @relation("ResponsableActividad")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([apellidoPaterno, nombre])
+  @@map("members")
+}
+
+/// Solicitud pública de ingreso. Al aceptarse se convierte en Member.
+model MembershipApplication {
+  id              String  @id @default(cuid())
+  nombre          String
+  apellidoPaterno String
+  apellidoMaterno String?
+  email           String
+  telefono        String?
+  escuela         String?
+  boleta          String?
+  /// Áreas de interés declaradas en el formulario (slugs).
+  areasInteres    String[]
+  experiencia     String?
+  mensaje         String?
+
+  status    ApplicationStatus @default(NUEVA)
+  revisadaPor String?
+  revisadaEn  DateTime?
+  motivoRechazo String?
+  /// Member creado a partir de esta solicitud, si fue aceptada.
+  memberId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@map("membership_applications")
+}
+
+// ---------------------------------------------------------------------------
+// Áreas (disciplinas)
+// ---------------------------------------------------------------------------
+
+model Area {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  nombre      String
+  descripcion String?
+  /// Texto largo para la página informativa pública.
+  contenido   String?
+  imagenUrl   String?
+  color       String? // acento para la UI
+  orden       Int     @default(0)
+  activa      Boolean @default(true)
+
+  miembros    AreaMembership[]
+  cursos      Course[]
+  actividades EditionActivity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("areas")
+}
+
+/// Pertenencia de un miembro a un área, con su rol. Un miembro puede estar en varias.
+model AreaMembership {
+  id       String   @id @default(cuid())
+  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String
+  area     Area     @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  areaId   String
+  role     AreaRole @default(MIEMBRO)
+  desde    DateTime @default(now())
+  hasta    DateTime?
+  activo   Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([memberId, areaId])
+  @@index([areaId, role])
+  @@map("area_memberships")
+}
+
+// ---------------------------------------------------------------------------
+// Cursos
+// ---------------------------------------------------------------------------
+
+/// Catálogo: la definición de un curso, independiente de cuándo se imparte.
+model Course {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  nombre      String
+  kind        CourseKind @default(TECNICO)
+  descripcion String?
+  contenido   String?
+  requisitos  String?
+  duracionHoras Int?
+  /// null cuando el curso es transversal a toda la asociación (caso del CIM).
+  area        Area?      @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  areaId      String?
+  activo      Boolean    @default(true)
+
+  ediciones CourseEdition[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind, activo])
+  @@map("courses")
+}
+
+/// Una impartición concreta del curso. El CIM tiene 3-4 ediciones por año.
+model CourseEdition {
+  id       String @id @default(cuid())
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+  /// Clave legible: "CIM 2026-1", "ESCALADA-2026-VERANO".
+  clave    String @unique
+
+  fechaInicio DateTime
+  fechaFin    DateTime
+  inscripcionesAbren  DateTime?
+  inscripcionesCierran DateTime?
+
+  cupo   Int?
+  costo  Decimal? @db.Decimal(10, 2)
+  sede   String?
+  estado EditionStatus @default(BORRADOR)
+  notas  String?
+
+  inscripciones Enrollment[]
+  actividades   EditionActivity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([estado, fechaInicio])
+  @@map("course_editions")
+}
+
+/// Salida o sesión dentro de una edición.
+/// En el CIM hay una por área para que el aspirante conozca cada disciplina.
+model EditionActivity {
+  id        String        @id @default(cuid())
+  edition   CourseEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
+  editionId String
+  /// El área que imparte esta salida. null si es una sesión general (bienvenida, teoría).
+  area      Area?         @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  areaId    String?
+
+  titulo      String
+  descripcion String?
+  fechaInicio DateTime
+  fechaFin    DateTime?
+  lugar       String?
+  cupo        Int?
+
+  responsable   Member? @relation("ResponsableActividad", fields: [responsableId], references: [id], onDelete: SetNull)
+  responsableId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([editionId, fechaInicio])
+  @@map("edition_activities")
+}
+
+/// Un miembro inscrito en una edición. Un miembro puede tener uno o más cursos.
+model Enrollment {
+  id        String        @id @default(cuid())
+  member    Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId  String
+  edition   CourseEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
+  editionId String
+
+  status        EnrollmentStatus @default(PREINSCRITO)
+  paymentStatus PaymentStatus    @default(PENDIENTE)
+  montoPagado   Decimal?         @db.Decimal(10, 2)
+  referenciaPago String?
+
+  fechaInscripcion DateTime  @default(now())
+  fechaAcreditacion DateTime?
+  calificacion     String?
+  notas            String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([memberId, editionId])
+  @@index([editionId, status])
+  @@index([paymentStatus])
+  @@map("enrollments")
+}
