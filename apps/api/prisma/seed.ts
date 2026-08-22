@@ -158,21 +158,38 @@ async function main() {
   }
   console.log(`  ${totalCursos} cursos tecnicos`);
 
-  // --- Primera edicion del CIM del ano en curso ----------------------------
-  const anio = new Date().getFullYear();
-  const clave = `CIM ${anio}-1`;
+  // --- Proxima edicion del CIM --------------------------------------------
+  // El CIM se imparte 3-4 veces al ano. Sembramos la siguiente que caiga en el
+  // futuro para que el sitio y el dashboard tengan algo real que mostrar.
+  const hoy = new Date();
+  const MESES_CIM = [2, 5, 8, 10]; // marzo, junio, septiembre, noviembre
+
+  let anio = hoy.getFullYear();
+  let indice = MESES_CIM.findIndex((m) => m > hoy.getMonth());
+  if (indice === -1) {
+    indice = 0;
+    anio += 1;
+  }
+
+  // Primer sabado del mes elegido.
+  const inicio = new Date(anio, MESES_CIM[indice], 1);
+  while (inicio.getDay() !== 6) inicio.setDate(inicio.getDate() + 1);
+  const fin = new Date(inicio);
+  fin.setDate(fin.getDate() + 1);
+
+  const clave = `CIM ${anio}-${indice + 1}`;
 
   const edicion = await prisma.courseEdition.upsert({
     where: { clave },
     create: {
       clave,
       courseId: cim.id,
-      fechaInicio: new Date(anio, 2, 7), // primer fin de semana de marzo (aproximado)
-      fechaFin: new Date(anio, 2, 8),
+      fechaInicio: inicio,
+      fechaFin: fin,
       cupo: 40,
       costo: 350,
       sede: 'ESIA Zacatenco y Parque Nacional Desierto de los Leones',
-      estado: 'BORRADOR',
+      estado: 'INSCRIPCIONES_ABIERTAS',
       notas: 'Edicion de ejemplo creada por el seed. Ajusta fechas y sede antes de publicar.',
     },
     update: {},
@@ -186,7 +203,8 @@ async function main() {
     await prisma.editionActivity.createMany({
       data: areas.map((area, i) => {
         const fechaInicio = new Date(edicion.fechaInicio);
-        fechaInicio.setHours(8 + Math.floor(i / 4) * 24 + (i % 4) * 2, 0, 0, 0);
+        fechaInicio.setDate(fechaInicio.getDate() + Math.floor(i / 4));
+        fechaInicio.setHours(8 + (i % 4) * 2, 0, 0, 0);
         return {
           editionId: edicion.id,
           areaId: area.id,

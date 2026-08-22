@@ -1,28 +1,31 @@
 #!/usr/bin/env bash
-# Prepara la base de datos de AEMIPN una vez que Postgres esta corriendo.
-# Uso:  bash scripts/setup-db.sh
+# Prepara la base de datos de AEMIPN.
+# Idempotente: se puede correr las veces que haga falta.
+#   bash scripts/setup-db.sh
 set -euo pipefail
 
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$RAIZ"
 
-PGAPP="/Applications/Postgres.app/Contents/Versions/latest/bin"
-[ -d "$PGAPP" ] && export PATH="$PGAPP:$PATH"
+PUERTO=5433
+PGBIN="/Applications/Postgres.app/Contents/Versions/18/bin"
+DATA="$HOME/Library/Application Support/Postgres/var-18"
 
-if ! command -v psql >/dev/null 2>&1; then
-  echo "No encuentro psql."
-  echo "Instala Postgres.app desde https://postgresapp.com, abrela y pulsa Initialize."
+if [ ! -d "$PGBIN" ]; then
+  echo "No encuentro Postgres.app en $PGBIN"
   exit 1
 fi
 
-if ! psql -d postgres -c 'select 1' >/dev/null 2>&1; then
-  echo "Postgres no responde en localhost:5432."
-  echo "Abre Postgres.app y asegurate de que el servidor este iniciado."
-  exit 1
+# El servidor corre en 5433 porque el 5432 lo tiene apartado la instalacion
+# EDB de /Library/PostgreSQL/14 (ver docs/postgres.md).
+if ! nc -z -G 2 127.0.0.1 "$PUERTO" 2>/dev/null; then
+  echo "==> Arrancando PostgreSQL en el puerto $PUERTO"
+  "$PGBIN/pg_ctl" -D "$DATA" -o "-p $PUERTO" -l /tmp/pg-aemipn.log start
+  sleep 3
 fi
 
-echo "==> Creando usuario y base 'aemipn'"
-psql -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+echo "==> Creando rol y base 'aemipn' si hacen falta"
+"$PGBIN/psql" -h 127.0.0.1 -p "$PUERTO" -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'aemipn') THEN
@@ -32,8 +35,10 @@ END
 $$;
 SQL
 
-psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='aemipn'" | grep -q 1 \
-  || psql -d postgres -c "CREATE DATABASE aemipn OWNER aemipn;"
+"$PGBIN/psql" -h 127.0.0.1 -p "$PUERTO" -U postgres -d postgres -tAc \
+  "SELECT 1 FROM pg_database WHERE datname='aemipn'" | grep -q 1 \
+  || "$PGBIN/psql" -h 127.0.0.1 -p "$PUERTO" -U postgres -d postgres \
+       -c "CREATE DATABASE aemipn OWNER aemipn;"
 
 echo "==> Cargando Node 20"
 export NVM_DIR="$HOME/.nvm"
@@ -41,10 +46,10 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm use 20 >/dev/null
 
 echo "==> Aplicando migraciones"
-npm run db:migrate -- --name inicial
+npm run db:migrate -w @aemipn/api
 
 echo "==> Sembrando datos base"
-npm run db:seed
+npm run db:seed -w @aemipn/api
 
 echo ""
 echo "Listo. Arranca todo con:  npm run dev"

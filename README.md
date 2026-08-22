@@ -33,21 +33,36 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 ## Requisitos
 
 - **Node 20+** (el proyecto trae `.nvmrc`; con `nvm` basta `nvm use`)
-- **PostgreSQL 14+** corriendo en local — ver [docs/postgres.md](docs/postgres.md)
+- **PostgreSQL** — ya configurado en este equipo: Postgres.app 18.6 en el puerto **5433**.
+  El porqué del 5433 y cómo arrancarlo está en [docs/postgres.md](docs/postgres.md).
 
 ## Puesta en marcha
 
+Ya está todo instalado y sembrado. Para trabajar:
+
 ```bash
-nvm use                              # Node 20
-npm install                          # dependencias de ambos workspaces
-cp apps/api/.env.example apps/api/.env   # y ajusta DATABASE_URL
-npm run db:migrate                   # crea las tablas
-npm run db:seed                      # áreas, cursos, CIM y usuario admin
+nvm use && npm run dev
+```
+
+Si el equipo se reinició y Postgres no responde:
+
+```bash
+bash scripts/db-start.sh
+```
+
+Desde cero (equipo nuevo o base borrada):
+
+```bash
+nvm use
+npm install
+cp apps/api/.env.example apps/api/.env
+bash scripts/setup-db.sh             # arranca Postgres, crea la base, migra y siembra
 npm run dev                          # API en :4000 y web en :5173
 ```
 
 Abre http://localhost:5173. El panel está en `/panel`; entra con el correo y la contraseña
-que definiste en `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`.
+de `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` en `apps/api/.env`
+(por omisión `admin@aemipn.mx` / `Aemipn2026!` — **cámbiala**).
 
 ## Comandos
 

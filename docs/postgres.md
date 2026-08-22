@@ -1,85 +1,91 @@
 # PostgreSQL en este equipo
 
-## El problema
+## Cómo quedó
 
-Este Mac corre **macOS 12 Monterey**. Homebrew dejó de publicar binarios precompilados (*bottles*)
-para esa versión, así que `brew install postgresql@XX` intenta **compilar desde el código fuente**.
-Además, las Command Line Tools de Xcode están incompletas: el directorio existe pero `clang` no
-está, así que ni siquiera puede compilar.
+| | |
+|---|---|
+| Servidor | PostgreSQL **18.6** (Postgres.app) |
+| Puerto | **5433** — no el 5432 por omisión |
+| Base | `aemipn` |
+| Rol de la app | `aemipn` / contraseña `aemipn` |
+| Superusuario del cluster | `postgres` |
+| Data dir | `~/Library/Application Support/Postgres/var-18` |
+| Log | `/tmp/pg-aemipn.log` |
 
 ```
-$ xcode-select -p
-/Library/Developer/CommandLineTools
-$ ls /Library/Developer/CommandLineTools/usr/bin/clang
-No such file or directory
+DATABASE_URL="postgresql://aemipn:aemipn@localhost:5433/aemipn?schema=public"
 ```
 
-Por eso `brew install postgresql` falló con
-`Error: Xcode alone is not sufficient on Monterey`.
+## Por qué el puerto 5433
 
-## Opción A — Postgres.app (recomendada)
+Este equipo ya tenía **otra instalación de PostgreSQL** antes de Postgres.app:
 
-Binarios ya compilados dentro de una app de macOS. Sin Homebrew, sin compilar, sin Command Line
-Tools. Es la ruta más corta en Monterey.
+- `/Library/PostgreSQL/14` — instalador de EDB, corre como el usuario `postgres`
+- `/Library/PgBouncer` — un pooler de conexiones, activo en el puerto 6432
 
-1. Descarga la versión de <https://postgresapp.com> (elige un build que soporte macOS 12).
-2. Arrástrala a `/Applications` y ábrela.
-3. Pulsa **Initialize**. Queda escuchando en `localhost:5432`.
-4. Agrega sus binarios al PATH (fish):
+Esa instalación dejó archivos en `/tmp` que le pertenecen al usuario `postgres`:
 
-   ```fish
-   fish_add_path /Applications/Postgres.app/Contents/Versions/latest/bin
-   ```
+```
+srwxrwxrwx  1 postgres  wheel  /tmp/.s.PGSQL.5432
+-rw-------  1 postgres  wheel  /tmp/.s.PGSQL.5432.lock
+```
 
-5. Crea la base y el usuario:
+Postgres.app corre como tu usuario, así que al intentar tomar el 5432 no puede abrir ese lock ajeno
+y se apaga de inmediato:
 
-   ```bash
-   createuser -s aemipn && createdb -O aemipn aemipn && psql -d aemipn -c "ALTER USER aemipn WITH PASSWORD 'aemipn';"
-   ```
+```
+FATAL:  could not open lock file "/tmp/.s.PGSQL.5432.lock": Permission denied
+```
 
-## Opción B — Command Line Tools + Homebrew
+Borrar esos archivos requeriría `sudo` — y como `/tmp` tiene el *sticky bit*, solo su dueño puede
+hacerlo. Además el conflicto volvería en cuanto la instalación de EDB arrancara otra vez. Mover
+nuestro servidor al **5433** evita ambas cosas y no toca nada de la instalación existente.
 
-Más largo, y la compilación puede tardar entre 20 y 40 minutos o fallar en un sistema que Homebrew
-ya no soporta.
+La preferencia de Postgres.app quedó apuntando al 5433, así que si abres la app, administrará este
+mismo servidor sin conflicto. Hay un respaldo de la configuración anterior en
+`/tmp/postgresapp-backup.plist`.
+
+## Arrancar y detener
+
+El servidor sigue vivo mientras no reinicies el equipo. Para levantarlo de nuevo:
 
 ```bash
-xcode-select --install
+bash scripts/db-start.sh
 ```
 
-Abre un diálogo del sistema; acéptalo y espera a que termine. Después:
+O abre Postgres.app y pulsa **Start**. Para detenerlo a mano:
 
 ```bash
-brew install postgresql@17
-brew services start postgresql@17
+/Applications/Postgres.app/Contents/Versions/18/bin/pg_ctl \
+  -D "$HOME/Library/Application Support/Postgres/var-18" stop
 ```
 
-## Opción C — Postgres administrado (sin instalar nada)
-
-Si prefieres no pelear con el sistema, un Postgres gratuito en la nube (Supabase o Neon) funciona
-sin cambiar una línea de código: solo cambia `DATABASE_URL` en `apps/api/.env`. La contra es que
-necesitas conexión a internet para desarrollar.
-
-## Verificar y arrancar
-
-Con Postgres corriendo, sea cual sea la opción:
+## Preparar la base desde cero
 
 ```bash
-psql -d aemipn -c "select version();"
+bash scripts/setup-db.sh
 ```
 
-Ajusta `DATABASE_URL` en `apps/api/.env` si tu usuario o contraseña son distintos:
+Arranca el servidor si hace falta, crea el rol y la base, aplica las migraciones y siembra los
+datos. Es idempotente.
 
-```
-DATABASE_URL="postgresql://aemipn:aemipn@localhost:5432/aemipn?schema=public"
-```
-
-Y entonces:
+## Conectarse a mano
 
 ```bash
-npm run db:migrate
-npm run db:seed
+/Applications/Postgres.app/Contents/Versions/18/bin/psql -h 127.0.0.1 -p 5433 -U aemipn -d aemipn
 ```
 
-`db:migrate` crea las tablas a partir de `apps/api/prisma/schema.prisma`. `db:seed` carga las ocho
-áreas, los cursos técnicos, el curso CIM con una edición de ejemplo y el usuario administrador.
-Es idempotente: puedes correrlo las veces que quieras.
+O con la interfaz de Prisma:
+
+```bash
+npm run db:studio
+```
+
+## Notas
+
+- Prisma 5.22 funciona sin problema contra PostgreSQL 18, ya verificado con migraciones y seed.
+- Las Command Line Tools de Xcode están incompletas en este equipo (`/Library/Developer/CommandLineTools`
+  existe pero no contiene `clang`). Eso rompe `python3` y cualquier compilación nativa. No afecta a
+  este proyecto — Postgres.app trae binarios listos y las dependencias de Node que elegimos son JS
+  puro (`bcryptjs` en vez de `bcrypt`, justamente por eso). Si algún día necesitas compilar algo:
+  `xcode-select --install`.
