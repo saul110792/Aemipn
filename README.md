@@ -78,6 +78,26 @@ Abre http://localhost:5173. El panel está en `/panel`; entra con el correo y la
 de `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` en `apps/api/.env`
 (por omisión `admin@aemipn.mx` / `Aemipn2026!` — **cámbiala**).
 
+## Entrar sin escribir el login (solo desarrollo)
+
+Copia `apps/web/.env.example` a `apps/web/.env.local` y llena:
+
+```
+VITE_AUTOLOGIN_EMAIL="admin@aemipn.mx"
+VITE_AUTOLOGIN_PASSWORD="Aemipn2026!"
+```
+
+Con eso, abrir cualquier página del panel inicia sesión sola y avisa en la consola.
+Pulsar **Salir** cierra de verdad y no vuelve a entrar al recargar; para reactivarlo,
+abre una pestaña nueva.
+
+> **Estas variables no son secretas.** Todo lo que empieza con `VITE_` se empaqueta en
+> el JavaScript del navegador. Aquí no hay riesgo porque el bloque que las lee está
+> encerrado en `import.meta.env.DEV`, que Vite convierte en `false` al compilar: el
+> empaquetador borra el código entero y el bundle de producción no contiene ni las
+> credenciales ni el mecanismo. Aun así, **nunca pongas ahí una contraseña que también
+> sirva en producción**. `.env.local` está ignorado por git.
+
 ## Comandos
 
 | Comando | Qué hace |
