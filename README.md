@@ -21,6 +21,8 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 - Solicitudes de ingreso: aceptar (crea el miembro y lo asigna a sus áreas de interés) o rechazar
 - Ediciones y CIM: roster con datos de emergencia a la mano, control de estado y de pago
 - Atajo para generar de golpe una salida por cada área en una edición del CIM
+- **Catálogo de cursos**: alta y edición, con código sugerido a partir del nombre
+- **Áreas**: edición de sus códigos, con aviso de duplicados y de formato
 - **Eventos**: alta con modalidad presencial / en línea / híbrida, y control de quién lo ve — público, solo miembros, o privado del área
 - **Textos e imágenes**: edita lo que ve el público de cada área y sube fotos al carrusel, sin tocar código
 

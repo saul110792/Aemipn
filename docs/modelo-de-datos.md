@@ -39,6 +39,12 @@ Un evento `PRESENCIAL` exige `lugar`; uno `EN_LINEA` exige `urlVideoconferencia`
 `HIBRIDA` exige ambos. Lo valida la API, no solo el formulario, así que no se puede publicar
 un taller en línea sin liga.
 
+**Los códigos se editan en el panel.**
+El de cada área en *Actividad → Áreas*; el de cada curso al darlo de alta o editarlo en
+*Actividad → Cursos*. El del curso encabeza la clave de sus ediciones: `CBER` produce
+`CBER_2026A`, `CBER_2026B`… La clave se escribe en la edición cuando se crea, así que
+**cambiar el código después no reescribe las claves ya emitidas**, y el histórico se conserva.
+
 ## Entidades
 
 | Modelo | Para qué |
