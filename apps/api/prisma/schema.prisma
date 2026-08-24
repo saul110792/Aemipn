@@ -52,11 +52,12 @@ enum ClaimStatus {
   RECHAZADA
 }
 
+/// Un area tiene un curso propio -el que da la membresia- y varios talleres.
 enum CourseKind {
-  CIM
-  TECNICO
+  CIM /// curso introductorio, transversal a toda la asociacion
+  AREA /// el curso de un area; acreditarlo es lo que integra a ella
+  TALLER /// formacion complementaria dentro de un area
   CERTIFICACION
-  TALLER
 }
 
 enum EditionStatus {
@@ -286,7 +287,7 @@ model Course {
   /// "Curso Básico de Escalada en Roca" -> CBER -> CBER_2026A
   codigo        String?    @unique
   nombre        String
-  kind          CourseKind @default(TECNICO)
+  kind          CourseKind @default(TALLER)
   descripcion   String?
   contenido     String?
   requisitos    String?

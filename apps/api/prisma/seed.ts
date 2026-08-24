@@ -123,57 +123,94 @@ async function main() {
   console.log('  Curso CIM');
 
   // --- Cursos tecnicos por area -------------------------------------------
-  // Los códigos son PROVISIONALES: se generaron con la inicial de cada palabra
-  // significativa del nombre. Se reemplazan por el catálogo oficial cuando llegue.
-  const CURSOS_POR_AREA: Record<string, { slug: string; nombre: string; horas: number; codigo: string }[]> = {
+  // Cada área tiene UN curso propio: acreditarlo es lo que integra a ella.
+  // Todo lo demás es un taller, formación complementaria dentro del área.
+  // Los códigos son PROVISIONALES, generados con la inicial de cada palabra
+  // significativa; se reemplazan cuando llegue el catálogo oficial.
+  const CURSO_DE_AREA: Record<string, { slug: string; nombre: string; horas: number; codigo: string }> = {
+    'alta-montana': { slug: 'curso-basico-de-alta-montana', nombre: 'Curso Básico de Alta Montaña', horas: 60, codigo: 'CBAM' },
+    'media-montana': { slug: 'curso-basico-de-media-montana', nombre: 'Curso Básico de Media Montaña', horas: 40, codigo: 'CBMM' },
+    'ciclismo-de-montana': { slug: 'curso-basico-de-ciclismo-de-montana', nombre: 'Curso Básico de Ciclismo de Montaña', horas: 32, codigo: 'CBCM' },
+    'escalada-en-roca': { slug: 'curso-basico-de-escalada-en-roca', nombre: 'Curso Básico de Escalada en Roca', horas: 40, codigo: 'CBER' },
+    boulder: { slug: 'curso-basico-de-boulder', nombre: 'Curso Básico de Boulder', horas: 24, codigo: 'CBB' },
+    canonismo: { slug: 'curso-basico-de-canonismo', nombre: 'Curso Básico de Cañonismo', horas: 40, codigo: 'CBC' },
+    espeleologia: { slug: 'curso-basico-de-espeleologia', nombre: 'Curso Básico de Espeleología', horas: 48, codigo: 'CBE' },
+    'fotografia-de-montana': { slug: 'curso-basico-de-fotografia-de-montana', nombre: 'Curso Básico de Fotografía de Montaña', horas: 24, codigo: 'CBFM' },
+  };
+
+  const TALLERES_POR_AREA: Record<string, { slug: string; nombre: string; horas: number; codigo: string }[]> = {
     'alta-montana': [
-      { slug: 'progresion-en-nieve-y-hielo', nombre: 'Progresión en nieve y hielo', horas: 24, codigo: 'CPNH' },
-      { slug: 'aclimatacion-y-mal-de-montana', nombre: 'Aclimatación y mal agudo de montaña', horas: 8, codigo: 'CAMM' },
+      { slug: 'progresion-en-nieve-y-hielo', nombre: 'Progresión en nieve y hielo', horas: 24, codigo: 'TPNH' },
+      { slug: 'aclimatacion-y-mal-de-montana', nombre: 'Aclimatación y mal agudo de montaña', horas: 8, codigo: 'TAMM' },
     ],
     'media-montana': [
-      { slug: 'orientacion-mapa-y-brujula', nombre: 'Orientación con mapa y brújula', horas: 12, codigo: 'COMB' },
-      { slug: 'campismo-y-armado-de-mochila', nombre: 'Campismo y armado de mochila', horas: 8, codigo: 'CCAM' },
+      { slug: 'orientacion-mapa-y-brujula', nombre: 'Orientación con mapa y brújula', horas: 12, codigo: 'TOMB' },
+      { slug: 'campismo-y-armado-de-mochila', nombre: 'Campismo y armado de mochila', horas: 8, codigo: 'TCAM' },
     ],
     'ciclismo-de-montana': [
-      { slug: 'mecanica-basica-en-ruta', nombre: 'Mecánica básica en ruta', horas: 8, codigo: 'CMBR' },
+      { slug: 'mecanica-basica-en-ruta', nombre: 'Mecánica básica en ruta', horas: 8, codigo: 'TMBR' },
     ],
     'escalada-en-roca': [
-      { slug: 'curso-basico-de-escalada-en-roca', nombre: 'Curso Básico de Escalada en Roca', horas: 40, codigo: 'CBER' },
-      { slug: 'nudos-y-aseguramiento', nombre: 'Nudos y aseguramiento', horas: 12, codigo: 'CNA' },
-      { slug: 'escalada-tradicional', nombre: 'Escalada tradicional', horas: 24, codigo: 'CET' },
+      { slug: 'nudos-y-aseguramiento', nombre: 'Nudos y aseguramiento', horas: 12, codigo: 'TNA' },
+      { slug: 'escalada-tradicional', nombre: 'Escalada tradicional', horas: 24, codigo: 'TET' },
     ],
-    boulder: [{ slug: 'tecnica-de-movimiento', nombre: 'Técnica de movimiento en boulder', horas: 10, codigo: 'CTMB' }],
-    canonismo: [{ slug: 'rapel-y-progresion-acuatica', nombre: 'Rapel y progresión acuática', horas: 16, codigo: 'CRPA' }],
+    boulder: [
+      { slug: 'tecnica-de-movimiento', nombre: 'Técnica de movimiento en boulder', horas: 10, codigo: 'TTMB' },
+    ],
+    canonismo: [
+      { slug: 'rapel-y-progresion-acuatica', nombre: 'Rapel y progresión acuática', horas: 16, codigo: 'TRPA' },
+    ],
     espeleologia: [
-      { slug: 'tecnica-vertical-sobre-cuerda', nombre: 'Técnica vertical sobre cuerda (TSA)', horas: 20, codigo: 'CTVC' },
-      { slug: 'topografia-de-cavernas', nombre: 'Topografía de cavernas', horas: 12, codigo: 'CTC' },
+      { slug: 'tecnica-vertical-sobre-cuerda', nombre: 'Técnica vertical sobre cuerda (TSA)', horas: 20, codigo: 'TTVC' },
+      { slug: 'topografia-de-cavernas', nombre: 'Topografía de cavernas', horas: 12, codigo: 'TTC' },
     ],
     'fotografia-de-montana': [
-      { slug: 'fotografia-de-paisaje-en-altura', nombre: 'Fotografía de paisaje en altura', horas: 10, codigo: 'CFPA' },
+      { slug: 'fotografia-de-paisaje-en-altura', nombre: 'Fotografía de paisaje en altura', horas: 10, codigo: 'TFPA' },
     ],
   };
 
   let totalCursos = 0;
-  for (const [areaSlug, cursos] of Object.entries(CURSOS_POR_AREA)) {
-    const area = await prisma.area.findUnique({ where: { slug: areaSlug } });
-    if (!area) continue;
-    for (const c of cursos) {
+  let totalTalleres = 0;
+
+  const areasSembradas = await prisma.area.findMany({ orderBy: { orden: 'asc' } });
+
+  for (const area of areasSembradas) {
+    const curso = CURSO_DE_AREA[area.slug];
+    if (curso) {
       await prisma.course.upsert({
-        where: { slug: c.slug },
+        where: { slug: curso.slug },
         create: {
-          slug: c.slug,
-          codigo: c.codigo,
-          nombre: c.nombre,
-          kind: 'TECNICO',
-          duracionHoras: c.horas,
+          slug: curso.slug,
+          codigo: curso.codigo,
+          nombre: curso.nombre,
+          kind: 'AREA',
+          duracionHoras: curso.horas,
           areaId: area.id,
+          descripcion: `Curso base de ${area.nombre}. Acreditarlo integra al área.`,
         },
-        update: { areaId: area.id, codigo: c.codigo },
+        update: { areaId: area.id, codigo: curso.codigo, kind: 'AREA' },
       });
       totalCursos++;
     }
+
+    for (const t of TALLERES_POR_AREA[area.slug] ?? []) {
+      await prisma.course.upsert({
+        where: { slug: t.slug },
+        create: {
+          slug: t.slug,
+          codigo: t.codigo,
+          nombre: t.nombre,
+          kind: 'TALLER',
+          duracionHoras: t.horas,
+          areaId: area.id,
+        },
+        update: { areaId: area.id, codigo: t.codigo, kind: 'TALLER' },
+      });
+      totalTalleres++;
+    }
   }
-  console.log(`  ${totalCursos} cursos tecnicos`);
+
+  console.log(`  ${totalCursos} cursos de area y ${totalTalleres} talleres`);
 
   // --- Proxima edicion del CIM --------------------------------------------
   // El CIM se imparte 3-4 veces al ano. Sembramos la siguiente que caiga en el

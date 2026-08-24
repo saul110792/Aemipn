@@ -90,8 +90,21 @@ export const ETIQUETAS: Record<string, string> = {
   EXAMEN_PRACTICO: 'Examen práctico',
   PRESENTACION_FINAL: 'Presentación final',
   OTRA: 'Otra',
-  TECNICO: 'Técnico',
   CERTIFICACION: 'Certificación',
 };
 
 export const etiqueta = (v: string | null | undefined) => (v ? (ETIQUETAS[v] ?? v) : '—');
+
+/**
+ * Tipos de curso, con mapa aparte a proposito: 'AREA' es tambien un valor de
+ * EventVisibility ("Privado del área") y en un mapa plano uno pisaria al otro.
+ */
+const TIPOS_DE_CURSO: Record<string, string> = {
+  CIM: 'CIM',
+  AREA: 'Curso de área',
+  TALLER: 'Taller',
+  CERTIFICACION: 'Certificación',
+};
+
+export const etiquetaTipoCurso = (v: string | null | undefined) =>
+  v ? (TIPOS_DE_CURSO[v] ?? v) : '—';

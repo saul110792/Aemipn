@@ -3,7 +3,7 @@
 export type GlobalRole = 'ADMIN' | 'STAFF' | 'JEFE_CIM' | 'MIEMBRO' | 'CIM';
 export type AreaRole = 'JEFE_DE_AREA' | 'TESORERO' | 'MIEMBRO';
 export type MemberStatus = 'ASPIRANTE' | 'ACTIVO' | 'INACTIVO' | 'BAJA';
-export type CourseKind = 'CIM' | 'TECNICO' | 'CERTIFICACION' | 'TALLER';
+export type CourseKind = 'CIM' | 'AREA' | 'TALLER' | 'CERTIFICACION';
 export type EditionStatus =
   | 'BORRADOR'
   | 'INSCRIPCIONES_ABIERTAS'

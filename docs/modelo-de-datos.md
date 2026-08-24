@@ -78,7 +78,7 @@ verificadas, porque ahí es él quien responde por la identidad de la persona.
 - `GlobalRole`: `ADMIN` · `STAFF` · `MIEMBRO`
 - `AreaRole`: `JEFE_DE_AREA` · `TESORERO` · `MIEMBRO`
 - `MemberStatus`: `ASPIRANTE` · `ACTIVO` · `INACTIVO` · `BAJA`
-- `CourseKind`: `CIM` · `TECNICO` · `CERTIFICACION` · `TALLER`
+- `CourseKind`: `CIM` · `AREA` · `TALLER` · `CERTIFICACION`
 - `EditionStatus`: `BORRADOR` · `INSCRIPCIONES_ABIERTAS` · `EN_CURSO` · `CONCLUIDA` · `CANCELADA`
 - `EnrollmentStatus`: `PREINSCRITO` · `INSCRITO` · `ACREDITADO` · `NO_ACREDITADO` · `BAJA`
 - `PaymentStatus`: `PENDIENTE` · `PARCIAL` · `PAGADO` · `EXENTO`

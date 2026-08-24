@@ -4,7 +4,7 @@ import { api } from '../../lib/api';
 import type { Area, Course, CourseKind } from '../../lib/types';
 import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { Icono, hayIcono } from '../../components/Icono';
-import { etiqueta } from '../../lib/format';
+import { etiquetaTipoCurso } from '../../lib/format';
 import { sugerirCodigo, sugerirSlug } from '../../lib/codigos';
 import { useAuth } from '../../lib/auth';
 
@@ -15,10 +15,10 @@ interface CursoConteo extends Course {
   activo?: boolean;
 }
 
-const TIPOS: CourseKind[] = ['CIM', 'TECNICO', 'CERTIFICACION', 'TALLER'];
+const TIPOS: CourseKind[] = ['AREA', 'TALLER', 'CIM', 'CERTIFICACION'];
 
 const VACIO = {
-  nombre: '', codigo: '', slug: '', kind: 'TECNICO' as CourseKind,
+  nombre: '', codigo: '', slug: '', kind: 'TALLER' as CourseKind,
   areaId: '', duracionHoras: '', descripcion: '', requisitos: '', activo: true,
 };
 
@@ -107,7 +107,7 @@ export function CursosPanel() {
                     <span className="texto-suave">Transversal</span>
                   )}
                 </td>
-                <td><Insignia valor={c.kind} texto={etiqueta(c.kind)} /></td>
+                <td><Insignia valor={c.kind} texto={etiquetaTipoCurso(c.kind)} /></td>
                 <td>{c.duracionHoras ?? '—'}</td>
                 <td>{c._count.ediciones}</td>
                 {esAdmin && (
@@ -258,9 +258,18 @@ function FormularioCurso({
             <label htmlFor="c-kind">Tipo</label>
             <select id="c-kind" value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as CourseKind })}>
               {TIPOS.map((t) => (
-                <option key={t} value={t}>{etiqueta(t)}</option>
+                <option key={t} value={t}>{etiquetaTipoCurso(t)}</option>
               ))}
             </select>
+            <span className="texto-suave" style={{ fontSize: '0.82rem' }}>
+              {f.kind === 'AREA'
+                ? 'Es el curso base del área: acreditarlo integra a ella.'
+                : f.kind === 'TALLER'
+                  ? 'Formación complementaria dentro del área.'
+                  : f.kind === 'CIM'
+                    ? 'Curso introductorio, transversal a toda la asociación.'
+                    : ''}
+            </span>
           </div>
 
           <div className="campo">

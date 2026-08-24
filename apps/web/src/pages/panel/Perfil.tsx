@@ -9,6 +9,14 @@ import { etiqueta } from '../../lib/format';
 const ANIO_MINIMO = 1980;
 const LETRAS = ['A', 'B', 'C', 'D', 'E'] as const;
 
+/** El desplegable separa las tres cosas: no son equivalentes. */
+const GRUPOS = [
+  { kind: 'CIM', titulo: 'Curso introductorio' },
+  { kind: 'AREA', titulo: 'Cursos de área — acreditarlos integra al área' },
+  { kind: 'TALLER', titulo: 'Talleres' },
+  { kind: 'CERTIFICACION', titulo: 'Certificaciones' },
+] as const;
+
 interface Declaracion {
   id: string;
   anio: number;
@@ -248,10 +256,10 @@ function CursosDeclarados({ declaraciones }: { declaraciones: Declaracion[] }) {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cuerpo">
-        <h3>Cursos que he tomado</h3>
+        <h3>Cursos y talleres que he tomado</h3>
         <p className="texto-suave" style={{ fontSize: '0.9rem' }}>
-          Declara cada curso con su generación. El jefe del área correspondiente lo revisa; al
-          aprobarlo quedas dentro de esa área.
+          Cada área tiene un curso propio y varios talleres. Declara cada uno con su generación:
+          el jefe del área lo revisa y, al aprobarlo, quedas dentro de esa área.
         </p>
 
         {declaraciones.length === 0 ? (
@@ -318,13 +326,21 @@ function CursosDeclarados({ declaraciones }: { declaraciones: Declaracion[] }) {
             <div className="campo">
               <label htmlFor="d-curso">Curso *</label>
               <select id="d-curso" value={f.courseId} onChange={(e) => setF({ ...f, courseId: e.target.value })}>
-                <option value="">Elige un curso…</option>
-                {cursos?.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.codigo ? `${c.codigo} · ` : ''}{c.nombre}
-                    {c.area ? ` — ${c.area.nombre}` : ''}
-                  </option>
-                ))}
+                <option value="">Elige un curso o taller…</option>
+                {GRUPOS.map(({ kind, titulo }) => {
+                  const delGrupo = (cursos ?? []).filter((c) => c.kind === kind);
+                  if (delGrupo.length === 0) return null;
+                  return (
+                    <optgroup key={kind} label={titulo}>
+                      {delGrupo.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.codigo ? `${c.codigo} · ` : ''}{c.nombre}
+                          {c.area ? ` — ${c.area.nombre}` : ''}
+                        </option>
+                      ))}
+                    </optgroup>
+                  );
+                })}
               </select>
             </div>
 
