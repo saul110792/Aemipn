@@ -19,7 +19,7 @@ const courseSchema = z.object({
     .optional()
     .nullable(),
   nombre: z.string().min(1),
-  kind: z.enum(['CIM', 'TECNICO', 'CERTIFICACION', 'TALLER']).default('TECNICO'),
+  kind: z.enum(['CIM', 'AREA', 'TALLER', 'CERTIFICACION']).default('TALLER'),
   descripcion: z.string().optional().nullable(),
   contenido: z.string().optional().nullable(),
   requisitos: z.string().optional().nullable(),
@@ -30,7 +30,7 @@ const courseSchema = z.object({
 
 coursesRouter.get(
   '/',
-  validate(z.object({ kind: z.enum(['CIM', 'TECNICO', 'CERTIFICACION', 'TALLER']).optional(), areaId: z.string().optional() }), 'query'),
+  validate(z.object({ kind: z.enum(['CIM', 'AREA', 'TALLER', 'CERTIFICACION']).optional(), areaId: z.string().optional() }), 'query'),
   asyncHandler(async (req, res) => {
     const { kind, areaId } = req.query as { kind?: never; areaId?: string };
     const courses = await prisma.course.findMany({
