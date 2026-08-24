@@ -45,6 +45,16 @@ El de cada área en *Actividad → Áreas*; el de cada curso al darlo de alta o 
 `CBER_2026A`, `CBER_2026B`… La clave se escribe en la edición cuando se crea, así que
 **cambiar el código después no reescribe las claves ya emitidas**, y el histórico se conserva.
 
+**El acceso a un área se gana con un curso aprobado.**
+Quien se registra declara los cursos que tomó (`CourseClaim`: curso + año + letra). El jefe de
+esa área lo confirma, y solo entonces se le crea la `AreaMembership` que le abre esa área. Nadie
+se acredita a sí mismo, y un jefe no puede ver ni resolver lo de un área que no encabeza.
+
+**El correo se confirma antes de poder entrar.**
+`EmailVerification` guarda el *hash* de la liga y del código, nunca el valor: quien lea la base
+no puede activar cuentas ajenas. Las cuentas que crea un administrador desde el panel nacen
+verificadas, porque ahí es él quien responde por la identidad de la persona.
+
 ## Entidades
 
 | Modelo | Para qué |
@@ -60,6 +70,8 @@ El de cada área en *Actividad → Áreas*; el de cada curso al darlo de alta o 
 | `Enrollment` | Miembro ↔ edición: estado académico, estado de pago, calificación. |
 | `Event` | Curso, taller, salida o reunión que se anuncia. Lleva modalidad, ubicación y visibilidad. |
 | `MediaAsset` | Registro de cada imagen subida desde el panel. El archivo vive en `apps/api/uploads`. |
+| `EmailVerification` | Liga y código de confirmación, guardados como hash y con vencimiento. |
+| `CourseClaim` | Curso que alguien declara haber tomado, con año y letra, a la espera del visto bueno de su área. |
 
 ## Enums
 
@@ -73,6 +85,22 @@ El de cada área en *Actividad → Áreas*; el de cada curso al darlo de alta o 
 - `EventKind`: `CURSO` · `TALLER` · `SALIDA` · `REUNION` · `CONVOCATORIA` · `OTRO`
 - `EventMode`: `PRESENCIAL` · `EN_LINEA` · `HIBRIDA`
 - `EventVisibility`: `PUBLICO` · `MIEMBROS` · `AREA`
+- `ClaimStatus`: `PENDIENTE` · `APROBADA` · `RECHAZADA`
+
+## Roles
+
+| Rol | Alcance |
+|---|---|
+| `ADMIN` | Mesa directiva: todo. |
+| `STAFF` | Apoyo administrativo: captura, no borra. |
+| `JEFE_CIM` | Coordina el curso introductorio. Resuelve las declaraciones del CIM, pero **no ve las áreas** salvo que tenga sus cursos aprobados. |
+| `MIEMBRO` | Tiene al menos un curso de área aprobado. Ve lo de sus áreas. |
+| `CIM` | Se registró y confirmó su correo, sin cursos de área aprobados todavía. Solo ve lo del CIM. |
+
+Encabezar un área es un `AreaRole` (`JEFE_DE_AREA`, `TESORERO`), no un rol global: alguien puede
+ser jefe de Escalada y miembro raso en Espeleología. **Un jefe no ve otra área a menos que tenga
+el curso aprobado de ella** — el padrón, las declaraciones y los eventos privados se filtran por
+las áreas a las que de verdad pertenece.
 
 ## Relaciones
 

@@ -1,6 +1,6 @@
 /** Tipos compartidos entre el front y la API. Reflejan el schema de Prisma. */
 
-export type GlobalRole = 'ADMIN' | 'STAFF' | 'MIEMBRO';
+export type GlobalRole = 'ADMIN' | 'STAFF' | 'JEFE_CIM' | 'MIEMBRO' | 'CIM';
 export type AreaRole = 'JEFE_DE_AREA' | 'TESORERO' | 'MIEMBRO';
 export type MemberStatus = 'ASPIRANTE' | 'ACTIVO' | 'INACTIVO' | 'BAJA';
 export type CourseKind = 'CIM' | 'TECNICO' | 'CERTIFICACION' | 'TALLER';
@@ -25,6 +25,8 @@ export interface SessionUser {
   memberId: string | null;
   nombre: string | null;
   fotoUrl: string | null;
+  /** Cuantas areas encabeza como jefe o tesorero. */
+  areasQueEncabeza?: number;
 }
 
 export interface Area {

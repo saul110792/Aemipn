@@ -1,0 +1,157 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { prisma } from '../lib/prisma.js';
+import { asyncHandler } from '../lib/asyncHandler.js';
+import { badRequest, conflict, notFound } from '../lib/errors.js';
+import { validate } from '../middleware/validate.js';
+import { requireAuth } from '../middleware/auth.js';
+
+export const perfilRouter = Router();
+perfilRouter.use(requireAuth);
+
+const ANIO_MINIMO = 1980;
+const LETRAS = ['A', 'B', 'C', 'D', 'E'] as const;
+
+/** GET /api/perfil — la ficha propia con sus áreas y cursos declarados. */
+perfilRouter.get(
+  '/',
+  asyncHandler(async (req, res) => {
+    if (!req.user!.memberId) throw notFound('Tu cuenta no tiene ficha de miembro');
+
+    const member = await prisma.member.findUnique({
+      where: { id: req.user!.memberId },
+      include: {
+        areas: { where: { activo: true }, include: { area: true } },
+        cursosDeclarados: {
+          include: {
+            course: {
+              include: { area: { select: { id: true, nombre: true, slug: true, color: true } } },
+            },
+          },
+          orderBy: [{ anio: 'desc' }, { createdAt: 'desc' }],
+        },
+      },
+    });
+    if (!member) throw notFound('Miembro no encontrado');
+
+    // Datos que la logística de salidas necesita antes de dejar salir a nadie.
+    const faltantes = [
+      !member.numeroSeguroSocial && 'numeroSeguroSocial',
+      !member.contactoEmergencia && 'contactoEmergencia',
+      !member.telefonoEmergencia && 'telefonoEmergencia',
+    ].filter((x): x is string => Boolean(x));
+
+    res.json({ ...member, perfilCompleto: faltantes.length === 0, faltantes });
+  }),
+);
+
+const perfilSchema = z.object({
+  telefono: z.string().optional().nullable(),
+  fechaNacimiento: z.coerce.date().optional().nullable(),
+  boleta: z.string().optional().nullable(),
+  escuela: z.string().optional().nullable(),
+  numeroSeguroSocial: z.string().min(1, 'El NSS es obligatorio'),
+  contactoEmergencia: z.string().min(1, 'El contacto de emergencia es obligatorio'),
+  telefonoEmergencia: z.string().min(1, 'El telefono de emergencia es obligatorio'),
+  direccion: z.string().optional().nullable(),
+  lesiones: z.string().max(2000).optional().nullable(),
+  tipoSangre: z.string().max(5).optional().nullable(),
+  alergias: z.string().optional().nullable(),
+  padecimientos: z.string().optional().nullable(),
+});
+
+/** PATCH /api/perfil — completar los datos propios. */
+perfilRouter.patch(
+  '/',
+  validate(perfilSchema.partial()),
+  asyncHandler(async (req, res) => {
+    if (!req.user!.memberId) throw notFound('Tu cuenta no tiene ficha de miembro');
+
+    res.json(
+      await prisma.member.update({
+        where: { id: req.user!.memberId },
+        data: req.body,
+      }),
+    );
+  }),
+);
+
+const declaracionSchema = z.object({
+  courseId: z.string().min(1, 'Elige el curso'),
+  anio: z.coerce
+    .number()
+    .int()
+    .min(ANIO_MINIMO, `El ano no puede ser anterior a ${ANIO_MINIMO}`)
+    .max(new Date().getFullYear(), 'El ano no puede ser futuro'),
+  letra: z.enum(LETRAS),
+  notas: z.string().max(500).optional().nullable(),
+});
+
+/**
+ * POST /api/perfil/cursos
+ * El miembro declara un curso que tomó. Queda PENDIENTE hasta que el área
+ * correspondiente lo confirme: nadie se acredita a sí mismo.
+ */
+perfilRouter.post(
+  '/cursos',
+  validate(declaracionSchema),
+  asyncHandler(async (req, res) => {
+    if (!req.user!.memberId) throw notFound('Tu cuenta no tiene ficha de miembro');
+    const d = req.body as z.infer<typeof declaracionSchema>;
+
+    const curso = await prisma.course.findUnique({ where: { id: d.courseId } });
+    if (!curso) throw notFound('Curso no encontrado');
+
+    const repetida = await prisma.courseClaim.findUnique({
+      where: {
+        memberId_courseId_anio_letra: {
+          memberId: req.user!.memberId,
+          courseId: d.courseId,
+          anio: d.anio,
+          letra: d.letra,
+        },
+      },
+    });
+    if (repetida) throw conflict('Ya declaraste ese curso, esa generacion.');
+
+    res.status(201).json(
+      await prisma.courseClaim.create({
+        data: { ...d, memberId: req.user!.memberId },
+        include: { course: { include: { area: true } } },
+      }),
+    );
+  }),
+);
+
+/** DELETE /api/perfil/cursos/:id — retirar una declaración aún sin revisar. */
+perfilRouter.delete(
+  '/cursos/:id',
+  asyncHandler(async (req, res) => {
+    const claim = await prisma.courseClaim.findUnique({ where: { id: req.params.id } });
+    if (!claim || claim.memberId !== req.user!.memberId) throw notFound('Declaracion no encontrada');
+    if (claim.status !== 'PENDIENTE') {
+      throw badRequest('Solo puedes retirar declaraciones que siguen pendientes');
+    }
+
+    await prisma.courseClaim.delete({ where: { id: claim.id } });
+    res.json({ ok: true });
+  }),
+);
+
+/** GET /api/perfil/areas-visibles — las areas que esta persona puede consultar. */
+perfilRouter.get(
+  '/areas-visibles',
+  asyncHandler(async (req, res) => {
+    if (req.user!.role === 'ADMIN' || req.user!.role === 'STAFF') {
+      return res.json(await prisma.area.findMany({ where: { activa: true }, orderBy: { orden: 'asc' } }));
+    }
+    if (!req.user!.memberId) return res.json([]);
+
+    const membresias = await prisma.areaMembership.findMany({
+      where: { memberId: req.user!.memberId, activo: true },
+      include: { area: true },
+    });
+    res.json(membresias.map((m) => m.area));
+  }),
+);
+

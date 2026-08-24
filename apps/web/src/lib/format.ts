@@ -48,6 +48,8 @@ export const ETIQUETAS: Record<string, string> = {
   JEFE_DE_AREA: 'Jefe de área',
   TESORERO: 'Tesorero',
   ASPIRANTE: 'Aspirante',
+  APROBADA: 'Aprobada',
+  JEFE_CIM: 'Jefe del CIM',
   ACTIVO: 'Activo',
   INACTIVO: 'Inactivo',
   BAJA: 'Baja',

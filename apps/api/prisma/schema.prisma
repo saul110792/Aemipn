@@ -16,9 +16,11 @@ datasource db {
 
 /// Rol a nivel de toda la asociación (mesa directiva / acceso al panel).
 enum GlobalRole {
-  ADMIN // mesa directiva: ve y edita todo
-  STAFF // apoyo administrativo: captura, no borra
-  MIEMBRO // solo su propio perfil
+  ADMIN /// mesa directiva: ve y edita todo
+  STAFF /// apoyo administrativo: captura, no borra
+  JEFE_CIM /// coordina el curso introductorio; no ve las áreas salvo que tenga el curso
+  MIEMBRO /// tiene al menos un curso de área aprobado
+  CIM /// solo acreditó el curso introductorio: ve únicamente lo del CIM
 }
 
 /// Rol dentro de un área específica. Un miembro puede tener rol distinto por área.
@@ -43,6 +45,13 @@ enum ApplicationStatus {
 }
 
 /// Tipo de curso. CIM es el curso introductorio que se imparte 3-4 veces al año.
+/// Una persona declara haber tomado un curso; el área lo confirma.
+enum ClaimStatus {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+}
+
 enum CourseKind {
   CIM
   TECNICO
@@ -114,12 +123,16 @@ enum PaymentStatus {
 // ---------------------------------------------------------------------------
 
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  passwordHash String
-  role         GlobalRole @default(MIEMBRO)
-  activo       Boolean    @default(true)
-  ultimoAcceso DateTime?
+  id                String     @id @default(cuid())
+  email             String     @unique
+  passwordHash      String
+  role              GlobalRole @default(MIEMBRO)
+  activo            Boolean    @default(true)
+  /// Hasta que no se verifica el correo, la cuenta no puede iniciar sesión.
+  emailVerificadoEn DateTime?
+  ultimoAcceso      DateTime?
+
+  verificaciones EmailVerification[]
 
   /// Un usuario del panel normalmente corresponde a un miembro.
   member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
@@ -155,6 +168,9 @@ model Member {
   contactoEmergencia String?
   telefonoEmergencia String?
   numeroSeguroSocial String?
+  direccion          String?
+  /// Lesiones u operaciones que puedan influir en la montaña.
+  lesiones           String?
 
   status       MemberStatus @default(ASPIRANTE)
   fechaIngreso DateTime     @default(now())
@@ -162,11 +178,12 @@ model Member {
   fotoUrl      String?
   notas        String?
 
-  user        User?
-  areas       AreaMembership[]
-  enrollments Enrollment[]
+  user             User?
+  areas            AreaMembership[]
+  enrollments      Enrollment[]
+  cursosDeclarados CourseClaim[]
   /// Actividades del CIM u otras ediciones donde esta persona es responsable.
-  actividades EditionActivity[] @relation("ResponsableActividad")
+  actividades      EditionActivity[] @relation("ResponsableActividad")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -279,7 +296,8 @@ model Course {
   areaId        String?
   activo        Boolean    @default(true)
 
-  ediciones CourseEdition[]
+  ediciones     CourseEdition[]
+  declaraciones CourseClaim[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -431,4 +449,58 @@ model MediaAsset {
 
   @@index([createdAt])
   @@map("media_assets")
+}
+
+// ---------------------------------------------------------------------------
+// Registro y validacion
+// ---------------------------------------------------------------------------
+
+/// Codigo y liga que confirman que el correo existe y es de quien se registra.
+/// Se guarda el hash, nunca el valor: quien lea la base no puede activar cuentas.
+model EmailVerification {
+  id         String    @id @default(cuid())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  /// SHA-256 de la liga larga.
+  tokenHash  String    @unique
+  /// SHA-256 del codigo corto que se teclea a mano.
+  codigoHash String
+  expiraEn   DateTime
+  usadoEn    DateTime?
+  intentos   Int       @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, usadoEn])
+  @@map("email_verifications")
+}
+
+/// Curso que un miembro declara haber tomado, a la espera de que su area lo
+/// confirme. El anio y la letra identifican la generacion aunque esa edicion
+/// sea anterior al sistema y no exista como CourseEdition.
+model CourseClaim {
+  id       String @id @default(cuid())
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+
+  /// Entre 1980 y el anio en curso.
+  anio  Int
+  /// Generacion dentro del anio: A, B, C, D o E.
+  letra String
+
+  status        ClaimStatus @default(PENDIENTE)
+  revisadaPor   String?
+  revisadaEn    DateTime?
+  motivoRechazo String?
+  notas         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([memberId, courseId, anio, letra])
+  @@index([status, createdAt])
+  @@index([courseId, status])
+  @@map("course_claims")
 }

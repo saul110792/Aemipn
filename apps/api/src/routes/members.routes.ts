@@ -38,14 +38,51 @@ const listQuery = z.object({
   perPage: z.coerce.number().int().min(1).max(100).default(25),
 });
 
-/** GET /api/members — listado con busqueda, filtros y paginacion. */
+/**
+ * Areas cuyo padron puede consultar esta persona.
+ * `null` = todas (mesa directiva). Lista vacia = ninguna.
+ */
+async function padronesQueVe(user: { role: string; memberId: string | null }) {
+  if (user.role === 'ADMIN' || user.role === 'STAFF') return null;
+  if (!user.memberId) return [];
+
+  // Un jefe o tesorero ve a la gente de su area; nadie mas ve el padron.
+  const m = await prisma.areaMembership.findMany({
+    where: {
+      memberId: user.memberId,
+      activo: true,
+      role: { in: ['JEFE_DE_AREA', 'TESORERO'] },
+    },
+    select: { areaId: true },
+  });
+  return m.map((x) => x.areaId);
+}
+
+/**
+ * GET /api/members — listado con busqueda, filtros y paginacion.
+ *
+ * El padron trae correos, telefonos y datos de emergencia, asi que no se
+ * expone a cualquiera con sesion: la mesa directiva lo ve completo y un jefe
+ * o tesorero solo el de sus areas. Un miembro consulta su propia ficha en
+ * /api/perfil.
+ */
 membersRouter.get(
   '/',
   validate(listQuery, 'query'),
   asyncHandler(async (req, res) => {
     const { q, status, areaId, page, perPage } = req.query as unknown as z.infer<typeof listQuery>;
 
+    const visibles = await padronesQueVe(req.user!);
+    if (visibles !== null && visibles.length === 0) {
+      throw forbidden('El padron solo lo consultan la mesa directiva y los jefes de area');
+    }
+    // Un jefe que filtra por un area ajena no debe ver nada de ella.
+    if (visibles !== null && areaId && !visibles.includes(areaId)) {
+      throw forbidden('Ese padron no es de tus areas');
+    }
+
     const where = {
+      ...(visibles === null ? {} : { areas: { some: { areaId: { in: visibles }, activo: true } } }),
       ...(status ? { status } : {}),
       ...(areaId ? { areas: { some: { areaId, activo: true } } } : {}),
       ...(q
@@ -205,8 +242,17 @@ membersRouter.post(
         passwordHash: await bcrypt.hash(password, 12),
         role,
         memberId: member.id,
+        // La crea un administrador que ya conoce a la persona y le entrega la
+        // contrasena en mano: no hay correo que confirmar. Sin esto, la cuenta
+        // nacería sin poder iniciar sesion.
+        emailVerificadoEn: new Date(),
       },
-      update: { passwordHash: await bcrypt.hash(password, 12), role, activo: true },
+      update: {
+        passwordHash: await bcrypt.hash(password, 12),
+        role,
+        activo: true,
+        emailVerificadoEn: new Date(),
+      },
       select: { id: true, email: true, role: true, activo: true },
     });
 

@@ -16,6 +16,9 @@ import { publicRouter } from './routes/public.routes.js';
 import { dashboardRouter } from './routes/dashboard.routes.js';
 import { eventsRouter } from './routes/events.routes.js';
 import { notificationsRouter } from './routes/notifications.routes.js';
+import { registroRouter } from './routes/registro.routes.js';
+import { perfilRouter } from './routes/perfil.routes.js';
+import { claimsRouter } from './routes/claims.routes.js';
 import { CARPETA_SUBIDAS, mediaRouter } from './routes/media.routes.js';
 
 export function createApp() {
@@ -60,6 +63,9 @@ export function createApp() {
   app.use('/api/applications', applicationsRouter);
   app.use('/api/events', eventsRouter);
   app.use('/api/notificaciones', notificationsRouter);
+  app.use('/api/registro', registroRouter);
+  app.use('/api/perfil', perfilRouter);
+  app.use('/api/claims', claimsRouter);
   app.use('/api/media', mediaRouter);
 
   app.use(notFoundHandler);

@@ -8,7 +8,12 @@ notificationsRouter.use(requireAuth);
 
 /** Un asunto que espera acción de alguien. */
 interface Pendiente {
-  tipo: 'SOLICITUDES' | 'PAGOS' | 'EVENTOS_SIN_PUBLICAR' | 'EDICION_SIN_PROGRAMA';
+  tipo:
+    | 'SOLICITUDES'
+    | 'DECLARACIONES'
+    | 'PAGOS'
+    | 'EVENTOS_SIN_PUBLICAR'
+    | 'EDICION_SIN_PROGRAMA';
   cantidad: number;
   titulo: string;
   detalle: string;
@@ -24,6 +29,34 @@ interface Pendiente {
  * ingreso las revisa la mesa directiva, así que a un jefe de área no se le
  * anuncian. Una notificación que no se puede atender es solo ruido.
  */
+/** Cuantas declaraciones de curso puede resolver esta persona. */
+async function contarDeclaracionesQueRevisa(user: { role: string; memberId: string | null }) {
+  const esAdmin = user.role === 'ADMIN' || user.role === 'STAFF';
+  if (esAdmin) return prisma.courseClaim.count({ where: { status: 'PENDIENTE' } });
+
+  const coordinaCim = user.role === 'JEFE_CIM';
+  const areas = user.memberId
+    ? (
+        await prisma.areaMembership.findMany({
+          where: { memberId: user.memberId, activo: true, role: 'JEFE_DE_AREA' },
+          select: { areaId: true },
+        })
+      ).map((a) => a.areaId)
+    : [];
+
+  if (areas.length === 0 && !coordinaCim) return 0;
+
+  return prisma.courseClaim.count({
+    where: {
+      status: 'PENDIENTE',
+      OR: [
+        ...(areas.length ? [{ course: { areaId: { in: areas } } }] : []),
+        ...(coordinaCim ? [{ course: { areaId: null } }] : []),
+      ],
+    },
+  });
+}
+
 notificationsRouter.get(
   '/',
   asyncHandler(async (req, res) => {
@@ -123,11 +156,28 @@ notificationsRouter.get(
       }
     }
 
+    // Declaraciones de curso: cada quien ve solo las que puede resolver.
+    const declaraciones = await contarDeclaracionesQueRevisa(req.user!);
+    if (declaraciones > 0) {
+      pendientes.push({
+        tipo: 'DECLARACIONES',
+        cantidad: declaraciones,
+        titulo: declaraciones === 1 ? 'Curso por validar' : 'Cursos por validar',
+        detalle:
+          declaraciones === 1
+            ? 'Alguien declaro un curso y espera tu visto bueno'
+            : `${declaraciones} cursos declarados esperan tu visto bueno`,
+        ruta: '/panel/validaciones',
+        prioridad: 1,
+      });
+    }
+
     pendientes.sort((a, b) => a.prioridad - b.prioridad);
 
     res.json({
       total: pendientes.reduce((n, p) => n + p.cantidad, 0),
       solicitudes: pendientes.find((p) => p.tipo === 'SOLICITUDES')?.cantidad ?? 0,
+      declaraciones,
       pendientes,
     });
   }),

@@ -3,6 +3,7 @@ import { api } from './api';
 
 export type TipoPendiente =
   | 'SOLICITUDES'
+  | 'DECLARACIONES'
   | 'PAGOS'
   | 'EVENTOS_SIN_PUBLICAR'
   | 'EDICION_SIN_PROGRAMA';
@@ -19,6 +20,7 @@ export interface Pendiente {
 export interface Notificaciones {
   total: number;
   solicitudes: number;
+  declaraciones: number;
   pendientes: Pendiente[];
 }
 

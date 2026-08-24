@@ -12,11 +12,13 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 - **Eventos**: próximos cursos, talleres y salidas, con fecha, área, y lugar o liga de videoconferencia según la modalidad
 - Página del CIM con fechas, cuota, requisitos y el desglose de salidas por área
 - Catálogo de cursos
-- Formulario "Únete" que genera una solicitud de ingreso
+- **Registro de miembros** con confirmación de correo (liga o código de seis caracteres)
 
 **Panel interno** (requiere sesión)
 - Resumen: miembros por estado y por área, solicitudes pendientes, pagos pendientes, próximas salidas
 - **Notificaciones**: contador junto a *Solicitudes* y campana en la barra con lo que espera acción
+- **Mi expediente**: NSS, contacto de emergencia, dirección, lesiones y los cursos que ha tomado
+- **Validación de cursos**: el jefe de cada área aprueba o rechaza lo que su gente declara; aprobar da acceso al área
 - Miembros: alta, búsqueda, filtros, paginación, ficha completa con historial de cursos
 - Asignación de miembros a áreas con rol (jefe de área / tesorero / miembro)
 - Solicitudes de ingreso: aceptar (crea el miembro y lo asigna a sus áreas de interés) o rechazar
@@ -26,6 +28,12 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 - **Áreas**: edición de sus códigos, con aviso de duplicados y de formato
 - **Eventos**: alta con modalidad presencial / en línea / híbrida, y control de quién lo ve — público, solo miembros, o privado del área
 - **Textos e imágenes**: edita lo que ve el público de cada área y sube fotos al carrusel, sin tocar código
+
+## Correo
+
+El registro manda una liga y un código de confirmación. Sin `SMTP_URL` configurado, el mensaje
+**se imprime en la consola del servidor** — suficiente para desarrollar, y visible en la salida de
+`npm run dev`. Con `SMTP_URL` se envía de verdad, sin cambiar nada más.
 
 ## Diseño móvil
 

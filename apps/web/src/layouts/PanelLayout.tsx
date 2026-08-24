@@ -9,6 +9,11 @@ import { useNotificaciones } from '../lib/notificaciones';
 export function PanelLayout() {
   const { user, logout, esAdmin } = useAuth();
   const { data: pendientes } = useNotificaciones();
+
+  // El padron trae datos personales: lo ven la mesa directiva y quien
+  // encabeza un area. Un miembro consulta su propio expediente.
+  const puedeVerPadron =
+    esAdmin || (user?.areasQueEncabeza ?? 0) > 0;
   const navigate = useNavigate();
 
   const salir = async () => {
@@ -45,12 +50,29 @@ export function PanelLayout() {
             <Icono nombre="resumen" />
             Resumen
           </NavLink>
+          <NavLink to="/panel/perfil" className={clase}>
+            <Icono nombre="miembros" />
+            Mi expediente
+          </NavLink>
 
           <div className="grupo">Personas</div>
-          <NavLink to="/panel/miembros" className={clase}>
-            <Icono nombre="miembros" />
-            Miembros
-          </NavLink>
+          {puedeVerPadron && (
+            <NavLink to="/panel/miembros" className={clase}>
+              <Icono nombre="miembros" />
+              Miembros
+            </NavLink>
+          )}
+          {/* Aparece para quien tenga algo que validar, sea jefe o mesa directiva. */}
+          {(esAdmin || (pendientes?.declaraciones ?? 0) > 0) && (
+            <NavLink to="/panel/validaciones" className={clase}>
+              <Icono nombre="solicitudes" />
+              Validar cursos
+              {(pendientes?.declaraciones ?? 0) > 0 && (
+                <span className="conteo-lateral">{pendientes!.declaraciones}</span>
+              )}
+            </NavLink>
+          )}
+
           {esAdmin && (
             <NavLink to="/panel/solicitudes" className={clase}>
               <Icono nombre="solicitudes" />

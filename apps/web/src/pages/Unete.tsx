@@ -1,10 +1,9 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
-import type { Area } from '../lib/types';
 import { ErrorAviso } from '../components/Estado';
-import { Icono, hayIcono } from '../components/Icono';
+import { Icono } from '../components/Icono';
 
 interface Formulario {
   nombre: string;
@@ -12,45 +11,43 @@ interface Formulario {
   apellidoMaterno: string;
   email: string;
   telefono: string;
-  escuela: string;
   boleta: string;
-  areasInteres: string[];
-  experiencia: string;
-  mensaje: string;
+  escuela: string;
+  password: string;
+  password2: string;
 }
 
+/**
+ * Registro de quien ya forma parte de la AEMIPN.
+ * Aquí solo se piden los datos básicos y una contraseña: el expediente
+ * completo (NSS, contacto de emergencia, cursos) se llena después de
+ * confirmar el correo, ya dentro del panel.
+ */
 export function Unete() {
-  const [enviado, setEnviado] = useState(false);
+  const [enviado, setEnviado] = useState<{ email: string } | null>(null);
   const [error, setError] = useState<unknown>(null);
-
-  const { data: areas } = useQuery({
-    queryKey: ['public', 'areas'],
-    queryFn: () => api.get<Area[]>('/public/areas'),
-  });
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
-  } = useForm<Formulario>({ defaultValues: { areasInteres: [] } });
+  } = useForm<Formulario>();
 
-  const onSubmit = handleSubmit(async (valores) => {
+  const onSubmit = handleSubmit(async (v) => {
     setError(null);
     try {
-      await api.post('/public/solicitudes', {
-        ...valores,
-        // Los campos vacios se envian como null en lugar de cadena vacia.
-        apellidoMaterno: valores.apellidoMaterno || null,
-        telefono: valores.telefono || null,
-        escuela: valores.escuela || null,
-        boleta: valores.boleta || null,
-        experiencia: valores.experiencia || null,
-        mensaje: valores.mensaje || null,
-        areasInteres: Array.isArray(valores.areasInteres)
-          ? valores.areasInteres
-          : [valores.areasInteres].filter(Boolean),
+      await api.post('/registro', {
+        nombre: v.nombre,
+        apellidoPaterno: v.apellidoPaterno,
+        apellidoMaterno: v.apellidoMaterno || null,
+        email: v.email,
+        telefono: v.telefono || null,
+        boleta: v.boleta || null,
+        escuela: v.escuela || null,
+        password: v.password,
       });
-      setEnviado(true);
+      setEnviado({ email: v.email });
     } catch (e) {
       setError(e);
     }
@@ -60,10 +57,17 @@ export function Unete() {
     return (
       <div className="contenedor seccion" style={{ maxWidth: '640px' }}>
         <div className="aviso aviso-ok">
-          <h2 style={{ marginTop: 0 }}>Solicitud recibida</h2>
+          <h2 style={{ marginTop: 0 }}>Revisa tu correo</h2>
+          <p>
+            Enviamos una liga de confirmación a <strong>{enviado.email}</strong>. Ábrela para
+            activar tu cuenta; también incluye un código de seis caracteres por si prefieres
+            escribirlo.
+          </p>
           <p style={{ marginBottom: 0 }}>
-            Gracias por tu interés en la AEMIPN. La mesa directiva revisará tu solicitud y te
-            contactará por correo con los siguientes pasos y la fecha del próximo CIM.
+            La liga sirve durante 24 horas.{' '}
+            <Link to={`/verificar?email=${encodeURIComponent(enviado.email)}`}>
+              Tengo el código
+            </Link>
           </p>
         </div>
       </div>
@@ -71,98 +75,116 @@ export function Unete() {
   }
 
   return (
-    <div className="contenedor seccion" style={{ maxWidth: '720px' }}>
-      <h1>Únete a la AEMIPN</h1>
-      <p className="texto-suave">
-        Llena este formulario y nos pondremos en contacto contigo. No necesitas experiencia previa:
-        el camino habitual es entrar por el CIM.
-      </p>
+    <>
+      <header className="hero" style={{ padding: '3rem 0 2.5rem' }}>
+        <div className="contenedor">
+          <h1>Crea tu cuenta</h1>
+          <p>
+            Para quienes ya forman parte de la AEMIPN. Con tu cuenta registras los cursos que
+            has tomado, tus datos de emergencia y ves lo de tus áreas.
+          </p>
+        </div>
+      </header>
 
-      {error != null && <ErrorAviso error={error} />}
-
-      <form onSubmit={onSubmit} style={{ marginTop: '1.5rem' }} noValidate>
-        <div className="campos-2">
-          <div className="campo">
-            <label htmlFor="nombre">Nombre(s) *</label>
-            <input id="nombre" {...register('nombre', { required: 'Escribe tu nombre' })} />
-            {errors.nombre && <span className="error">{errors.nombre.message}</span>}
-          </div>
-
-          <div className="campo">
-            <label htmlFor="apellidoPaterno">Apellido paterno *</label>
-            <input id="apellidoPaterno" {...register('apellidoPaterno', { required: 'Escribe tu apellido paterno' })} />
-            {errors.apellidoPaterno && <span className="error">{errors.apellidoPaterno.message}</span>}
-          </div>
+      <div className="contenedor seccion" style={{ maxWidth: '720px' }}>
+        <div className="aviso aviso-info">
+          <strong>¿Todavía no eres de la asociación?</strong> El camino de entrada es el{' '}
+          <Link to="/cim">Curso Introductorio al Montañismo</Link>. Ahí te decimos cuándo abre la
+          siguiente generación.
         </div>
 
-        <div className="campos-2">
-          <div className="campo">
-            <label htmlFor="apellidoMaterno">Apellido materno</label>
-            <input id="apellidoMaterno" {...register('apellidoMaterno')} />
+        {error != null && <ErrorAviso error={error} />}
+
+        <form onSubmit={onSubmit} noValidate style={{ marginTop: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.15rem' }}>Datos básicos</h2>
+
+          <div className="campos-2">
+            <div className="campo">
+              <label htmlFor="r-nombre">Nombre(s) *</label>
+              <input id="r-nombre" autoComplete="given-name" {...register('nombre', { required: 'Escribe tu nombre' })} />
+              {errors.nombre && <span className="error">{errors.nombre.message}</span>}
+            </div>
+            <div className="campo">
+              <label htmlFor="r-ap">Apellido paterno *</label>
+              <input id="r-ap" {...register('apellidoPaterno', { required: 'Escribe tu apellido paterno' })} />
+              {errors.apellidoPaterno && <span className="error">{errors.apellidoPaterno.message}</span>}
+            </div>
+            <div className="campo">
+              <label htmlFor="r-am">Apellido materno</label>
+              <input id="r-am" {...register('apellidoMaterno')} />
+            </div>
+            <div className="campo">
+              <label htmlFor="r-tel">Teléfono / WhatsApp</label>
+              <input id="r-tel" type="tel" autoComplete="tel" {...register('telefono')} />
+            </div>
+            <div className="campo">
+              <label htmlFor="r-boleta">Boleta (si eres del IPN)</label>
+              <input id="r-boleta" {...register('boleta')} />
+            </div>
+            <div className="campo">
+              <label htmlFor="r-escuela">Escuela o unidad</label>
+              <input id="r-escuela" placeholder="ESIA, ESCOM, ENCB, externo…" {...register('escuela')} />
+            </div>
           </div>
 
+          <h2 style={{ fontSize: '1.15rem', marginTop: '1.5rem' }}>Acceso</h2>
+
           <div className="campo">
-            <label htmlFor="email">Correo electrónico *</label>
+            <label htmlFor="r-email">Correo electrónico *</label>
             <input
-              id="email"
+              id="r-email"
               type="email"
+              autoComplete="email"
               {...register('email', {
                 required: 'Escribe tu correo',
                 pattern: { value: /^\S+@\S+\.\S+$/, message: 'Correo no válido' },
               })}
             />
             {errors.email && <span className="error">{errors.email.message}</span>}
-          </div>
-        </div>
-
-        <div className="campos-2">
-          <div className="campo">
-            <label htmlFor="telefono">Teléfono / WhatsApp</label>
-            <input id="telefono" type="tel" {...register('telefono')} />
+            <span className="texto-suave" style={{ fontSize: '0.83rem' }}>
+              Ahí te llega la liga de confirmación.
+            </span>
           </div>
 
-          <div className="campo">
-            <label htmlFor="escuela">Escuela o unidad</label>
-            <input id="escuela" placeholder="ESIA, ESCOM, ENCB, externo…" {...register('escuela')} />
+          <div className="campos-2">
+            <div className="campo">
+              <label htmlFor="r-pass">Contraseña *</label>
+              <input
+                id="r-pass"
+                type="password"
+                autoComplete="new-password"
+                {...register('password', {
+                  required: 'Elige una contraseña',
+                  minLength: { value: 8, message: 'Al menos 8 caracteres' },
+                })}
+              />
+              {errors.password && <span className="error">{errors.password.message}</span>}
+            </div>
+            <div className="campo">
+              <label htmlFor="r-pass2">Repite la contraseña *</label>
+              <input
+                id="r-pass2"
+                type="password"
+                autoComplete="new-password"
+                {...register('password2', {
+                  required: 'Repite la contraseña',
+                  validate: (v) => v === watch('password') || 'Las contraseñas no coinciden',
+                })}
+              />
+              {errors.password2 && <span className="error">{errors.password2.message}</span>}
+            </div>
           </div>
-        </div>
 
-        <div className="campo">
-          <label htmlFor="boleta">Boleta (si eres del IPN)</label>
-          <input id="boleta" {...register('boleta')} />
-        </div>
+          <button type="submit" className="btn btn-verde" disabled={isSubmitting}>
+            <Icono nombre="miembros" />
+            {isSubmitting ? 'Creando cuenta…' : 'Crear cuenta'}
+          </button>
 
-        <div className="campo">
-          <label>Áreas que te interesan</label>
-          <div className="casillas">
-            {areas?.map((a) => (
-              <label key={a.id} className="casilla">
-                <input type="checkbox" value={a.slug} {...register('areasInteres')} />
-                {hayIcono(a.slug) && (
-                  <span style={{ color: a.color ?? 'var(--guinda)' }}>
-                    <Icono nombre={a.slug} />
-                  </span>
-                )}
-                {a.nombre}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="campo">
-          <label htmlFor="experiencia">¿Tienes experiencia previa en montaña?</label>
-          <textarea id="experiencia" placeholder="Ninguna está bien: el CIM parte de cero." {...register('experiencia')} />
-        </div>
-
-        <div className="campo">
-          <label htmlFor="mensaje">¿Algo más que quieras contarnos?</label>
-          <textarea id="mensaje" {...register('mensaje')} />
-        </div>
-
-        <button type="submit" className="btn btn-verde" disabled={isSubmitting}>
-          {isSubmitting ? 'Enviando…' : 'Enviar solicitud'}
-        </button>
-      </form>
-    </div>
+          <p className="texto-suave" style={{ fontSize: '0.87rem', marginTop: '1rem' }}>
+            ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>.
+          </p>
+        </form>
+      </div>
+    </>
   );
 }

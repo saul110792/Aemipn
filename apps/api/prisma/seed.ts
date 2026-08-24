@@ -387,8 +387,10 @@ async function main() {
       passwordHash: await bcrypt.hash(env.SEED_ADMIN_PASSWORD, 12),
       role: 'ADMIN',
       memberId: adminMember.id,
+      // Sembrado a mano: no hay correo que confirmar.
+      emailVerificadoEn: new Date(),
     },
-    update: { role: 'ADMIN', activo: true },
+    update: { role: 'ADMIN', activo: true, emailVerificadoEn: new Date() },
   });
 
   console.log(`  Admin: ${adminEmail}`);

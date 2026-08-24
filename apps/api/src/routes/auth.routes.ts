@@ -49,7 +49,12 @@ const publicUser = (user: {
   email: string;
   role: string;
   memberId: string | null;
-  member?: { nombre: string; apellidoPaterno: string; fotoUrl: string | null } | null;
+  member?: {
+    nombre: string;
+    apellidoPaterno: string;
+    fotoUrl: string | null;
+    areas?: { areaId: string }[];
+  } | null;
 }) => ({
   id: user.id,
   email: user.email,
@@ -57,6 +62,9 @@ const publicUser = (user: {
   memberId: user.memberId,
   nombre: user.member ? `${user.member.nombre} ${user.member.apellidoPaterno}` : null,
   fotoUrl: user.member?.fotoUrl ?? null,
+  /// Cuantas areas encabeza. El cliente lo usa para no ofrecer pantallas
+  /// que la API le negaria de todos modos.
+  areasQueEncabeza: user.member?.areas?.length ?? 0,
 });
 
 authRouter.post(
@@ -68,14 +76,33 @@ authRouter.post(
 
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
-      include: { member: { select: { nombre: true, apellidoPaterno: true, fotoUrl: true } } },
+      include: {
+    member: {
+      select: {
+        nombre: true,
+        apellidoPaterno: true,
+        fotoUrl: true,
+        areas: {
+          where: { activo: true, role: { in: ['JEFE_DE_AREA', 'TESORERO'] } },
+          select: { areaId: true },
+        },
+      },
+    },
+  },
     });
 
     // Mismo mensaje para usuario inexistente y contrasena incorrecta.
-    if (!user || !user.activo) throw unauthorized('Correo o contrasena incorrectos');
+    if (!user) throw unauthorized('Correo o contrasena incorrectos');
     if (!(await bcrypt.compare(password, user.passwordHash))) {
       throw unauthorized('Correo o contrasena incorrectos');
     }
+
+    // La contrasena es correcta: aqui ya se puede decir por que no entra,
+    // sin revelar nada a quien solo esta probando correos.
+    if (!user.emailVerificadoEn) {
+      throw unauthorized('Confirma tu correo antes de entrar. Revisa la liga que te enviamos.');
+    }
+    if (!user.activo) throw unauthorized('Tu cuenta esta desactivada. Contacta a la mesa directiva.');
 
     await prisma.user.update({
       where: { id: user.id },
@@ -110,7 +137,19 @@ authRouter.post(
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { member: { select: { nombre: true, apellidoPaterno: true, fotoUrl: true } } },
+      include: {
+    member: {
+      select: {
+        nombre: true,
+        apellidoPaterno: true,
+        fotoUrl: true,
+        areas: {
+          where: { activo: true, role: { in: ['JEFE_DE_AREA', 'TESORERO'] } },
+          select: { areaId: true },
+        },
+      },
+    },
+  },
     });
     if (!user || !user.activo) throw unauthorized('Cuenta desactivada');
 
