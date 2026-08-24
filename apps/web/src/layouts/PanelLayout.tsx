@@ -3,9 +3,12 @@ import { useAuth } from '../lib/auth';
 import { etiqueta } from '../lib/format';
 import { Marca } from '../components/Marca';
 import { Icono } from '../components/Icono';
+import { Campana } from '../components/Campana';
+import { useNotificaciones } from '../lib/notificaciones';
 
 export function PanelLayout() {
   const { user, logout, esAdmin } = useAuth();
+  const { data: pendientes } = useNotificaciones();
   const navigate = useNavigate();
 
   const salir = async () => {
@@ -24,6 +27,7 @@ export function PanelLayout() {
             <Marca subtitulo="Panel de gestión" />
           </Link>
           <div className="nav-links">
+            <Campana />
             <Link to="/">Ver sitio público</Link>
             <span style={{ opacity: 0.75, fontSize: '0.88rem' }}>
               {user?.nombre ?? user?.email} · {etiqueta(user?.role)}
@@ -51,6 +55,11 @@ export function PanelLayout() {
             <NavLink to="/panel/solicitudes" className={clase}>
               <Icono nombre="solicitudes" />
               Solicitudes
+              {(pendientes?.solicitudes ?? 0) > 0 && (
+                <span className="conteo-lateral" aria-label={`${pendientes!.solicitudes} pendientes`}>
+                  {pendientes!.solicitudes}
+                </span>
+              )}
             </NavLink>
           )}
 

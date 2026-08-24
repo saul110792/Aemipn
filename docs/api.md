@@ -63,6 +63,7 @@ Todas requieren sesión. `ADMIN`/`STAFF` donde se indica.
 | GET | `/events?areaId=&incluirPasados=` | sesión — filtrado por visibilidad |
 | GET | `/events/:id` | sesión — 403 si es privado de un área ajena |
 | POST/PATCH/DELETE | `/events` | ADMIN, STAFF **o jefe/tesorero del área del evento** |
+| GET | `/notificaciones` | sesión — devuelve solo lo que quien pregunta puede resolver |
 | GET | `/media` | ADMIN, STAFF |
 | POST | `/media` | ADMIN, STAFF — `multipart/form-data`, campo `archivo` |
 | PATCH | `/media/:id` | ADMIN, STAFF — edita el texto alternativo |
@@ -80,6 +81,20 @@ Cada evento declara quién puede verlo, y la API lo hace cumplir en los tres cam
 | `AREA` | Solo los miembros activos del área del evento. Un miembro de otra área recibe 403 aunque tenga el id. |
 
 ADMIN y STAFF ven todo, publicado o no.
+
+## Notificaciones
+
+`GET /api/notificaciones` reúne lo que espera acción y devuelve `{ total, solicitudes, pendientes[] }`.
+
+Cada pendiente trae `cantidad`, `titulo`, `detalle` y la `ruta` donde se resuelve, así que el
+frontend no necesita saber qué significa cada tipo.
+
+La lista está filtrada por lo que quien pregunta puede atender: las solicitudes de ingreso las
+revisa la mesa directiva, así que a un jefe de área no se le anuncian — a él solo le aparecen
+los eventos de su área sin publicar. **Una notificación que no se puede atender es solo ruido.**
+
+El frontend la consulta cada minuto y al volver a la pestaña, y la invalida en cuanto se acepta
+o rechaza una solicitud, para que el contador baje sin esperar al siguiente sondeo.
 
 ## Archivos subidos
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { CLAVE_NOTIFICACIONES } from '../../lib/notificaciones';
 import type { MembershipApplication } from '../../lib/types';
 import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { etiqueta, fmtFechaCorta } from '../../lib/format';
@@ -20,6 +21,7 @@ export function Solicitudes() {
     qc.invalidateQueries({ queryKey: ['applications'] });
     qc.invalidateQueries({ queryKey: ['dashboard'] });
     qc.invalidateQueries({ queryKey: ['members'] });
+    qc.invalidateQueries({ queryKey: CLAVE_NOTIFICACIONES });
   };
 
   const aceptar = useMutation({

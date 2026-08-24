@@ -16,6 +16,7 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 
 **Panel interno** (requiere sesión)
 - Resumen: miembros por estado y por área, solicitudes pendientes, pagos pendientes, próximas salidas
+- **Notificaciones**: contador junto a *Solicitudes* y campana en la barra con lo que espera acción
 - Miembros: alta, búsqueda, filtros, paginación, ficha completa con historial de cursos
 - Asignación de miembros a áreas con rol (jefe de área / tesorero / miembro)
 - Solicitudes de ingreso: aceptar (crea el miembro y lo asigna a sus áreas de interés) o rechazar

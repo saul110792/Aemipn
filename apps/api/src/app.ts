@@ -15,6 +15,7 @@ import { applicationsRouter } from './routes/applications.routes.js';
 import { publicRouter } from './routes/public.routes.js';
 import { dashboardRouter } from './routes/dashboard.routes.js';
 import { eventsRouter } from './routes/events.routes.js';
+import { notificationsRouter } from './routes/notifications.routes.js';
 import { CARPETA_SUBIDAS, mediaRouter } from './routes/media.routes.js';
 
 export function createApp() {
@@ -58,6 +59,7 @@ export function createApp() {
   app.use('/api/enrollments', enrollmentsRouter);
   app.use('/api/applications', applicationsRouter);
   app.use('/api/events', eventsRouter);
+  app.use('/api/notificaciones', notificationsRouter);
   app.use('/api/media', mediaRouter);
 
   app.use(notFoundHandler);

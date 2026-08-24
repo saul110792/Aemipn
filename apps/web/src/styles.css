@@ -533,3 +533,63 @@ tbody tr:hover { background: var(--guinda-100); }
   .pie-institucion { padding-top: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.12); width: 100%; }
   .logo-ipn { width: 190px; }
 }
+
+/* ---------- Notificaciones ---------- */
+/* Contador junto a un elemento del menú lateral. */
+.conteo-lateral {
+  margin-left: auto;
+  min-width: 20px; height: 20px; padding: 0 6px;
+  display: inline-grid; place-items: center;
+  background: var(--blanco); color: var(--guinda);
+  border-radius: 999px; font-size: 0.72rem; font-weight: 800; line-height: 1;
+}
+.panel-lateral a.activo .conteo-lateral { background: var(--blanco); color: var(--guinda-500); }
+
+.campana { position: relative; }
+.campana-boton {
+  position: relative; width: 38px; height: 38px; padding: 0;
+  display: grid; place-items: center; cursor: pointer;
+  background: transparent; border: none; border-radius: 9px;
+  color: rgba(255, 255, 255, 0.9);
+}
+.campana-boton:hover { background: rgba(255, 255, 255, 0.12); color: var(--blanco); }
+.campana-boton svg { width: 21px; height: 21px; }
+
+.campana-conteo {
+  position: absolute; top: 1px; right: 0;
+  min-width: 17px; height: 17px; padding: 0 4px;
+  display: grid; place-items: center;
+  background: var(--acento-aviso, #d8324f); color: #fff;
+  border-radius: 999px; font-size: 0.66rem; font-weight: 800; line-height: 1;
+  border: 2px solid var(--guinda);
+}
+
+.campana-panel {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 60;
+  width: min(340px, calc(100vw - 2rem));
+  background: var(--blanco); color: var(--texto);
+  border: 1px solid var(--borde); border-radius: var(--radio);
+  box-shadow: var(--sombra-alta); padding: 0.9rem;
+}
+.campana-titulo {
+  font-family: var(--fuente-titulo); font-weight: 700; font-size: 0.95rem;
+  color: var(--guinda); margin-bottom: 0.6rem;
+}
+.campana-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
+.campana-lista a {
+  display: flex; gap: 0.7rem; align-items: center;
+  padding: 0.55rem 0.5rem; border-radius: 8px; color: inherit;
+}
+.campana-lista a:hover { background: var(--guinda-100); text-decoration: none; }
+.campana-lista strong { display: block; font-size: 0.9rem; }
+.campana-lista .texto-suave { display: block; font-size: 0.8rem; }
+.campana-numero {
+  flex: none; min-width: 30px; height: 30px; padding: 0 7px;
+  display: grid; place-items: center;
+  background: var(--guinda); color: var(--blanco);
+  border-radius: 8px; font-weight: 800; font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .campana-panel { right: -0.5rem; }
+}
