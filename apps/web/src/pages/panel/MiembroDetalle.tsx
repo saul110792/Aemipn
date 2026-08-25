@@ -131,6 +131,7 @@ export function MiembroDetalle() {
               </p>
               <dl style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '0.9rem', margin: 0 }}>
                 <Dato titulo="Tipo de sangre" valor={miembro.tipoSangre} />
+                <Dato titulo="Alergias" valor={miembro.alergias?.length ? miembro.alergias.join(', ') : null} />
                 <Dato titulo="Contacto de emergencia" valor={miembro.contactoEmergencia} />
                 <Dato titulo="Teléfono de emergencia" valor={miembro.telefonoEmergencia} />
               </dl>

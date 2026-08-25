@@ -4,6 +4,12 @@ import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import { badRequest, conflict, notFound } from '../lib/errors.js';
 import { validate } from '../middleware/validate.js';
+import {
+  LARGO_MAXIMO_ALERGIA,
+  MAXIMO_ALERGIAS,
+  TIPOS_DE_SANGRE,
+  normalizarAlergias,
+} from '../lib/catalogos.js';
 import { requireAuth } from '../middleware/auth.js';
 import { vigente } from '../lib/jefaturas.js';
 
@@ -56,8 +62,25 @@ const perfilSchema = z.object({
   telefonoEmergencia: z.string().min(1, 'El telefono de emergencia es obligatorio'),
   direccion: z.string().optional().nullable(),
   lesiones: z.string().max(2000).optional().nullable(),
-  tipoSangre: z.string().max(5).optional().nullable(),
-  alergias: z.string().optional().nullable(),
+  tipoSangre: z
+    .enum(TIPOS_DE_SANGRE, {
+      errorMap: () => ({ message: `Elige uno de: ${TIPOS_DE_SANGRE.join(', ')}` }),
+    })
+    .nullable()
+    .optional()
+    .or(z.literal('').transform(() => null)),
+  alergias: z
+    .array(z.string())
+    // Se limpia antes de medir: un vacío o una repetida no deben tumbar el
+    // guardado entero, solo desaparecer de la lista.
+    .transform(normalizarAlergias)
+    .refine((v) => v.length <= MAXIMO_ALERGIAS, {
+      message: `No más de ${MAXIMO_ALERGIAS} alergias`,
+    })
+    .refine((v) => v.every((x) => x.length <= LARGO_MAXIMO_ALERGIA), {
+      message: `Cada alergia admite hasta ${LARGO_MAXIMO_ALERGIA} caracteres`,
+    })
+    .optional(),
   padecimientos: z.string().optional().nullable(),
 });
 

@@ -58,6 +58,15 @@ Nadie se acredita a sí mismo, y un jefe no puede ver ni resolver lo de un área
 no puede activar cuentas ajenas. Las cuentas que crea un administrador desde el panel nacen
 verificadas, porque ahí es él quien responde por la identidad de la persona.
 
+**Las alergias son una lista, no un párrafo.**
+`Member.alergias` es `String[]`. En campo se consultan de un vistazo, y una cadena suelta obliga
+a leerla entera para encontrar lo importante. El tipo de sangre se valida contra un catálogo de
+ocho valores y se guarda tal como se lee (`"O+"`), que es el mismo texto que va impreso en una
+lista de salida.
+
+Las sugerencias de alergia son un atajo, no una lista cerrada: se acepta texto libre, porque en un
+expediente médico la alergia rara es justo la que hay que anotar.
+
 ## Entidades
 
 | Modelo | Para qué |

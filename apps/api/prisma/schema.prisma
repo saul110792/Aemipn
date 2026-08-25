@@ -164,8 +164,11 @@ model Member {
   escuela         String? // ESIA, ESCOM, ENCB, externo...
 
   // Datos que la logística de salidas necesita a la mano.
+  /// Uno de los ocho grupos del catálogo, o nulo si no se sabe.
   tipoSangre         String?
-  alergias           String?
+  /// Varias, cada una por separado: en campo se consultan de un vistazo y
+  /// una cadena suelta obliga a leer para encontrar lo importante.
+  alergias           String[]
   padecimientos      String?
   contactoEmergencia String?
   telefonoEmergencia String?

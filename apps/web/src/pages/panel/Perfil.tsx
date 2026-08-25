@@ -5,6 +5,13 @@ import type { Area, Course } from '../../lib/types';
 import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { Icono, hayIcono } from '../../components/Icono';
 import { etiqueta } from '../../lib/format';
+import { CampoEtiquetas } from '../../components/CampoEtiquetas';
+import {
+  ALERGIAS_SUGERIDAS,
+  LARGO_MAXIMO_ALERGIA,
+  MAXIMO_ALERGIAS,
+  TIPOS_DE_SANGRE,
+} from '../../lib/catalogos';
 
 const ANIO_MINIMO = 1980;
 const LETRAS = ['A', 'B', 'C', 'D', 'E'] as const;
@@ -37,7 +44,7 @@ interface PerfilPropio {
   direccion: string | null;
   lesiones: string | null;
   tipoSangre: string | null;
-  alergias: string | null;
+  alergias: string[];
   telefono: string | null;
   boleta: string | null;
   escuela: string | null;
@@ -58,8 +65,9 @@ export function Perfil() {
 
   const [f, setF] = useState({
     telefono: '', numeroSeguroSocial: '', contactoEmergencia: '', telefonoEmergencia: '',
-    direccion: '', lesiones: '', tipoSangre: '', alergias: '',
+    direccion: '', lesiones: '', tipoSangre: '',
   });
+  const [alergias, setAlergias] = useState<string[]>([]);
 
   useEffect(() => {
     if (!data) return;
@@ -71,8 +79,8 @@ export function Perfil() {
       direccion: data.direccion ?? '',
       lesiones: data.lesiones ?? '',
       tipoSangre: data.tipoSangre ?? '',
-      alergias: data.alergias ?? '',
     });
+    setAlergias(data.alergias ?? []);
   }, [data?.id]);
 
   const guardar = useMutation({
@@ -85,7 +93,7 @@ export function Perfil() {
         direccion: f.direccion || null,
         lesiones: f.lesiones || null,
         tipoSangre: f.tipoSangre || null,
-        alergias: f.alergias || null,
+        alergias,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['perfil'] });
@@ -147,14 +155,32 @@ export function Perfil() {
             </div>
             <div className="campo">
               <label htmlFor="p-sangre">Tipo de sangre</label>
-              <input id="p-sangre" placeholder="O+" maxLength={5} value={f.tipoSangre}
-                onChange={(e) => setF({ ...f, tipoSangre: e.target.value })} />
+              <select id="p-sangre" value={f.tipoSangre}
+                onChange={(e) => setF({ ...f, tipoSangre: e.target.value })}>
+                <option value="">No lo sé</option>
+                {TIPOS_DE_SANGRE.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
             </div>
-            <div className="campo">
-              <label htmlFor="p-alergias">Alergias</label>
-              <input id="p-alergias" value={f.alergias}
-                onChange={(e) => setF({ ...f, alergias: e.target.value })} />
-            </div>
+          </div>
+
+          <div className="campo">
+            <label htmlFor="p-alergias">
+              Alergias
+              <span className="texto-suave" style={{ fontWeight: 400 }}>
+                {' '}— elige de la lista o escribe la tuya
+              </span>
+            </label>
+            <CampoEtiquetas
+              id="p-alergias"
+              valores={alergias}
+              sugerencias={ALERGIAS_SUGERIDAS}
+              onCambio={setAlergias}
+              maximo={MAXIMO_ALERGIAS}
+              largoMaximo={LARGO_MAXIMO_ALERGIA}
+              placeholder="Penicilina, mariscos…"
+            />
           </div>
 
           <div className="campo">

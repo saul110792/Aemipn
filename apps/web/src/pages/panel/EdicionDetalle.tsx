@@ -253,6 +253,11 @@ export function EdicionDetalle() {
                             Sangre {i.member.tipoSangre}
                           </div>
                         )}
+                        {i.member?.alergias && i.member.alergias.length > 0 && (
+                          <div style={{ fontSize: '0.78rem', color: 'var(--alerta)', fontWeight: 600 }}>
+                            Alergias: {i.member.alergias.join(', ')}
+                          </div>
+                        )}
                       </td>
                       <td className="texto-suave" style={{ fontSize: '0.86rem' }}>
                         {i.member?.email}

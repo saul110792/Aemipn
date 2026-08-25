@@ -54,6 +54,7 @@ export interface Member {
   boleta: string | null;
   escuela: string | null;
   tipoSangre: string | null;
+  alergias?: string[];
   contactoEmergencia: string | null;
   telefonoEmergencia: string | null;
   status: MemberStatus;

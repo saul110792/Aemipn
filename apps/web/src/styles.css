@@ -733,3 +733,45 @@ tbody tr:hover { background: var(--guinda-100); }
   .anio-fila { grid-template-columns: 120px 1fr; min-width: 640px; }
   .anio-etiqueta { font-size: 0.78rem; }
 }
+
+/* ---------- Campo de etiquetas ---------- */
+.etiquetas { position: relative; }
+.etiquetas-lista {
+  list-style: none; margin: 0 0 0.45rem; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 0.35rem;
+}
+.etiquetas-lista li {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: var(--guinda-100); color: var(--guinda);
+  border-radius: 999px; padding: 0.22rem 0.3rem 0.22rem 0.7rem;
+  font-size: 0.85rem; font-weight: 600;
+}
+.etiquetas-lista button {
+  border: none; background: rgba(97, 18, 50, 0.12); color: var(--guinda);
+  cursor: pointer; border-radius: 50%; width: 20px; height: 20px;
+  display: grid; place-items: center; font-size: 0.95rem; line-height: 1; padding: 0;
+}
+.etiquetas-lista button:hover { background: var(--guinda); color: var(--blanco); }
+
+.etiquetas-entrada { display: flex; gap: 0.4rem; }
+.etiquetas-entrada input {
+  flex: 1; padding: 0.55rem 0.7rem; border: 1px solid var(--borde);
+  border-radius: 8px; font: inherit; font-size: 0.94rem; background: var(--blanco);
+}
+.etiquetas-entrada input:focus {
+  outline: 2px solid var(--guinda-500); outline-offset: -1px; border-color: var(--guinda-500);
+}
+
+.etiquetas-sugerencias {
+  position: absolute; z-index: 20; left: 0; right: 0; top: 100%;
+  margin: 0.25rem 0 0; padding: 0.3rem; list-style: none;
+  background: var(--blanco); border: 1px solid var(--borde);
+  border-radius: var(--radio); box-shadow: var(--sombra);
+  max-height: 220px; overflow-y: auto;
+}
+.etiquetas-sugerencias button {
+  display: block; width: 100%; text-align: left; border: none; background: none;
+  cursor: pointer; font: inherit; font-size: 0.9rem;
+  padding: 0.45rem 0.55rem; border-radius: 7px; color: var(--texto);
+}
+.etiquetas-sugerencias button:hover { background: var(--guinda-100); color: var(--guinda); }

@@ -97,7 +97,8 @@ editionsRouter.get(
             member: {
               select: {
                 id: true, nombre: true, apellidoPaterno: true, apellidoMaterno: true,
-                email: true, telefono: true, tipoSangre: true, contactoEmergencia: true,
+                email: true, telefono: true, tipoSangre: true, alergias: true,
+                contactoEmergencia: true,
                 telefonoEmergencia: true, status: true,
               },
             },

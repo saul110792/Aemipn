@@ -7,6 +7,7 @@ import type { Area, Member, MemberStatus, Paginated } from '../../lib/types';
 import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { etiqueta, fmtFechaCorta, nombreCompleto } from '../../lib/format';
 import { useAuth } from '../../lib/auth';
+import { TIPOS_DE_SANGRE } from '../../lib/catalogos';
 
 const ESTADOS: MemberStatus[] = ['ASPIRANTE', 'ACTIVO', 'INACTIVO', 'BAJA'];
 
@@ -241,7 +242,12 @@ function FormularioMiembro({
             </div>
             <div className="campo">
               <label htmlFor="n-sangre">Tipo de sangre</label>
-              <input id="n-sangre" placeholder="O+" {...register('tipoSangre')} />
+              <select id="n-sangre" {...register('tipoSangre')}>
+                <option value="">No lo sé</option>
+                {TIPOS_DE_SANGRE.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
             </div>
             <div className="campo">
               <label htmlFor="n-emerg">Contacto de emergencia</label>
