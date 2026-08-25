@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import type { Area, Course, CourseKind } from '../../lib/types';
@@ -17,6 +17,12 @@ interface CursoConteo extends Course {
 
 const TIPOS: CourseKind[] = ['AREA', 'TALLER', 'CIM', 'CERTIFICACION'];
 
+/** Compara ignorando acentos y mayusculas, como espera quien busca "canonismo". */
+const normalizar = (t: string) =>
+  t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+const FILTROS_VACIOS = { texto: '', areaId: '', kind: '', estado: '' };
+
 const VACIO = {
   nombre: '', codigo: '', slug: '', kind: 'TALLER' as CourseKind,
   areaId: '', duracionHoras: '', descripcion: '', requisitos: '', activo: true,
@@ -34,6 +40,30 @@ export function CursosPanel() {
   });
 
   const { data: areas } = useQuery({ queryKey: ['areas'], queryFn: () => api.get<Area[]>('/areas') });
+
+  const [filtros, setFiltros] = useState(FILTROS_VACIOS);
+  const hayFiltro = Object.values(filtros).some(Boolean);
+
+  // El catalogo son unas decenas de filas: filtrar aqui es instantaneo y
+  // evita un viaje al servidor por cada tecla.
+  const visibles = useMemo(() => {
+    const t = normalizar(filtros.texto.trim());
+    const slugArea = areas?.find((a) => a.id === filtros.areaId)?.slug;
+
+    return (data ?? []).filter((c) => {
+      if (filtros.areaId === '__sin__' && c.area) return false;
+      if (filtros.areaId && filtros.areaId !== '__sin__' && c.area?.slug !== slugArea) return false;
+      if (filtros.kind && c.kind !== filtros.kind) return false;
+      if (filtros.estado === 'activos' && c.activo === false) return false;
+      if (filtros.estado === 'inactivos' && c.activo !== false) return false;
+      if (!t) return true;
+      return (
+        normalizar(c.nombre).includes(t) ||
+        normalizar(c.codigo ?? '').includes(t) ||
+        normalizar(c.area?.nombre ?? '').includes(t)
+      );
+    });
+  }, [data, areas, filtros]);
 
   const cerrar = () => {
     setCreando(false);
@@ -70,6 +100,75 @@ export function CursosPanel() {
         />
       )}
 
+      <div className="barra-filtros">
+        <input
+          type="search"
+          aria-label="Buscar curso"
+          placeholder="Buscar por nombre, código o área…"
+          value={filtros.texto}
+          onChange={(e) => setFiltros({ ...filtros, texto: e.target.value })}
+        />
+
+        <select
+          aria-label="Filtrar por área"
+          value={filtros.areaId}
+          onChange={(e) => setFiltros({ ...filtros, areaId: e.target.value })}
+        >
+          <option value="">Todas las áreas</option>
+          <option value="__sin__">Transversales (sin área)</option>
+          {areas?.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.codigo ? a.codigo + ' · ' : ''}{a.nombre}
+            </option>
+          ))}
+        </select>
+
+        <select
+          aria-label="Filtrar por tipo"
+          value={filtros.kind}
+          onChange={(e) => setFiltros({ ...filtros, kind: e.target.value })}
+        >
+          <option value="">Todos los tipos</option>
+          {TIPOS.map((t) => (
+            <option key={t} value={t}>{etiquetaTipoCurso(t)}</option>
+          ))}
+        </select>
+
+        <select
+          aria-label="Filtrar por estado"
+          value={filtros.estado}
+          onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
+        >
+          <option value="">Activos e inactivos</option>
+          <option value="activos">Solo activos</option>
+          <option value="inactivos">Solo inactivos</option>
+        </select>
+
+        <span className="texto-suave">
+          {visibles.length === (data?.length ?? 0)
+            ? visibles.length + ' curso(s)'
+            : visibles.length + ' de ' + (data?.length ?? 0)}
+        </span>
+
+        {hayFiltro && (
+          <button type="button" className="btn btn-borde btn-sm" onClick={() => setFiltros(FILTROS_VACIOS)}>
+            Limpiar
+          </button>
+        )}
+      </div>
+
+      {visibles.length === 0 ? (
+        <div className="vacio">
+          Ningún curso coincide con el filtro.{' '}
+          <button
+            type="button"
+            onClick={() => setFiltros(FILTROS_VACIOS)}
+            style={{ background: 'none', border: 'none', padding: 0, color: 'var(--guinda-600)', cursor: 'pointer', font: 'inherit', textDecoration: 'underline' }}
+          >
+            Quitar los filtros
+          </button>
+        </div>
+      ) : (
       <div className="tabla-envoltura">
         <table>
           <thead>
@@ -84,7 +183,7 @@ export function CursosPanel() {
             </tr>
           </thead>
           <tbody>
-            {data?.map((c) => (
+            {visibles.map((c) => (
               <tr key={c.id} style={c.activo === false ? { opacity: 0.55 } : undefined}>
                 <td>
                   {c.codigo ? (
@@ -126,6 +225,7 @@ export function CursosPanel() {
           </tbody>
         </table>
       </div>
+      )}
     </>
   );
 }
