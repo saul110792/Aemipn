@@ -203,10 +203,17 @@ editionsRouter.post(
 
     const areas = await prisma.area.findMany({ where: { activa: true }, orderBy: { orden: 'asc' } });
 
-    // Una salida por area, espaciadas un dia a partir del inicio de la edicion.
+    // Una salida por area, un fin de semana tras otro: asi se dan en la
+    // practica. Son un punto de partida, no una programacion definitiva —
+    // los puentes y el clima obligan a moverlas, y por eso se editan.
     const actividades = areas.map((area, i) => {
       const fechaInicio = new Date(edition.fechaInicio);
-      fechaInicio.setDate(fechaInicio.getDate() + i);
+      fechaInicio.setDate(fechaInicio.getDate() + i * 7);
+      fechaInicio.setHours(7, 0, 0, 0);
+
+      const fechaFin = new Date(fechaInicio);
+      fechaFin.setHours(18, 0, 0, 0);
+
       return {
         editionId: edition.id,
         areaId: area.id,
@@ -214,6 +221,7 @@ editionsRouter.post(
         titulo: `Salida de ${area.nombre}`,
         descripcion: `Sesion introductoria de ${area.nombre} dentro de ${edition.clave}.`,
         fechaInicio,
+        fechaFin,
       };
     });
 
@@ -221,7 +229,9 @@ editionsRouter.post(
 
     res.status(201).json({
       creadas: actividades.length,
-      aviso: 'Ajusta fechas, lugares y responsables de cada salida desde el panel.',
+      aviso:
+        'Quedaron una por semana desde el inicio de la edicion. Ajusta fechas, ' +
+        'lugares y areas desde el programa: los puentes y el clima suelen moverlas.',
     });
   }),
 );

@@ -256,9 +256,11 @@ async function main() {
   if (yaTiene === 0) {
     await prisma.editionActivity.createMany({
       data: areas.map((area, i) => {
+        // Una por semana: asi se dan en la practica, y deja margen para
+        // moverlas cuando cae un puente o el clima obliga a intercambiarlas.
         const fechaInicio = new Date(edicion.fechaInicio);
-        fechaInicio.setDate(fechaInicio.getDate() + Math.floor(i / 4));
-        fechaInicio.setHours(8 + (i % 4) * 2, 0, 0, 0);
+        fechaInicio.setDate(fechaInicio.getDate() + i * 7);
+        fechaInicio.setHours(7, 0, 0, 0);
         return {
           editionId: edicion.id,
           areaId: area.id,

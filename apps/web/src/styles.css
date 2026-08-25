@@ -775,3 +775,12 @@ tbody tr:hover { background: var(--guinda-100); }
   padding: 0.45rem 0.55rem; border-radius: 7px; color: var(--texto);
 }
 .etiquetas-sugerencias button:hover { background: var(--guinda-100); color: var(--guinda); }
+
+/* Panel de edición de una sesión, dentro de la tabla del programa. */
+.editar-sesion {
+  padding: 1rem;
+  border-left: 3px solid var(--guinda-500);
+  background: var(--blanco);
+  border-radius: 8px;
+}
+.editar-sesion .campo { margin-bottom: 0.8rem; }

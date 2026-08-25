@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
-import type { CourseEdition, EnrollmentStatus, Member, Paginated, PaymentStatus } from '../../lib/types';
+import type { Area, CourseEdition, EnrollmentStatus, Member, Paginated, PaymentStatus } from '../../lib/types';
 import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { etiqueta, fmtFechaHora, fmtMoneda, fmtRango, nombreCompleto } from '../../lib/format';
 import { useAuth } from '../../lib/auth';
 import { Icono, hayIcono } from '../../components/Icono';
 import { FormularioSesion } from '../../components/FormularioSesion';
+import { EditarSesion } from '../../components/EditarSesion';
 
 const ESTADOS_INSCRIPCION: EnrollmentStatus[] = [
   'PREINSCRITO', 'INSCRITO', 'ACREDITADO', 'NO_ACREDITADO', 'BAJA',
@@ -20,6 +21,13 @@ export function EdicionDetalle() {
   const qc = useQueryClient();
   const [busqueda, setBusqueda] = useState('');
   const [agregandoSesion, setAgregandoSesion] = useState(false);
+  const [editandoSesion, setEditandoSesion] = useState<string | null>(null);
+
+  const { data: areas } = useQuery({
+    queryKey: ['areas'],
+    queryFn: () => api.get<Area[]>('/areas'),
+    enabled: esAdmin,
+  });
 
   const { data: edicion, isLoading, error } = useQuery({
     queryKey: ['edition', id],
@@ -138,11 +146,14 @@ export function EdicionDetalle() {
                     <th>Cuándo</th>
                     <th>Lugar</th>
                     <th>Área</th>
+                    {esAdmin && <th />}
                   </tr>
                 </thead>
                 <tbody>
                   {edicion.actividades.map((a) => (
-                    <tr key={a.id}>
+                    // La fila y su panel de edición son hermanas, de ahí el fragmento.
+                    <Fragment key={a.id}>
+                    <tr>
                       <td>
                         <span className="insignia insignia-guinda">{etiqueta(a.kind)}</span>
                       </td>
@@ -172,7 +183,34 @@ export function EdicionDetalle() {
                           <span className="texto-suave">—</span>
                         )}
                       </td>
+                      {esAdmin && (
+                        <td>
+                          <button
+                            type="button"
+                            className="btn btn-borde btn-sm"
+                            onClick={() =>
+                              setEditandoSesion(editandoSesion === a.id ? null : a.id)
+                            }
+                          >
+                            {editandoSesion === a.id ? 'Cerrar' : 'Editar'}
+                          </button>
+                        </td>
+                      )}
                     </tr>
+                    {esAdmin && editandoSesion === a.id && (
+                      <tr>
+                        <td colSpan={6} style={{ background: 'var(--fondo)' }}>
+                          <EditarSesion
+                            editionId={edicion.id}
+                            actividad={a}
+                            areas={areas ?? []}
+                            onListo={() => setEditandoSesion(null)}
+                            onCancelar={() => setEditandoSesion(null)}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

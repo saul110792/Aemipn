@@ -97,6 +97,18 @@ los eventos de su área sin publicar. **Una notificación que no se puede atende
 El frontend la consulta cada minuto y al volver a la pestaña, y la invalida en cuanto se acepta
 o rechaza una solicitud, para que el contador baje sin esperar al siguiente sondeo.
 
+## Editar una sesión del programa
+
+`PATCH /api/editions/:id/activities/:activityId` cambia tipo, título, **área**, fechas, lugar y
+notas de una sesión ya programada.
+
+Poder cambiar el área importa tanto como la fecha: cuando el clima impide una salida de cañonismo
+se hace una de fotografía, y sigue siendo la misma casilla del programa. Cambiar la fecha cubre el
+otro caso habitual, los puentes y días festivos en que no hay salida.
+
+`POST /api/editions/:id/activities/generar-cim` reparte las salidas **una por semana** desde el
+inicio de la edición. Es un punto de partida, no una programación definitiva.
+
 ## Corregir una declaración
 
 Dos caminos, con alcances distintos:
