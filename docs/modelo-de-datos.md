@@ -45,10 +45,13 @@ El de cada área en *Actividad → Áreas*; el de cada curso al darlo de alta o 
 `CBER_2026A`, `CBER_2026B`… La clave se escribe en la edición cuando se crea, así que
 **cambiar el código después no reescribe las claves ya emitidas**, y el histórico se conserva.
 
-**El acceso a un área se gana con un curso aprobado.**
-Quien se registra declara los cursos que tomó (`CourseClaim`: curso + año + letra). El jefe de
-esa área lo confirma, y solo entonces se le crea la `AreaMembership` que le abre esa área. Nadie
-se acredita a sí mismo, y un jefe no puede ver ni resolver lo de un área que no encabeza.
+**Solo el curso base de un área da la membresía.**
+Quien se registra declara los cursos que tomó (`CourseClaim`: curso + año + letra) y el jefe del
+área los confirma. Aprobar el curso de `kind: AREA` crea la `AreaMembership` que abre esa área;
+aprobar un `TALLER` lo deja en el historial pero **no da acceso**, porque un taller es formación
+complementaria y no acredita la disciplina.
+
+Nadie se acredita a sí mismo, y un jefe no puede ver ni resolver lo de un área que no encabeza.
 
 **El correo se confirma antes de poder entrar.**
 `EmailVerification` guarda el *hash* de la liga y del código, nunca el valor: quien lea la base

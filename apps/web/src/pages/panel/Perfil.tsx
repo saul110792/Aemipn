@@ -12,7 +12,7 @@ const LETRAS = ['A', 'B', 'C', 'D', 'E'] as const;
 /** El desplegable separa las tres cosas: no son equivalentes. */
 const GRUPOS = [
   { kind: 'CIM', titulo: 'Curso introductorio' },
-  { kind: 'AREA', titulo: 'Cursos de área — acreditarlos integra al área' },
+  { kind: 'AREA', titulo: 'Cursos de área — el curso base integra al área' },
   { kind: 'TALLER', titulo: 'Talleres' },
   { kind: 'CERTIFICACION', titulo: 'Certificaciones' },
 ] as const;
@@ -258,8 +258,9 @@ function CursosDeclarados({ declaraciones }: { declaraciones: Declaracion[] }) {
       <div className="tarjeta-cuerpo">
         <h3>Cursos y talleres que he tomado</h3>
         <p className="texto-suave" style={{ fontSize: '0.9rem' }}>
-          Cada área tiene un curso propio y varios talleres. Declara cada uno con su generación:
-          el jefe del área lo revisa y, al aprobarlo, quedas dentro de esa área.
+          Declara cada uno con su generación; el jefe del área lo revisa. Aprobar el
+          <strong> curso base</strong> de un área es lo que te integra a ella. Los talleres quedan
+          en tu historial, pero no abren el área por sí solos.
         </p>
 
         {declaraciones.length === 0 ? (
@@ -284,7 +285,14 @@ function CursosDeclarados({ declaraciones }: { declaraciones: Declaracion[] }) {
                         {d.course.codigo ?? '—'}_{d.anio}{d.letra}
                       </code>
                     </td>
-                    <td>{d.course.nombre}</td>
+                    <td>
+                      {d.course.nombre}
+                      {d.course.kind === 'AREA' && (
+                        <div className="texto-suave" style={{ fontSize: '0.78rem' }}>
+                          Curso base · da acceso al área
+                        </div>
+                      )}
+                    </td>
                     <td>
                       {d.course.area ? (
                         <span className="insignia" style={{ background: `${d.course.area.color}1f`, color: d.course.area.color ?? undefined }}>

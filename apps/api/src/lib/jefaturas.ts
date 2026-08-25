@@ -33,13 +33,14 @@ export async function areasConRol(memberId: string | null, roles: AreaRole[]) {
 }
 
 /**
- * ¿Tiene esta persona un curso del área aprobado?
- * Es el requisito para ser jefe titular: se exige tener acreditado algún curso
- * que pertenezca a esa área, sea el curso base o un taller suyo.
+ * ¿Tiene aprobado el **curso base** de esa área?
+ *
+ * Es lo mismo que pertenecer a ella: solo el curso base da la membresía, y un
+ * taller no basta. Por eso el requisito para ser jefe titular se mide aquí.
  */
 export async function tieneCursoDelArea(memberId: string, areaId: string) {
   const claim = await prisma.courseClaim.findFirst({
-    where: { memberId, status: 'APROBADA', course: { areaId } },
+    where: { memberId, status: 'APROBADA', course: { areaId, kind: 'AREA' } },
     select: { id: true },
   });
   return Boolean(claim);

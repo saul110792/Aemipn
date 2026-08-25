@@ -130,6 +130,13 @@ export function Validaciones() {
               <p style={{ fontSize: '0.93rem', marginBottom: '0.5rem' }}>
                 Declara haber tomado <strong>{d.course.nombre}</strong>, generación {d.anio}{d.letra}.
               </p>
+              {d.status === 'PENDIENTE' && (
+                <p className="texto-suave" style={{ fontSize: '0.85rem' }}>
+                  {d.course.kind === 'AREA' && d.course.area
+                    ? 'Es el curso base del área: aprobarlo la integra a ' + d.course.area.nombre + '.'
+                    : 'Es un taller: aprobarlo lo deja en su historial, pero no le abre el área.'}
+                </p>
+              )}
               {d.notas && (
                 <p className="texto-suave" style={{ fontSize: '0.9rem' }}>{d.notas}</p>
               )}
@@ -148,7 +155,9 @@ export function Validaciones() {
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
                   <button type="button" className="btn btn-verde btn-sm"
                     onClick={() => aprobar.mutate(d.id)} disabled={aprobar.isPending}>
-                    Aprobar{d.course.area ? ` y sumar a ${d.course.area.nombre}` : ''}
+                    {d.course.kind === 'AREA' && d.course.area
+                      ? 'Aprobar y sumar a ' + d.course.area.nombre
+                      : 'Aprobar'}
                   </button>
                   <button type="button" className="btn btn-borde btn-sm"
                     onClick={() => setRechazando(rechazando === d.id ? null : d.id)}>

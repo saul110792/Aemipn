@@ -115,10 +115,14 @@ claimsRouter.post(
         include: incluye,
       });
 
-      if (claim.course.areaId) {
+      // Solo el curso base de un area integra a ella. Un taller es formacion
+      // complementaria: queda en el historial, pero no abre el area.
+      const integraAlArea = claim.course.kind === 'AREA' && claim.course.areaId !== null;
+
+      if (integraAlArea) {
         await tx.areaMembership.upsert({
-          where: { memberId_areaId: { memberId: claim.memberId, areaId: claim.course.areaId } },
-          create: { memberId: claim.memberId, areaId: claim.course.areaId, role: 'MIEMBRO' },
+          where: { memberId_areaId: { memberId: claim.memberId, areaId: claim.course.areaId! } },
+          create: { memberId: claim.memberId, areaId: claim.course.areaId!, role: 'MIEMBRO' },
           update: { activo: true, hasta: null },
         });
       }
@@ -129,15 +133,15 @@ claimsRouter.post(
         data: { status: 'ACTIVO' },
       });
 
-      // Quien solo tenia el CIM pasa a miembro en cuanto acredita un area.
-      if (claim.course.areaId) {
+      // Sube de CIM a miembro solo al acreditar el curso base de un area.
+      if (integraAlArea) {
         await tx.user.updateMany({
           where: { memberId: claim.memberId, role: 'CIM' },
           data: { role: 'MIEMBRO' },
         });
       }
 
-      return actualizada;
+      return { ...actualizada, integraAlArea };
     });
 
     res.json(resultado);

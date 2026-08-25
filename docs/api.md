@@ -97,6 +97,12 @@ los eventos de su área sin publicar. **Una notificación que no se puede atende
 El frontend la consulta cada minuto y al volver a la pestaña, y la invalida en cuanto se acepta
 o rechaza una solicitud, para que el contador baje sin esperar al siguiente sondeo.
 
+## Aprobación de cursos declarados
+
+`POST /api/claims/:id/aprobar` devuelve `integraAlArea`, que dice si el visto bueno abrió un área
+o solo dejó constancia. Es `true` únicamente cuando el curso es de `kind: AREA`: el curso base es
+lo que acredita la disciplina, y un taller no basta.
+
 ## Calendario
 
 `GET /api/calendario` reúne en una sola lista las sesiones de cada edición, la duración completa
