@@ -3,6 +3,7 @@ import type { AreaRole, GlobalRole } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { forbidden, unauthorized } from '../lib/errors.js';
 import { verifyAccessToken, type AccessPayload } from '../lib/tokens.js';
+import { vigente } from '../lib/jefaturas.js';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -48,7 +49,7 @@ export const requireAreaRole =
 
     const areaId = req.params[paramName];
     const membership = await prisma.areaMembership.findFirst({
-      where: { areaId, memberId: req.user.memberId, activo: true, role: { in: roles } },
+      where: { areaId, memberId: req.user.memberId, role: { in: roles }, ...vigente() },
       select: { id: true },
     });
 

@@ -1,7 +1,7 @@
 /** Tipos compartidos entre el front y la API. Reflejan el schema de Prisma. */
 
 export type GlobalRole = 'ADMIN' | 'STAFF' | 'JEFE_CIM' | 'MIEMBRO' | 'CIM';
-export type AreaRole = 'JEFE_DE_AREA' | 'TESORERO' | 'MIEMBRO';
+export type AreaRole = 'JEFE_DE_AREA' | 'JEFE_INTERINO' | 'TESORERO' | 'MIEMBRO';
 export type MemberStatus = 'ASPIRANTE' | 'ACTIVO' | 'INACTIVO' | 'BAJA';
 export type CourseKind = 'CIM' | 'AREA' | 'TALLER' | 'CERTIFICACION';
 export type EditionStatus =
@@ -59,7 +59,7 @@ export interface Member {
   status: MemberStatus;
   fechaIngreso: string;
   fotoUrl: string | null;
-  areas?: { id: string; role: AreaRole; area: Area }[];
+  areas?: { id: string; role: AreaRole; area: Area; hasta?: string | null; asignadoPor?: string | null; motivo?: string | null }[];
   enrollments?: Enrollment[];
   _count?: { enrollments: number };
 }

@@ -83,7 +83,11 @@ authRouter.post(
         apellidoPaterno: true,
         fotoUrl: true,
         areas: {
-          where: { activo: true, role: { in: ['JEFE_DE_AREA', 'TESORERO'] } },
+          where: {
+            activo: true,
+            role: { in: ['JEFE_DE_AREA', 'JEFE_INTERINO', 'TESORERO'] },
+            OR: [{ hasta: null }, { hasta: { gte: new Date() } }],
+          },
           select: { areaId: true },
         },
       },
@@ -144,7 +148,11 @@ authRouter.post(
         apellidoPaterno: true,
         fotoUrl: true,
         areas: {
-          where: { activo: true, role: { in: ['JEFE_DE_AREA', 'TESORERO'] } },
+          where: {
+            activo: true,
+            role: { in: ['JEFE_DE_AREA', 'JEFE_INTERINO', 'TESORERO'] },
+            OR: [{ hasta: null }, { hasta: { gte: new Date() } }],
+          },
           select: { areaId: true },
         },
       },

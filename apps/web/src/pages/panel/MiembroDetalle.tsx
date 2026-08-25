@@ -7,7 +7,14 @@ import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { etiqueta, fmtFecha, fmtFechaCorta, nombreCompleto } from '../../lib/format';
 import { useAuth } from '../../lib/auth';
 
-const ROLES: AreaRole[] = ['MIEMBRO', 'JEFE_DE_AREA', 'TESORERO'];
+const ROLES: AreaRole[] = ['MIEMBRO', 'TESORERO', 'JEFE_DE_AREA', 'JEFE_INTERINO'];
+
+/** Un año a partir de hoy, en el formato que espera un input de fecha. */
+function unAnioDesdeHoy() {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().slice(0, 10);
+}
 
 export function MiembroDetalle() {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +23,16 @@ export function MiembroDetalle() {
 
   const [areaId, setAreaId] = useState('');
   const [role, setRole] = useState<AreaRole>('MIEMBRO');
+  const [hasta, setHasta] = useState(unAnioDesdeHoy());
+  const [motivo, setMotivo] = useState('');
+
+  // Ser jefe titular exige tener aprobado un curso del área.
+  const { data: elegibilidad } = useQuery({
+    queryKey: ['elegible', id, areaId],
+    queryFn: () =>
+      api.get<{ elegible: boolean }>(`/members/${id}/areas/${areaId}/elegible`),
+    enabled: Boolean(id && areaId),
+  });
 
   const { data: miembro, isLoading, error } = useQuery({
     queryKey: ['member', id],
@@ -30,11 +47,23 @@ export function MiembroDetalle() {
   });
 
   const asignar = useMutation({
-    mutationFn: () => api.post(`/members/${id}/areas`, { areaId, role }),
+    mutationFn: () =>
+      api.post(`/members/${id}/areas`, {
+        areaId,
+        role,
+        hasta: role === 'JEFE_INTERINO' ? hasta : null,
+        motivo: motivo || null,
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['member', id] });
       setAreaId('');
+      setMotivo('');
     },
+  });
+
+  const relevar = useMutation({
+    mutationFn: (aId: string) => api.post(`/members/${id}/areas/${aId}/relevar`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['member', id] }),
   });
 
   const quitar = useMutation({
@@ -163,18 +192,48 @@ export function MiembroDetalle() {
                     <span style={{ width: 4, height: 28, background: am.area.color ?? 'var(--roca)', borderRadius: 2 }} />
                     <div style={{ flex: 1 }}>
                       <strong style={{ fontSize: '0.93rem' }}>{am.area.nombre}</strong>
-                      <div className="texto-suave" style={{ fontSize: '0.82rem' }}>{etiqueta(am.role)}</div>
+                      <div className="texto-suave" style={{ fontSize: '0.82rem' }}>
+                        {etiqueta(am.role)}
+                        {am.hasta &&
+                          (new Date(am.hasta) < new Date() ? (
+                            <span style={{ color: 'var(--error)' }}>
+                              {' · venció el '}
+                              {fmtFechaCorta(am.hasta)}
+                            </span>
+                          ) : (
+                            <>{' · hasta '}{fmtFechaCorta(am.hasta)}</>
+                          ))}
+                      </div>
+                      {am.asignadoPor && (
+                        <div className="texto-suave" style={{ fontSize: '0.76rem' }}>
+                          {'Nombrado por '}{am.asignadoPor}
+                          {am.motivo ? ' — ' + am.motivo : ''}
+                        </div>
+                      )}
                     </div>
                     {esAdmin && (
-                      <button
-                        type="button"
-                        className="btn btn-borde btn-sm"
-                        onClick={() => quitar.mutate(am.area.id)}
-                        disabled={quitar.isPending}
-                        title="Dar de baja del área"
-                      >
-                        Quitar
-                      </button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        {(am.role === 'JEFE_DE_AREA' || am.role === 'JEFE_INTERINO') && (
+                          <button
+                            type="button"
+                            className="btn btn-borde btn-sm"
+                            onClick={() => relevar.mutate(am.area.id)}
+                            disabled={relevar.isPending}
+                            title="Cerrar el cargo; sigue como miembro del área"
+                          >
+                            Relevar
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="btn btn-borde btn-sm"
+                          onClick={() => quitar.mutate(am.area.id)}
+                          disabled={quitar.isPending}
+                          title="Dar de baja del área"
+                        >
+                          Quitar
+                        </button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -192,13 +251,56 @@ export function MiembroDetalle() {
                     </select>
                   </div>
                   <div className="campo">
-                    <label htmlFor="asignar-rol">Rol</label>
+                    <label htmlFor="asignar-rol">Cargo</label>
                     <select id="asignar-rol" value={role} onChange={(e) => setRole(e.target.value as AreaRole)}>
                       {ROLES.map((r) => (
-                        <option key={r} value={r}>{etiqueta(r)}</option>
+                        <option
+                          key={r}
+                          value={r}
+                          disabled={r === 'JEFE_DE_AREA' && elegibilidad?.elegible === false}
+                        >
+                          {etiqueta(r)}
+                          {r === 'JEFE_DE_AREA' && elegibilidad?.elegible === false
+                            ? ' — sin curso del área'
+                            : ''}
+                        </option>
                       ))}
                     </select>
+                    {role === 'JEFE_DE_AREA' && elegibilidad && (
+                      <span className="texto-suave" style={{ fontSize: '0.8rem' }}>
+                        {elegibilidad.elegible
+                          ? 'Tiene un curso del área aprobado.'
+                          : 'No tiene ningún curso de esta área aprobado; nombra a un interino.'}
+                      </span>
+                    )}
                   </div>
+
+                  {role === 'JEFE_INTERINO' && (
+                    <>
+                      <div className="campo">
+                        <label htmlFor="asignar-hasta">Hasta *</label>
+                        <input
+                          id="asignar-hasta"
+                          type="date"
+                          value={hasta}
+                          max={unAnioDesdeHoy()}
+                          onChange={(e) => setHasta(e.target.value)}
+                        />
+                        <span className="texto-suave" style={{ fontSize: '0.8rem' }}>
+                          Un interino no puede pasar de doce meses; al vencer deja de mandar solo.
+                        </span>
+                      </div>
+                      <div className="campo">
+                        <label htmlFor="asignar-motivo">Motivo</label>
+                        <input
+                          id="asignar-motivo"
+                          value={motivo}
+                          placeholder="Nadie acreditado en el área todavía"
+                          onChange={(e) => setMotivo(e.target.value)}
+                        />
+                      </div>
+                    </>
+                  )}
                   <button
                     type="button"
                     className="btn btn-verde btn-sm"
@@ -208,6 +310,7 @@ export function MiembroDetalle() {
                     Asignar
                   </button>
                   {asignar.error != null && <ErrorAviso error={asignar.error} />}
+                  {relevar.error != null && <ErrorAviso error={relevar.error} />}
                 </div>
               )}
             </div>

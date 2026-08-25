@@ -76,7 +76,7 @@ verificadas, porque ahí es él quien responde por la identidad de la persona.
 ## Enums
 
 - `GlobalRole`: `ADMIN` · `STAFF` · `MIEMBRO`
-- `AreaRole`: `JEFE_DE_AREA` · `TESORERO` · `MIEMBRO`
+- `AreaRole`: `JEFE_DE_AREA` · `JEFE_INTERINO` · `TESORERO` · `MIEMBRO`
 - `MemberStatus`: `ASPIRANTE` · `ACTIVO` · `INACTIVO` · `BAJA`
 - `CourseKind`: `CIM` · `AREA` · `TALLER` · `CERTIFICACION`
 - `EditionStatus`: `BORRADOR` · `INSCRIPCIONES_ABIERTAS` · `EN_CURSO` · `CONCLUIDA` · `CANCELADA`
@@ -96,6 +96,24 @@ verificadas, porque ahí es él quien responde por la identidad de la persona.
 | `JEFE_CIM` | Coordina el curso introductorio. Resuelve las declaraciones del CIM, pero **no ve las áreas** salvo que tenga sus cursos aprobados. |
 | `MIEMBRO` | Tiene al menos un curso de área aprobado. Ve lo de sus áreas. |
 | `CIM` | Se registró y confirmó su correo, sin cursos de área aprobados todavía. Solo ve lo del CIM. |
+
+### Nombramientos
+
+Ser jefe titular (`JEFE_DE_AREA`) **exige tener aprobado un curso de esa área**. El cargo aprueba
+los cursos de los demás, y no tendría sentido que lo ejerza quien no acreditó el suyo. La API lo
+comprueba; no es solo un aviso en la pantalla.
+
+Cuando nadie califica todavía —un área que arranca— la salida es `JEFE_INTERINO`: manda igual,
+pero **siempre lleva fecha de término**, tope de doce meses, y al vencer deja de dar permisos solo,
+sin que nadie tenga que acordarse de retirarlo.
+
+Un área puede tener **más de un jefe a la vez**: hay co-jefaturas, y un interino puede convivir con
+un titular. Por eso nombrar a uno nuevo no releva al anterior. Relevar es una acción aparte, y deja
+a la persona como **miembro del área**, no fuera de ella: el jefe saliente rara vez abandona la
+disciplina, solo deja de mandar.
+
+Cada nombramiento guarda **quién lo hizo y por qué** (`asignadoPor`, `motivo`), para poder
+responder "¿desde cuándo es jefe y quién lo puso?".
 
 Encabezar un área es un `AreaRole` (`JEFE_DE_AREA`, `TESORERO`), no un rol global: alguien puede
 ser jefe de Escalada y miembro raso en Espeleología. **Un jefe no ve otra área a menos que tenga

@@ -13,7 +13,7 @@ interface AreaPublica {
   contenido: string | null;
   color: string | null;
   cursos: { id: string; slug: string; nombre: string; descripcion: string | null; requisitos: string | null; duracionHoras: number | null }[];
-  miembros: { role: string; member: { nombre: string; apellidoPaterno: string; fotoUrl: string | null } }[];
+  miembros: { role: string; hasta: string | null; member: { nombre: string; apellidoPaterno: string; fotoUrl: string | null } }[];
 }
 
 export function AreaDetalle() {

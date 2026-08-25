@@ -25,7 +25,8 @@ enum GlobalRole {
 
 /// Rol dentro de un área específica. Un miembro puede tener rol distinto por área.
 enum AreaRole {
-  JEFE_DE_AREA
+  JEFE_DE_AREA /// titular; exige tener aprobado un curso del área
+  JEFE_INTERINO /// releva mientras nadie acreditado pueda tomarlo; siempre con fecha de término
   TESORERO
   MIEMBRO
 }
@@ -264,8 +265,15 @@ model AreaMembership {
   areaId   String
   role     AreaRole  @default(MIEMBRO)
   desde    DateTime  @default(now())
+  /// Fin del nombramiento. Obligatorio para un interino: pasada esa fecha el
+  /// cargo deja de dar permisos aunque el registro siga activo.
   hasta    DateTime?
   activo   Boolean   @default(true)
+
+  /// Correo de quien hizo el nombramiento, para poder responder "quién lo puso".
+  asignadoPor String?
+  /// Por qué se nombró así, sobre todo cuando es un interino.
+  motivo      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

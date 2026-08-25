@@ -5,6 +5,7 @@ import { asyncHandler } from '../lib/asyncHandler.js';
 import { forbidden, notFound } from '../lib/errors.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth } from '../middleware/auth.js';
+import { ROLES_DE_MANDO, areasConRol } from '../lib/jefaturas.js';
 
 export const claimsRouter = Router();
 claimsRouter.use(requireAuth);
@@ -29,11 +30,7 @@ async function areasQueRevisa(user: { role: string; memberId: string | null }) {
   if (user.role === 'ADMIN' || user.role === 'STAFF') return null;
   if (!user.memberId) return [];
 
-  const m = await prisma.areaMembership.findMany({
-    where: { memberId: user.memberId, activo: true, role: 'JEFE_DE_AREA' },
-    select: { areaId: true },
-  });
-  return m.map((x) => x.areaId);
+  return areasConRol(user.memberId, ROLES_DE_MANDO);
 }
 
 /** El CIM no pertenece a un área; lo resuelve quien lo coordina. */

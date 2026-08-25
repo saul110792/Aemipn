@@ -3,9 +3,16 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
-import { forbidden, notFound } from '../lib/errors.js';
+import { badRequest, forbidden, notFound } from '../lib/errors.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import {
+  MESES_MAXIMOS_INTERINO,
+  ROLES_DE_MESA,
+  areasConRol,
+  limiteInterino,
+  tieneCursoDelArea,
+} from '../lib/jefaturas.js';
 
 export const membersRouter = Router();
 membersRouter.use(requireAuth);
@@ -47,15 +54,7 @@ async function padronesQueVe(user: { role: string; memberId: string | null }) {
   if (!user.memberId) return [];
 
   // Un jefe o tesorero ve a la gente de su area; nadie mas ve el padron.
-  const m = await prisma.areaMembership.findMany({
-    where: {
-      memberId: user.memberId,
-      activo: true,
-      role: { in: ['JEFE_DE_AREA', 'TESORERO'] },
-    },
-    select: { areaId: true },
-  });
-  return m.map((x) => x.areaId);
+  return areasConRol(user.memberId, ROLES_DE_MESA);
 }
 
 /**
@@ -186,24 +185,110 @@ membersRouter.delete(
 /** POST /api/members/:id/areas — asignar o mover a un miembro dentro de un area. */
 const assignAreaSchema = z.object({
   areaId: z.string().min(1),
-  role: z.enum(['JEFE_DE_AREA', 'TESORERO', 'MIEMBRO']).default('MIEMBRO'),
+  role: z.enum(['JEFE_DE_AREA', 'JEFE_INTERINO', 'TESORERO', 'MIEMBRO']).default('MIEMBRO'),
+  /// Obligatoria para un interino; opcional para los demas.
+  hasta: z.coerce.date().optional().nullable(),
+  motivo: z.string().max(400).optional().nullable(),
 });
 
+/**
+ * POST /api/members/:id/areas — asignar o mover a alguien dentro de un area.
+ *
+ * Jefe titular exige tener aprobado un curso de esa area: el cargo aprueba
+ * cursos ajenos, y no tendria sentido que lo ejerza quien no acredito el suyo.
+ * Cuando nadie califica, la salida es un JEFE_INTERINO, que siempre lleva
+ * fecha de termino y caduca solo.
+ */
 membersRouter.post(
   '/:id/areas',
   requireRole('ADMIN', 'STAFF'),
   validate(assignAreaSchema),
   asyncHandler(async (req, res) => {
-    const { areaId, role } = req.body as z.infer<typeof assignAreaSchema>;
+    const { areaId, role, hasta, motivo } = req.body as z.infer<typeof assignAreaSchema>;
+
+    if (role === 'JEFE_DE_AREA' && !(await tieneCursoDelArea(req.params.id, areaId))) {
+      throw badRequest(
+        'Para ser jefe titular hace falta tener aprobado un curso de esa area. ' +
+          'Si nadie califica todavia, nombra a un jefe interino.',
+      );
+    }
+
+    // El interino existe justamente para no quedarse; el plazo no es opcional.
+    let termino = hasta ?? null;
+    if (role === 'JEFE_INTERINO') {
+      const maximo = limiteInterino();
+      termino = hasta ?? maximo;
+      if (termino > maximo) {
+        throw badRequest(
+          `Un interino no puede pasar de ${MESES_MAXIMOS_INTERINO} meses. ` +
+            `La fecha maxima es ${maximo.toLocaleDateString('es-MX')}.`,
+        );
+      }
+      if (termino <= new Date()) throw badRequest('La fecha de termino ya paso');
+    }
 
     const membership = await prisma.areaMembership.upsert({
       where: { memberId_areaId: { memberId: req.params.id, areaId } },
-      create: { memberId: req.params.id, areaId, role },
-      update: { role, activo: true, hasta: null },
+      create: {
+        memberId: req.params.id,
+        areaId,
+        role,
+        hasta: termino,
+        asignadoPor: req.user!.email,
+        motivo: motivo ?? null,
+      },
+      update: {
+        role,
+        activo: true,
+        hasta: termino,
+        desde: new Date(),
+        asignadoPor: req.user!.email,
+        motivo: motivo ?? null,
+      },
       include: { area: true },
     });
 
     res.json(membership);
+  }),
+);
+
+/**
+ * POST /api/members/:id/areas/:areaId/relevar
+ * Cierra el cargo y deja a la persona como miembro del area: el jefe saliente
+ * rara vez abandona la disciplina, solo deja de mandar.
+ */
+membersRouter.post(
+  '/:id/areas/:areaId/relevar',
+  requireRole('ADMIN', 'STAFF'),
+  asyncHandler(async (req, res) => {
+    const actual = await prisma.areaMembership.findUnique({
+      where: { memberId_areaId: { memberId: req.params.id, areaId: req.params.areaId } },
+    });
+    if (!actual) throw notFound('Esa persona no pertenece al area');
+
+    res.json(
+      await prisma.areaMembership.update({
+        where: { id: actual.id },
+        data: {
+          role: 'MIEMBRO',
+          hasta: null,
+          asignadoPor: req.user!.email,
+          motivo: 'Relevado del cargo',
+        },
+        include: { area: true },
+      }),
+    );
+  }),
+);
+
+/**
+ * GET /api/members/:id/areas/:areaId/elegible
+ * Si esta persona califica para jefe titular de esa area.
+ */
+membersRouter.get(
+  '/:id/areas/:areaId/elegible',
+  asyncHandler(async (req, res) => {
+    res.json({ elegible: await tieneCursoDelArea(req.params.id, req.params.areaId) });
   }),
 );
 

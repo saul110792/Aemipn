@@ -65,11 +65,26 @@ areasRouter.get(
 
     if (!area) throw notFound('Area no encontrada');
 
-    // Separar la mesa directiva del area del resto del padron.
+    const ahora = new Date();
+    const conMando = area.miembros.filter(
+      (m) =>
+        (m.role === 'JEFE_DE_AREA' || m.role === 'JEFE_INTERINO') &&
+        (!m.hasta || m.hasta >= ahora),
+    );
+
     res.json({
       ...area,
-      jefe: area.miembros.find((m) => m.role === 'JEFE_DE_AREA') ?? null,
-      tesorero: area.miembros.find((m) => m.role === 'TESORERO') ?? null,
+      // En plural a proposito: hay co-jefaturas, y un interino puede convivir
+      // con un titular. Devolver solo el primero los escondia.
+      jefes: conMando,
+      tesoreros: area.miembros.filter((m) => m.role === 'TESORERO'),
+      /// Nombramientos de mando ya vencidos, para poder mostrarlos como historia.
+      mandosVencidos: area.miembros.filter(
+        (m) =>
+          (m.role === 'JEFE_DE_AREA' || m.role === 'JEFE_INTERINO') &&
+          m.hasta !== null &&
+          m.hasta < ahora,
+      ),
     });
   }),
 );
