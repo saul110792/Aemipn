@@ -64,6 +64,7 @@ Todas requieren sesión. `ADMIN`/`STAFF` donde se indica.
 | GET | `/events/:id` | sesión — 403 si es privado de un área ajena |
 | POST/PATCH/DELETE | `/events` | ADMIN, STAFF **o jefe/tesorero del área del evento** |
 | GET | `/notificaciones` | sesión — devuelve solo lo que quien pregunta puede resolver |
+| GET | `/calendario?desde=&hasta=` | sesión — ver la nota de planeación abajo |
 | GET | `/media` | ADMIN, STAFF |
 | POST | `/media` | ADMIN, STAFF — `multipart/form-data`, campo `archivo` |
 | PATCH | `/media/:id` | ADMIN, STAFF — edita el texto alternativo |
@@ -95,6 +96,19 @@ los eventos de su área sin publicar. **Una notificación que no se puede atende
 
 El frontend la consulta cada minuto y al volver a la pestaña, y la invalida en cuanto se acepta
 o rechaza una solicitud, para que el contador baje sin esperar al siguiente sondeo.
+
+## Calendario
+
+`GET /api/calendario` reúne en una sola lista las sesiones de cada edición, la duración completa
+de las ediciones abiertas y los eventos, cada uno con el color de su área.
+
+La regla de visibilidad tiene **una excepción deliberada** al aislamiento entre áreas: quien
+encabeza un área —y quien coordina el CIM— ve también **los cursos de las demás**, marcados con
+`ajeno: true`. Sin eso no se puede programar sin encimarse, que es justo para lo que sirve la
+vista. La excepción alcanza solo a los cursos: los **eventos privados de otra área no se filtran**,
+esos siguen la visibilidad de siempre.
+
+Un miembro sin cargo ve lo de sus áreas más lo público, y nada de los cursos ajenos.
 
 ## Archivos subidos
 

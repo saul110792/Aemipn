@@ -86,6 +86,10 @@ export function PanelLayout() {
           )}
 
           <div className="grupo">Actividad</div>
+          <NavLink to="/panel/calendario" className={clase}>
+            <Icono nombre="calendario" />
+            Calendario
+          </NavLink>
           <NavLink to="/panel/areas" className={clase}>
             <Icono nombre="areas" />
             Áreas

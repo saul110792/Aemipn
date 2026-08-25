@@ -319,6 +319,74 @@ async function main() {
     }
   }
 
+  // --- Otras ediciones, para que el calendario muestre su razon de ser ------
+  // Se traslapan a proposito: es justo lo que la vista de calendario deja ver
+  // para que dos areas no programen encima una de otra.
+  const OTRAS_EDICIONES = [
+    {
+      codigo: 'CBAM', ini: [8, 5], fin: [9, 18], sede: 'Iztaccíhuatl y Nevado de Toluca',
+      sesiones: [
+        ['CLASE_TEORICA', 'Aclimatación y fisiología de altura', [8, 5], [8, 5]],
+        ['SALIDA_1_DIA', 'Ascenso al Nevado de Toluca', [8, 19], [8, 19]],
+        ['CAMPAMENTO', 'Campamento de aclimatación en Iztaccíhuatl', [9, 2], [9, 4]],
+        ['EXAMEN_PRACTICO', 'Examen práctico en alta montaña', [9, 17], [9, 18]],
+      ],
+    },
+    {
+      codigo: 'CBE', ini: [8, 12], fin: [9, 10], sede: 'Sótano de las Golondrinas',
+      sesiones: [
+        ['CLASE_TEORICA', 'Técnica vertical y equipo', [8, 12], [8, 12]],
+        ['CAMPAMENTO', 'Exploración en Sótano de las Golondrinas', [8, 26], [8, 28]],
+        ['EXAMEN_TEORICO', 'Examen teórico de espeleología', [9, 9], [9, 9]],
+      ],
+    },
+    {
+      codigo: 'CBMM', ini: [9, 1], fin: [9, 25], sede: 'Ajusco y Sierra de Guadalupe',
+      sesiones: [
+        ['SALIDA_1_DIA', 'Travesía Ajusco', [9, 3], [9, 3]],
+        ['SALIDA_1_DIA', 'Sierra de Guadalupe', [9, 17], [9, 17]],
+      ],
+    },
+  ] as const;
+
+  const anioEd = hoy.getFullYear();
+  let edicionesNuevas = 0;
+
+  for (const e of OTRAS_EDICIONES) {
+    const curso = await prisma.course.findFirst({ where: { codigo: e.codigo } });
+    if (!curso) continue;
+
+    const clave = `${e.codigo}_${anioEd}A`;
+    const ed = await prisma.courseEdition.upsert({
+      where: { clave },
+      create: {
+        clave,
+        courseId: curso.id,
+        fechaInicio: new Date(anioEd, e.ini[0], e.ini[1], 8),
+        fechaFin: new Date(anioEd, e.fin[0], e.fin[1], 18),
+        cupo: 14,
+        costo: 900,
+        sede: e.sede,
+        estado: 'INSCRIPCIONES_ABIERTAS',
+      },
+      update: {},
+    });
+
+    if ((await prisma.editionActivity.count({ where: { editionId: ed.id } })) === 0) {
+      await prisma.editionActivity.createMany({
+        data: e.sesiones.map(([kind, titulo, ini, fin]) => ({
+          editionId: ed.id,
+          kind,
+          titulo,
+          fechaInicio: new Date(anioEd, ini[0], ini[1], 8),
+          fechaFin: new Date(anioEd, fin[0], fin[1], 18),
+        })),
+      });
+      edicionesNuevas++;
+    }
+  }
+  if (edicionesNuevas > 0) console.log(`  ${edicionesNuevas} ediciones mas, con sus sesiones`);
+
   // --- Eventos de ejemplo --------------------------------------------------
   // Uno de cada modalidad y visibilidad, para que el calendario y el panel
   // tengan con que trabajar desde el primer arranque.

@@ -19,6 +19,7 @@ import { notificationsRouter } from './routes/notifications.routes.js';
 import { registroRouter } from './routes/registro.routes.js';
 import { perfilRouter } from './routes/perfil.routes.js';
 import { claimsRouter } from './routes/claims.routes.js';
+import { calendarioRouter } from './routes/calendario.routes.js';
 import { CARPETA_SUBIDAS, mediaRouter } from './routes/media.routes.js';
 
 export function createApp() {
@@ -66,6 +67,7 @@ export function createApp() {
   app.use('/api/registro', registroRouter);
   app.use('/api/perfil', perfilRouter);
   app.use('/api/claims', claimsRouter);
+  app.use('/api/calendario', calendarioRouter);
   app.use('/api/media', mediaRouter);
 
   app.use(notFoundHandler);

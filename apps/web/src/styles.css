@@ -593,3 +593,86 @@ tbody tr:hover { background: var(--guinda-100); }
 @media (max-width: 640px) {
   .campana-panel { right: -0.5rem; }
 }
+
+/* ---------- Calendario de actividades ---------- */
+.leyenda { display: flex; gap: 0.85rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
+.leyenda-item {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.82rem; color: var(--texto-suave);
+}
+.leyenda-color { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+
+.calendario {
+  background: var(--blanco); border: 1px solid var(--borde);
+  border-radius: var(--radio); overflow: hidden;
+}
+.cal-encabezado {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  background: var(--arena); border-bottom: 1px solid var(--borde);
+}
+.cal-encabezado div {
+  padding: 0.5rem 0.6rem; font-size: 0.75rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--guinda);
+}
+
+/* Cada semana superpone dos capas: las celdas de fondo y las barras encima. */
+.cal-semana { position: relative; border-bottom: 1px solid var(--borde); }
+.cal-semana:last-child { border-bottom: none; }
+.cal-semana > .cal-dia,
+.cal-semana > .cal-barras { }
+.cal-semana { display: grid; grid-template-columns: repeat(7, 1fr); }
+
+.cal-dia { border-right: 1px solid var(--borde); padding: 0.3rem 0.45rem; min-height: 90px; }
+.cal-dia:last-child { border-right: none; }
+.cal-dia.fuera { background: #fbfafa; }
+.cal-dia.fuera .cal-numero { color: #b9b0b4; }
+.cal-dia.hoy { background: var(--guinda-100); }
+.cal-numero { font-size: 0.82rem; font-weight: 700; color: var(--texto-suave); }
+.cal-dia.hoy .cal-numero {
+  background: var(--guinda); color: var(--blanco);
+  border-radius: 999px; padding: 0.1rem 0.42rem;
+}
+
+.cal-barras {
+  position: absolute; inset: 1.6rem 0 0.3rem 0;
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 20px; gap: 2px 0;
+  pointer-events: none; padding: 0 2px;
+}
+.cal-barra {
+  pointer-events: auto;
+  margin: 0 2px; padding: 0 0.4rem; border: 1px solid transparent; border-radius: 5px;
+  font: inherit; font-size: 0.72rem; font-weight: 600; line-height: 18px;
+  text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer;
+}
+.cal-barra:hover { filter: brightness(1.08); }
+.cal-barra.ajena { border-style: dashed; opacity: 0.72; }
+.cal-barra.edicion { font-weight: 700; }
+
+.cal-agenda { display: none; }
+.cal-agenda-item {
+  display: flex; gap: 0.7rem; align-items: center; width: 100%; text-align: left;
+  background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio);
+  padding: 0.7rem 0.8rem; margin-bottom: 0.5rem; cursor: pointer; font: inherit;
+}
+.cal-agenda-item strong { display: block; font-size: 0.93rem; }
+.cal-agenda-item .texto-suave { display: block; font-size: 0.82rem; }
+.cal-agenda-color { width: 5px; align-self: stretch; border-radius: 3px; flex: none; }
+
+.cal-detalle { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 1rem; }
+.cal-detalle-velo {
+  position: absolute; inset: 0; background: rgba(20, 5, 12, 0.45);
+  border: none; cursor: default;
+}
+.cal-detalle-caja {
+  position: relative; z-index: 1; width: min(430px, 100%);
+  background: var(--blanco); border-radius: var(--radio);
+  box-shadow: var(--sombra-alta); padding: 1.25rem;
+}
+
+/* En el teléfono una rejilla de siete columnas no se lee: se cambia por agenda. */
+@media (max-width: 780px) {
+  .calendario { display: none; }
+  .cal-agenda { display: block; }
+}

@@ -24,6 +24,7 @@ import { Contenido } from './pages/panel/Contenido';
 import { EventosPanel } from './pages/panel/EventosPanel';
 import { Perfil } from './pages/panel/Perfil';
 import { Validaciones } from './pages/panel/Validaciones';
+import { Calendario } from './pages/panel/Calendario';
 import { EdicionDetalle } from './pages/panel/EdicionDetalle';
 
 /** Bloquea el panel a quien no haya iniciado sesion. */
@@ -60,6 +61,7 @@ export function App() {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="calendario" element={<Calendario />} />
         <Route path="perfil" element={<Perfil />} />
         <Route path="validaciones" element={<Validaciones />} />
         <Route path="miembros" element={<Miembros />} />
