@@ -503,6 +503,10 @@ model CourseClaim {
   letra String
 
   status        ClaimStatus @default(PENDIENTE)
+  /// Quien hizo la ultima correccion y cuando. Importa saber si el dato lo
+  /// arreglo la propia persona o el area con su registro en la mano.
+  editadaPor    String?
+  editadaEn     DateTime?
   revisadaPor   String?
   revisadaEn    DateTime?
   motivoRechazo String?

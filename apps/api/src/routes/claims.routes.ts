@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
-import { forbidden, notFound } from '../lib/errors.js';
+import { conflict, forbidden, notFound } from '../lib/errors.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth } from '../middleware/auth.js';
 import { ROLES_DE_MANDO, areasConRol } from '../lib/jefaturas.js';
@@ -145,6 +145,63 @@ claimsRouter.post(
     });
 
     res.json(resultado);
+  }),
+);
+
+const correccionSchema = z.object({
+  anio: z.coerce
+    .number()
+    .int()
+    .min(1980, 'El ano no puede ser anterior a 1980')
+    .max(new Date().getFullYear(), 'El ano no puede ser futuro'),
+  letra: z.enum(['A', 'B', 'C', 'D', 'E'], {
+    errorMap: () => ({ message: 'La generacion va de la A a la E' }),
+  }),
+  notas: z.string().max(500).optional().nullable(),
+});
+
+/**
+ * PATCH /api/claims/:id
+ *
+ * El area corrige la generacion con su registro en la mano, y puede hacerlo
+ * aunque la declaracion ya este resuelta: si aprobo 2023 y su lista dice 2022,
+ * lo que vale es su lista. No se toca el curso ni el estado, solo el dato:
+ * cambiar el curso movería la revision a otra area y eso es una declaracion
+ * distinta, no una correccion.
+ */
+claimsRouter.patch(
+  '/:id',
+  validate(correccionSchema),
+  asyncHandler(async (req, res) => {
+    const claim = await exigirPermiso(req.user!, req.params.id);
+    const d = req.body as z.infer<typeof correccionSchema>;
+
+    const choque = await prisma.courseClaim.findFirst({
+      where: {
+        memberId: claim.memberId,
+        courseId: claim.courseId,
+        anio: d.anio,
+        letra: d.letra,
+        NOT: { id: claim.id },
+      },
+    });
+    if (choque) {
+      throw conflict('Esa persona ya tiene declarada esa generacion de este curso.');
+    }
+
+    res.json(
+      await prisma.courseClaim.update({
+        where: { id: claim.id },
+        data: {
+          anio: d.anio,
+          letra: d.letra,
+          notas: d.notas ?? claim.notas,
+          editadaPor: req.user!.email,
+          editadaEn: new Date(),
+        },
+        include: incluye,
+      }),
+    );
   }),
 );
 

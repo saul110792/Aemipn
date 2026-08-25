@@ -97,6 +97,23 @@ los eventos de su área sin publicar. **Una notificación que no se puede atende
 El frontend la consulta cada minuto y al volver a la pestaña, y la invalida en cuanto se acepta
 o rechaza una solicitud, para que el contador baje sin esperar al siguiente sondeo.
 
+## Corregir una declaración
+
+Dos caminos, con alcances distintos:
+
+| Quién | Endpoint | Cuándo | Qué toca |
+|---|---|---|---|
+| El solicitante | `PATCH /api/perfil/cursos/:id` | Solo mientras esté `PENDIENTE` | Curso, año, letra y notas |
+| El área | `PATCH /api/claims/:id` | En cualquier estado | Año, letra y notas |
+
+Una vez aprobada, el dato ya sirvió para dar acceso: cambiarlo por cuenta propia dejaría el
+expediente diciendo algo que el área nunca confirmó. Por eso después solo corrige el área, que
+lleva el registro. Y el área no puede cambiar **el curso**, porque eso movería la revisión a otra
+área: eso es una declaración distinta, no una corrección.
+
+Ambas rutas guardan `editadaPor` y `editadaEn`, y rechazan con 409 una corrección que dejaría
+duplicada una generación ya declarada.
+
 ## Aprobación de cursos declarados
 
 `POST /api/claims/:id/aprobar` devuelve `integraAlArea`, que dice si el visto bueno abrió un área

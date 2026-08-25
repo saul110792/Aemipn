@@ -147,6 +147,60 @@ perfilRouter.post(
   }),
 );
 
+/**
+ * PATCH /api/perfil/cursos/:id
+ *
+ * Corregir la propia declaración solo mientras nadie la ha revisado. Una vez
+ * aprobada, el dato ya sirvió para dar acceso: cambiarlo por cuenta propia
+ * dejaría el expediente diciendo algo que el área nunca confirmó. Si hay que
+ * arreglarla después, la corrige el área, que lleva el registro.
+ */
+perfilRouter.patch(
+  '/cursos/:id',
+  validate(declaracionSchema.partial()),
+  asyncHandler(async (req, res) => {
+    const claim = await prisma.courseClaim.findUnique({ where: { id: req.params.id } });
+    if (!claim || claim.memberId !== req.user!.memberId) throw notFound('Declaracion no encontrada');
+    if (claim.status !== 'PENDIENTE') {
+      throw badRequest(
+        'Esta declaracion ya fue revisada. Pide al area que la corrija: ellos llevan el registro.',
+      );
+    }
+
+    const d = req.body as Partial<z.infer<typeof declaracionSchema>>;
+    const courseId = d.courseId ?? claim.courseId;
+    const anio = d.anio ?? claim.anio;
+    const letra = d.letra ?? claim.letra;
+
+    // La misma generacion del mismo curso no puede quedar declarada dos veces.
+    const choque = await prisma.courseClaim.findFirst({
+      where: {
+        memberId: claim.memberId,
+        courseId,
+        anio,
+        letra,
+        NOT: { id: claim.id },
+      },
+    });
+    if (choque) throw conflict('Ya tienes declarado ese curso, esa generacion.');
+
+    res.json(
+      await prisma.courseClaim.update({
+        where: { id: claim.id },
+        data: {
+          courseId,
+          anio,
+          letra,
+          notas: d.notas ?? claim.notas,
+          editadaPor: req.user!.email,
+          editadaEn: new Date(),
+        },
+        include: { course: { include: { area: true } } },
+      }),
+    );
+  }),
+);
+
 /** DELETE /api/perfil/cursos/:id — retirar una declaración aún sin revisar. */
 perfilRouter.delete(
   '/cursos/:id',

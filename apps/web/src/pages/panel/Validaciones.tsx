@@ -14,6 +14,7 @@ interface Declaracion {
   status: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
   motivoRechazo: string | null;
   revisadaPor: string | null;
+  editadaPor: string | null;
   notas: string | null;
   createdAt: string;
   member: {
@@ -33,6 +34,13 @@ export function Validaciones() {
   const [filtro, setFiltro] = useState('PENDIENTE');
   const [rechazando, setRechazando] = useState<string | null>(null);
   const [motivo, setMotivo] = useState('');
+  // El área lleva su propio registro: puede corregir el dato aunque ya
+  // estuviera resuelto.
+  const [corrigiendo, setCorrigiendo] = useState<{ id: string; anio: string; letra: string } | null>(null);
+
+  const anioActual = new Date().getFullYear();
+  const anios = Array.from({ length: anioActual - 1980 + 1 }, (_, i) => anioActual - i);
+  const LETRAS = ['A', 'B', 'C', 'D', 'E'];
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['claims', filtro],
@@ -49,6 +57,18 @@ export function Validaciones() {
   const aprobar = useMutation({
     mutationFn: (id: string) => api.post(`/claims/${id}/aprobar`),
     onSuccess: refrescar,
+  });
+
+  const corregir = useMutation({
+    mutationFn: () =>
+      api.patch(`/claims/${corrigiendo!.id}`, {
+        anio: Number(corrigiendo!.anio),
+        letra: corrigiendo!.letra,
+      }),
+    onSuccess: () => {
+      refrescar();
+      setCorrigiendo(null);
+    },
   });
 
   const rechazar = useMutation({
@@ -85,6 +105,7 @@ export function Validaciones() {
       {error && <ErrorAviso error={error} />}
       {aprobar.error != null && <ErrorAviso error={aprobar.error} />}
       {rechazar.error != null && <ErrorAviso error={rechazar.error} />}
+      {corregir.error != null && <ErrorAviso error={corregir.error} />}
 
       {data?.length === 0 && (
         <div className="vacio">
@@ -100,9 +121,27 @@ export function Validaciones() {
             <div className="tarjeta-franja" style={{ background: d.course.area?.color ?? 'var(--guinda)' }} />
             <div className="tarjeta-cuerpo">
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                <code style={{ fontWeight: 700, color: 'var(--guinda)', fontSize: '1.05rem' }}>
-                  {d.course.codigo ?? '—'}_{d.anio}{d.letra}
-                </code>
+                {corrigiendo?.id === d.id ? (
+                  <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                    <code style={{ fontWeight: 700, color: 'var(--guinda)' }}>
+                      {d.course.codigo ?? '—'}_
+                    </code>
+                    <select value={corrigiendo.anio} aria-label="Año"
+                      onChange={(e) => setCorrigiendo({ ...corrigiendo, anio: e.target.value })}
+                      style={{ padding: '0.25rem' }}>
+                      {anios.map((a) => (<option key={a} value={a}>{a}</option>))}
+                    </select>
+                    <select value={corrigiendo.letra} aria-label="Generación"
+                      onChange={(e) => setCorrigiendo({ ...corrigiendo, letra: e.target.value })}
+                      style={{ padding: '0.25rem' }}>
+                      {LETRAS.map((l) => (<option key={l} value={l}>{l}</option>))}
+                    </select>
+                  </div>
+                ) : (
+                  <code style={{ fontWeight: 700, color: 'var(--guinda)', fontSize: '1.05rem' }}>
+                    {d.course.codigo ?? '—'}_{d.anio}{d.letra}
+                  </code>
+                )}
                 <Insignia valor={d.status} texto={etiqueta(d.status)} />
                 {d.course.area ? (
                   <span className="insignia" style={{ background: `${d.course.area.color}1f`, color: d.course.area.color ?? undefined }}>
@@ -150,6 +189,34 @@ export function Validaciones() {
                   Revisada por {d.revisadaPor}
                 </p>
               )}
+              {d.editadaPor && (
+                <p className="texto-suave" style={{ fontSize: '0.82rem' }}>
+                  {'Generación corregida por '}{d.editadaPor}
+                </p>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
+                {corrigiendo?.id === d.id ? (
+                  <>
+                    <button type="button" className="btn btn-verde btn-sm"
+                      onClick={() => corregir.mutate()} disabled={corregir.isPending}>
+                      Guardar generación
+                    </button>
+                    <button type="button" className="btn btn-borde btn-sm"
+                      onClick={() => setCorrigiendo(null)}>
+                      Cancelar
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" className="btn btn-borde btn-sm"
+                    onClick={() =>
+                      setCorrigiendo({ id: d.id, anio: String(d.anio), letra: d.letra })
+                    }
+                    title="Corregir el año o la generación con tu registro">
+                    Corregir generación
+                  </button>
+                )}
+              </div>
 
               {d.status === 'PENDIENTE' && (
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>

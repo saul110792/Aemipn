@@ -30,6 +30,9 @@ interface Declaracion {
   letra: string;
   status: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
   motivoRechazo: string | null;
+  editadaPor: string | null;
+  notas?: string | null;
+  courseId?: string;
   revisadaPor: string | null;
   course: Course & { area: Pick<Area, 'id' | 'nombre' | 'slug' | 'color'> | null };
 }
@@ -246,6 +249,8 @@ function CursosDeclarados({ declaraciones }: { declaraciones: Declaracion[] }) {
   const qc = useQueryClient();
   const anioActual = new Date().getFullYear();
   const [f, setF] = useState({ courseId: '', anio: String(anioActual), letra: 'A' });
+  // Declaración que se está corrigiendo, con su año y letra en edición.
+  const [editando, setEditando] = useState<{ id: string; anio: string; letra: string } | null>(null);
 
   const { data: cursos } = useQuery({
     queryKey: ['courses'],
@@ -273,6 +278,18 @@ function CursosDeclarados({ declaraciones }: { declaraciones: Declaracion[] }) {
   const retirar = useMutation({
     mutationFn: (id: string) => api.delete(`/perfil/cursos/${id}`),
     onSuccess: refrescar,
+  });
+
+  const corregir = useMutation({
+    mutationFn: () =>
+      api.patch(`/perfil/cursos/${editando!.id}`, {
+        anio: Number(editando!.anio),
+        letra: editando!.letra,
+      }),
+    onSuccess: () => {
+      refrescar();
+      setEditando(null);
+    },
   });
 
   const anios = Array.from({ length: anioActual - ANIO_MINIMO + 1 }, (_, i) => anioActual - i);
@@ -307,9 +324,34 @@ function CursosDeclarados({ declaraciones }: { declaraciones: Declaracion[] }) {
                 {declaraciones.map((d) => (
                   <tr key={d.id}>
                     <td>
-                      <code style={{ fontWeight: 700, color: 'var(--guinda)' }}>
-                        {d.course.codigo ?? '—'}_{d.anio}{d.letra}
-                      </code>
+                      {editando?.id === d.id ? (
+                        <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                          <select
+                            value={editando.anio}
+                            aria-label="Año"
+                            onChange={(e) => setEditando({ ...editando, anio: e.target.value })}
+                            style={{ padding: '0.25rem' }}
+                          >
+                            {anios.map((a) => (
+                              <option key={a} value={a}>{a}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={editando.letra}
+                            aria-label="Generación"
+                            onChange={(e) => setEditando({ ...editando, letra: e.target.value })}
+                            style={{ padding: '0.25rem' }}
+                          >
+                            {LETRAS.map((l) => (
+                              <option key={l} value={l}>{l}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <code style={{ fontWeight: 700, color: 'var(--guinda)' }}>
+                          {d.course.codigo ?? '—'}_{d.anio}{d.letra}
+                        </code>
+                      )}
                     </td>
                     <td>
                       {d.course.nombre}
@@ -334,13 +376,41 @@ function CursosDeclarados({ declaraciones }: { declaraciones: Declaracion[] }) {
                       {d.motivoRechazo && (
                         <div className="texto-suave" style={{ fontSize: '0.8rem' }}>{d.motivoRechazo}</div>
                       )}
+                      {d.editadaPor && (
+                        <div className="texto-suave" style={{ fontSize: '0.76rem' }}>
+                          {'Corregida por '}{d.editadaPor}
+                        </div>
+                      )}
                     </td>
                     <td>
                       {d.status === 'PENDIENTE' && (
-                        <button type="button" className="btn btn-borde btn-sm"
-                          onClick={() => retirar.mutate(d.id)} disabled={retirar.isPending}>
-                          Retirar
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                          {editando?.id === d.id ? (
+                            <>
+                              <button type="button" className="btn btn-verde btn-sm"
+                                onClick={() => corregir.mutate()} disabled={corregir.isPending}>
+                                Guardar
+                              </button>
+                              <button type="button" className="btn btn-borde btn-sm"
+                                onClick={() => setEditando(null)}>
+                                Cancelar
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button type="button" className="btn btn-borde btn-sm"
+                                onClick={() =>
+                                  setEditando({ id: d.id, anio: String(d.anio), letra: d.letra })
+                                }>
+                                Corregir
+                              </button>
+                              <button type="button" className="btn btn-borde btn-sm"
+                                onClick={() => retirar.mutate(d.id)} disabled={retirar.isPending}>
+                                Retirar
+                              </button>
+                            </>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -351,6 +421,7 @@ function CursosDeclarados({ declaraciones }: { declaraciones: Declaracion[] }) {
         )}
 
         {declarar.error != null && <ErrorAviso error={declarar.error} />}
+        {corregir.error != null && <ErrorAviso error={corregir.error} />}
         {retirar.error != null && <ErrorAviso error={retirar.error} />}
 
         <div style={{ borderTop: '1px solid var(--borde)', paddingTop: '1rem' }}>
