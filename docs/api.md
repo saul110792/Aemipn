@@ -110,6 +110,9 @@ esos siguen la visibilidad de siempre.
 
 Un miembro sin cargo ve lo de sus áreas más lo público, y nada de los cursos ajenos.
 
+El mismo endpoint sirve a las dos escalas: la vista de mes pide las seis semanas visibles y la
+de año pide del 1 de enero al 31 de diciembre.
+
 ## Archivos subidos
 
 `POST /api/media` acepta un archivo por petición en el campo `archivo`. Solo JPG, PNG, WebP

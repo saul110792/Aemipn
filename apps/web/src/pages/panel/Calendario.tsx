@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import type { Area } from '../../lib/types';
 import { Cargando, ErrorAviso } from '../../components/Estado';
+import { CalendarioAnual } from '../../components/CalendarioAnual';
 import { Icono, hayIcono } from '../../components/Icono';
 import { fmtFechaHora } from '../../lib/format';
 import {
@@ -17,12 +18,17 @@ export function Calendario() {
   const hoy = aDia(new Date());
   const navegar = useNavigate();
   const [cursor, setCursor] = useState({ anio: hoy.getFullYear(), mes: hoy.getMonth() });
+  const [vista, setVista] = useState<'mes' | 'anio'>('mes');
   const [areaFiltro, setAreaFiltro] = useState('');
   const [detalle, setDetalle] = useState<EntradaCalendario | null>(null);
 
   const semanas = useMemo(() => semanasDelMes(cursor.anio, cursor.mes), [cursor]);
-  const desde = semanas[0][0];
-  const hasta = sumarDias(semanas[5][6], 1);
+
+  // En vista de año se pide el año completo; en mes, las seis semanas visibles.
+  const [desde, hasta] =
+    vista === 'anio'
+      ? [new Date(cursor.anio, 0, 1), new Date(cursor.anio + 1, 0, 1)]
+      : [semanas[0][0], sumarDias(semanas[5][6], 1)];
 
   const { data: areas } = useQuery({ queryKey: ['areas'], queryFn: () => api.get<Area[]>('/areas') });
 
@@ -40,6 +46,10 @@ export function Calendario() {
   );
 
   const mover = (n: number) => {
+    if (vista === 'anio') {
+      setCursor({ ...cursor, anio: cursor.anio + n });
+      return;
+    }
     const d = new Date(cursor.anio, cursor.mes + n, 1);
     setCursor({ anio: d.getFullYear(), mes: d.getMonth() });
   };
@@ -60,19 +70,31 @@ export function Calendario() {
             Cursos, sesiones y eventos, del color de su área y abarcando lo que duran.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-          <button type="button" className="btn btn-borde btn-sm" onClick={() => mover(-1)} aria-label="Mes anterior">‹</button>
-          <button type="button" className="btn btn-borde btn-sm"
-            onClick={() => setCursor({ anio: hoy.getFullYear(), mes: hoy.getMonth() })}>
-            Hoy
-          </button>
-          <button type="button" className="btn btn-borde btn-sm" onClick={() => mover(1)} aria-label="Mes siguiente">›</button>
+        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="conmutador" role="group" aria-label="Escala del calendario">
+            <button type="button" className={vista === 'mes' ? 'activo' : ''} onClick={() => setVista('mes')}>
+              Mes
+            </button>
+            <button type="button" className={vista === 'anio' ? 'activo' : ''} onClick={() => setVista('anio')}>
+              Año
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: '0.4rem' }}>
+            <button type="button" className="btn btn-borde btn-sm" onClick={() => mover(-1)}
+              aria-label={vista === 'anio' ? 'Año anterior' : 'Mes anterior'}>‹</button>
+            <button type="button" className="btn btn-borde btn-sm"
+              onClick={() => setCursor({ anio: hoy.getFullYear(), mes: hoy.getMonth() })}>
+              Hoy
+            </button>
+            <button type="button" className="btn btn-borde btn-sm" onClick={() => mover(1)}
+              aria-label={vista === 'anio' ? 'Año siguiente' : 'Mes siguiente'}>›</button>
+          </div>
         </div>
       </div>
 
       <div className="barra-filtros">
         <strong style={{ fontFamily: 'var(--fuente-titulo)', fontSize: '1.15rem', textTransform: 'capitalize', minWidth: 190 }}>
-          {nombreMes(cursor.mes)} {cursor.anio}
+          {vista === 'anio' ? cursor.anio : `${nombreMes(cursor.mes)} ${cursor.anio}`}
         </strong>
         <select value={areaFiltro} onChange={(e) => setAreaFiltro(e.target.value)}>
           <option value="">Todas las áreas</option>
@@ -105,8 +127,17 @@ export function Calendario() {
         </div>
       )}
 
+      {vista === 'anio' && (
+        <CalendarioAnual
+          anio={cursor.anio}
+          entradas={entradas}
+          onElegirMes={(mes) => { setCursor({ ...cursor, mes }); setVista('mes'); }}
+          onElegirEntrada={setDetalle}
+        />
+      )}
+
       {/* Rejilla del mes: para pantalla ancha. */}
-      <div className="calendario">
+      <div className="calendario" style={vista === 'anio' ? { display: 'none' } : undefined}>
         <div className="cal-encabezado">
           {DIAS_CORTOS.map((d) => (
             <div key={d}>{d}</div>
@@ -166,7 +197,7 @@ export function Calendario() {
       </div>
 
       {/* Agenda: para el teléfono, donde una rejilla de siete columnas no cabe. */}
-      <div className="cal-agenda">
+      <div className="cal-agenda" style={vista === 'anio' ? { display: 'none' } : undefined}>
         {entradas.length === 0 ? (
           <div className="vacio">Nada programado este mes.</div>
         ) : (
@@ -235,8 +266,10 @@ export function Calendario() {
       )}
 
       <p className="texto-suave" style={{ fontSize: '0.85rem', marginTop: '1rem' }}>
-        Las barras claras con borde son la duración completa de una edición; las sólidas, sus
-        sesiones y los eventos. <Link to="/panel/ediciones">Programar una edición →</Link>
+        {vista === 'anio'
+          ? 'Una fila por área y una barra por actividad. Dos barras apiladas en la misma fila son cosas que se traslapan. Pulsa un mes para verlo en detalle.'
+          : 'Las barras claras con borde son la duración completa de una edición; las sólidas, sus sesiones y los eventos.'}{' '}
+        <Link to="/panel/ediciones">Programar una edición →</Link>
       </p>
     </>
   );

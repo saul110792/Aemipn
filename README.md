@@ -16,7 +16,7 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 
 **Panel interno** (requiere sesión)
 - Resumen: miembros por estado y por área, solicitudes pendientes, pagos pendientes, próximas salidas
-- **Calendario**: mes con barras del color de cada área que abarcan lo que dura la actividad; en el teléfono se vuelve agenda
+- **Calendario**: dos escalas. Por **mes**, rejilla con barras del color de cada área que abarcan lo que dura la actividad. Por **año**, línea de tiempo con una fila por área, donde los traslapes se ven de un vistazo. En el teléfono el mes se vuelve agenda y el año se desplaza de lado.
 - **Notificaciones**: contador junto a *Solicitudes* y campana en la barra con lo que espera acción
 - **Mi expediente**: NSS, contacto de emergencia, dirección, lesiones y los cursos que ha tomado
 - **Validación de cursos**: el jefe de cada área aprueba o rechaza lo que su gente declara; aprobar da acceso al área

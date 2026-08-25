@@ -676,3 +676,60 @@ tbody tr:hover { background: var(--guinda-100); }
   .calendario { display: none; }
   .cal-agenda { display: block; }
 }
+
+/* ---------- Conmutador mes / año ---------- */
+.conmutador {
+  display: inline-flex; background: var(--arena);
+  border: 1px solid var(--borde); border-radius: 9px; padding: 2px;
+}
+.conmutador button {
+  border: none; background: none; cursor: pointer; font: inherit;
+  font-size: 0.85rem; font-weight: 600; color: var(--texto-suave);
+  padding: 0.32rem 0.8rem; border-radius: 7px;
+}
+.conmutador button.activo { background: var(--guinda); color: var(--blanco); }
+
+/* ---------- Calendario anual ---------- */
+.anio {
+  background: var(--blanco); border: 1px solid var(--borde);
+  border-radius: var(--radio); overflow: hidden;
+}
+.anio-fila { display: grid; grid-template-columns: 168px 1fr; border-bottom: 1px solid var(--borde); }
+.anio-fila:last-child { border-bottom: none; }
+.anio-cabecera { background: var(--arena); }
+.anio-etiqueta {
+  display: flex; align-items: center; gap: 0.45rem;
+  padding: 0.5rem 0.7rem; font-size: 0.85rem; font-weight: 600;
+  border-right: 1px solid var(--borde);
+}
+.anio-pista { position: relative; min-height: 34px; }
+
+.anio-mes {
+  position: absolute; top: 0; bottom: 0;
+  border: none; border-left: 1px solid var(--borde); background: none; cursor: pointer;
+  font: inherit; font-size: 0.74rem; font-weight: 700; color: var(--guinda);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.anio-mes:hover { background: var(--guinda-100); }
+.anio-division { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--borde); }
+.anio-hoy { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--guinda-500); z-index: 2; }
+
+.anio-barra {
+  position: absolute; height: 18px; min-width: 4px;
+  border: 1px solid transparent; border-radius: 4px; padding: 0;
+  cursor: pointer; overflow: hidden; z-index: 1;
+}
+.anio-barra:hover { filter: brightness(1.12); z-index: 3; }
+.anio-barra.ajena { border-style: dashed; opacity: 0.7; }
+.anio-barra-texto {
+  display: block; padding: 0 0.35rem; line-height: 16px;
+  font: inherit; font-size: 0.68rem; font-weight: 600; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left;
+}
+
+@media (max-width: 780px) {
+  /* La línea de tiempo se desplaza de lado en vez de encogerse ilegible. */
+  .anio { overflow-x: auto; }
+  .anio-fila { grid-template-columns: 120px 1fr; min-width: 640px; }
+  .anio-etiqueta { font-size: 0.78rem; }
+}
