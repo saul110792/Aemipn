@@ -15,6 +15,15 @@ const schema = z.object({
   /// Sin esto, los correos se imprimen en la consola en lugar de enviarse.
   SMTP_URL: z.string().optional(),
   SMTP_REMITENTE: z.string().default('AEMIPN <no-responder@aemipn.mx>'),
+  /// Cuentas de prueba para entrar como jefe de area y ver los permisos
+  /// desde dentro. El seed se niega a crearlas si NODE_ENV es production.
+  SEED_CUENTAS_DEMO: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
+  SEED_DEMO_PASSWORD: z.string().min(8).default('Demo2026!'),
+  /// Dominio propio para poder reconocerlas y borrarlas de un golpe.
+  SEED_DEMO_DOMINIO: z.string().default('demo.aemipn.mx'),
   SEED_ADMIN_EMAIL: z.string().email().default('admin@aemipn.mx'),
   SEED_ADMIN_PASSWORD: z.string().min(8).default('Aemipn2026!'),
 });

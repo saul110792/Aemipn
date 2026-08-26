@@ -17,10 +17,17 @@ import {
 
 export const authRouter = Router();
 
-/** Freno a la fuerza bruta sobre el login. */
+/**
+ * Freno a la fuerza bruta sobre el login.
+ *
+ * En desarrollo el tope es alto: probar el sistema con las cuentas de prueba
+ * exige entrar y salir muchas veces, y un limite pensado para un atacante
+ * acaba estorbando a quien esta revisando su propio sistema. En produccion
+ * sigue siendo estricto, que es donde importa.
+ */
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 10,
+  limit: isProd ? 10 : 200,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { error: 'Demasiados intentos de acceso. Intenta de nuevo en 15 minutos.' },

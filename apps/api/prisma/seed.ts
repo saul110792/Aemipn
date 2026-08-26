@@ -5,7 +5,8 @@
  */
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
-import { env } from '../src/lib/env.js';
+import { env, isProd } from '../src/lib/env.js';
+import { sembrarCuentasDemo } from './cuentasDemo.js';
 
 const prisma = new PrismaClient();
 
@@ -501,6 +502,27 @@ async function main() {
   });
 
   console.log(`  Admin: ${adminEmail}`);
+
+  // --- Cuentas de prueba ---------------------------------------------------
+  if (env.SEED_CUENTAS_DEMO) {
+    if (isProd) {
+      console.warn(
+        '\n  SEED_CUENTAS_DEMO esta en true pero NODE_ENV es production: no se crearon.\n',
+      );
+    } else {
+      const cuentas = await sembrarCuentasDemo(prisma, {
+        password: env.SEED_DEMO_PASSWORD,
+        dominio: env.SEED_DEMO_DOMINIO,
+      });
+      console.log(`\n  ${cuentas.length} cuentas de prueba (contrasena: ${env.SEED_DEMO_PASSWORD})`);
+      for (const c of cuentas) {
+        console.log(`    ${c.email.padEnd(42)} ${c.para}`);
+      }
+      console.log(
+        `\n  Para borrarlas: delete from members where email like '%@${env.SEED_DEMO_DOMINIO}';`,
+      );
+    }
+  }
   console.log(`\nListo. Entra al panel con ${adminEmail} / (SEED_ADMIN_PASSWORD de tu .env)\n`);
 }
 

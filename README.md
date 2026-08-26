@@ -30,6 +30,33 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 - **Eventos**: alta con modalidad presencial / en línea / híbrida, y control de quién lo ve — público, solo miembros, o privado del área
 - **Textos e imágenes**: edita lo que ve el público de cada área y sube fotos al carrusel, sin tocar código
 
+## Cuentas de prueba
+
+Para recorrer el sistema desde cada rol en vez de deducirlo del código, pon en `apps/api/.env`:
+
+```
+SEED_CUENTAS_DEMO="true"
+SEED_DEMO_PASSWORD="Demo2026!"
+SEED_DEMO_DOMINIO="demo.aemipn.mx"
+```
+
+y corre `npm run db:seed`. Crea doce cuentas que comparten contraseña:
+
+| Cuenta | Para probar |
+|---|---|
+| `jefe.<área>@demo.aemipn.mx` (8) | Un jefe por área, con su curso base acreditado |
+| `tesorero.alta-montana@…` | Ve el padrón de su área pero no valida cursos |
+| `miembro.escalada-en-roca@…` | Miembro raso: solo su área, sin padrón |
+| `jefe.cim@…` | Coordina el CIM; no ve las áreas |
+| `recien.registrado@…` | Sin curso aprobado: no pertenece a ninguna área |
+
+Los jefes se crean con el curso base del área **aprobado**, porque esa es la condición para ser
+titular: las cuentas de prueba cumplen la misma regla que las reales.
+
+> **El seed se niega a crearlas si `NODE_ENV=production`**, aunque el interruptor esté en true.
+> Viven bajo su propio dominio para poder borrarlas de un golpe:
+> `delete from members where email like '%@demo.aemipn.mx';`
+
 ## Correo
 
 El registro manda una liga y un código de confirmación. Sin `SMTP_URL` configurado, el mensaje
