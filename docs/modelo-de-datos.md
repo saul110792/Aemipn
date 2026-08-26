@@ -143,6 +143,29 @@ ser jefe de Escalada y miembro raso en Espeleología. **Un jefe no ve otra área
 el curso aprobado de ella** — el padrón, las declaraciones y los eventos privados se filtran por
 las áreas a las que de verdad pertenece.
 
+**El CIM es la excepción deliberada.** Un jefe ve sus estadísticas encabece el área que encabece:
+cuánta gente se apuntó, cuántos todavía no pertenecen a ninguna área y qué día le toca la salida
+de su disciplina. Es la puerta de entrada a la asociación —ahí están sus futuros miembros— y cada
+área pone una salida dentro del curso, así que ocultárselo sería esconderle su propio trabajo.
+Lo que **no** ve es el padrón del CIM: cifras sí, datos personales de quien no es suyo todavía no.
+
+## Requisitos entre cursos
+
+Un curso puede exigir que otros estén acreditados antes (`Course.requiere`, autorrelación
+muchos-a-muchos). Hoy solo **Alta Montaña** los tiene: exige el CIM y el Curso Básico de Media
+Montaña, porque no se sube arriba de los 4,000 m sin haber caminado antes.
+
+La regla vive en **datos, no en código**: el catálogo lo maneja la asociación, y si mañana
+Espeleología pide lo mismo se marca en la pantalla de cursos sin tocar el programa. La mesa
+directiva es la única que puede fijarlos, porque un requisito ata dos áreas y ningún jefe manda
+sobre la otra.
+
+Se comprueban al **inscribir**, y cuentan por igual la declaración histórica aprobada por el jefe
+de área (para quien lo tomó antes de que existiera el sistema) y la inscripción acreditada aquí
+dentro. Un administrador puede inscribir de todos modos con `omitirRequisitos`; la excepción
+queda escrita en las notas de la inscripción, porque sin rastro sería invisible al siguiente que
+revise.
+
 ## Relaciones
 
 ```

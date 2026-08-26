@@ -186,5 +186,57 @@ export async function sembrarCuentasDemo(
     creadas.push({ email, para: p.para });
   }
 
+  await sembrarAspirantesDelCim(prisma, dominio);
+
   return creadas;
+}
+
+/**
+ * Aspirantes en el CIM abierto.
+ *
+ * Sin ellos el resumen del jefe muestra el bloque del CIM en ceros y parece
+ * roto, cuando justamente ahí es donde debe ver a los nuevos interesados.
+ * Son miembros sin usuario: todavía no entran al sistema, solo se apuntaron.
+ */
+async function sembrarAspirantesDelCim(prisma: PrismaClient, dominio: string) {
+  const edicion = await prisma.courseEdition.findFirst({
+    where: { course: { kind: 'CIM' }, estado: { in: ['BORRADOR', 'INSCRIPCIONES_ABIERTAS', 'EN_CURSO'] } },
+    orderBy: { fechaInicio: 'asc' },
+  });
+  if (!edicion) return;
+
+  const ASPIRANTES: { nombre: string; apellido: string; status: 'PREINSCRITO' | 'INSCRITO' }[] = [
+    { nombre: 'Ximena', apellido: 'Cordero', status: 'INSCRITO' },
+    { nombre: 'Rodrigo', apellido: 'Bañuelos', status: 'INSCRITO' },
+    { nombre: 'Paulina', apellido: 'Estrada', status: 'INSCRITO' },
+    { nombre: 'Ulises', apellido: 'Marín', status: 'INSCRITO' },
+    { nombre: 'Renata', apellido: 'Quiroz', status: 'PREINSCRITO' },
+    { nombre: 'Iván', apellido: 'Salgado', status: 'PREINSCRITO' },
+    { nombre: 'Dánae', apellido: 'Oropeza', status: 'PREINSCRITO' },
+  ];
+
+  const sinAcentos = (t: string) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  for (const a of ASPIRANTES) {
+    const email = `${sinAcentos(a.nombre)}.${sinAcentos(a.apellido)}@${dominio}`;
+    const member = await prisma.member.upsert({
+      where: { email },
+      create: {
+        nombre: a.nombre,
+        apellidoPaterno: a.apellido,
+        email,
+        status: 'ASPIRANTE',
+        contactoEmergencia: 'Contacto de prueba · 55 5555 5555',
+      },
+      update: {},
+    });
+
+    await prisma.enrollment.upsert({
+      where: { memberId_editionId: { memberId: member.id, editionId: edicion.id } },
+      create: { memberId: member.id, editionId: edicion.id, status: a.status },
+      update: { status: a.status },
+    });
+  }
+
+  console.log(`  ${ASPIRANTES.length} aspirantes en ${edicion.clave} (para que el resumen del CIM tenga cifras)`);
 }

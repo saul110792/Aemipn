@@ -213,6 +213,33 @@ async function main() {
 
   console.log(`  ${totalCursos} cursos de area y ${totalTalleres} talleres`);
 
+  // --- Requisitos previos -------------------------------------------------
+  // Alta Montaña es la única área con antesala: no se sube arriba de los
+  // 4,000 m sin haber pasado antes por el CIM y por el curso básico. Los
+  // demás cursos base se toman de entrada.
+  //
+  // Se siembra como dato, no como regla en código: si la asociación cambia
+  // de criterio, se edita el curso y nadie toca el programa.
+  const REQUISITOS: Record<string, string[]> = {
+    'curso-basico-de-alta-montana': ['cim', 'curso-basico-de-media-montana'],
+  };
+
+  for (const [slug, requiere] of Object.entries(REQUISITOS)) {
+    const previos = await prisma.course.findMany({
+      where: { slug: { in: requiere } },
+      select: { id: true, nombre: true },
+    });
+    if (previos.length !== requiere.length) {
+      console.warn(`  aviso: faltan requisitos de ${slug} en el catalogo; no se ataron`);
+      continue;
+    }
+    await prisma.course.update({
+      where: { slug },
+      data: { requiere: { set: previos.map((c) => ({ id: c.id })) } },
+    });
+    console.log(`  ${slug} exige: ${previos.map((c) => c.nombre).join(' + ')}`);
+  }
+
   // --- Proxima edicion del CIM --------------------------------------------
   // El CIM se imparte 3-4 veces al ano. Sembramos la siguiente que caiga en el
   // futuro para que el sitio y el dashboard tengan algo real que mostrar.
@@ -229,8 +256,11 @@ async function main() {
   // Primer sabado del mes elegido.
   const inicio = new Date(anio, MESES_CIM[indice], 1);
   while (inicio.getDay() !== 6) inicio.setDate(inicio.getDate() + 1);
+  // Ocho salidas, una por semana: la edicion cierra con la ultima, no el
+  // domingo siguiente al arranque. Si no, la cabecera contradice al programa.
   const fin = new Date(inicio);
-  fin.setDate(fin.getDate() + 1);
+  fin.setDate(fin.getDate() + 7 * 7);
+  fin.setHours(23, 59, 0, 0);
 
   const clave = `CIM ${anio}-${indice + 1}`;
 
@@ -247,7 +277,7 @@ async function main() {
       estado: 'INSCRIPCIONES_ABIERTAS',
       notas: 'Edicion de ejemplo creada por el seed. Ajusta fechas y sede antes de publicar.',
     },
-    update: {},
+    update: { fechaFin: fin },
   });
 
   // Una salida por area dentro del CIM, que es como esta disenado el curso.

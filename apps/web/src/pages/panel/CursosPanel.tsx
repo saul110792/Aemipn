@@ -13,6 +13,11 @@ interface CursoConteo extends Course {
   contenido?: string | null;
   areaId?: string | null;
   activo?: boolean;
+  /// Lo decide el servidor, no la interfaz: es la misma regla que aplica el
+  /// API al guardar, así que el botón nunca promete algo que luego se niega.
+  puedeEditar?: boolean;
+  /// Cursos que hay que traer acreditados para poder tomar este.
+  requiere?: { id: string; nombre: string; codigo: string | null }[];
 }
 
 const TIPOS: CourseKind[] = ['AREA', 'TALLER', 'CIM', 'CERTIFICACION'];
@@ -34,12 +39,28 @@ export function CursosPanel() {
   const [editando, setEditando] = useState<CursoConteo | null>(null);
   const [creando, setCreando] = useState(false);
 
+  // Un jefe ve el catálogo de su área y nada más; la mesa directiva ve todo.
   const { data, isLoading, error } = useQuery({
-    queryKey: ['courses'],
-    queryFn: () => api.get<CursoConteo[]>('/courses'),
+    queryKey: ['courses', esAdmin ? 'todos' : 'mis-areas'],
+    queryFn: () =>
+      api.get<CursoConteo[]>(`/courses${esAdmin ? '' : '?soloMisAreas=true'}`),
   });
 
   const { data: areas } = useQuery({ queryKey: ['areas'], queryFn: () => api.get<Area[]>('/areas') });
+
+  // Las áreas que encabeza se deducen de lo que el servidor dejó editable:
+  // no hace falta preguntarle por separado quién es.
+  const misAreas = useMemo(
+    () => [...new Set((data ?? []).filter((c) => c.puedeEditar && c.areaId).map((c) => c.areaId!))],
+    [data],
+  );
+  const puedeCrear = esAdmin || misAreas.length > 0;
+  // Ofrecer las ocho áreas cuando solo se ven los cursos de una deja filtros
+  // que no devuelven nada. Se listan las que de verdad aparecen en la tabla.
+  const areasDelFiltro = useMemo(
+    () => (esAdmin ? (areas ?? []) : (areas ?? []).filter((a) => misAreas.includes(a.id))),
+    [areas, esAdmin, misAreas],
+  );
 
   const [filtros, setFiltros] = useState(FILTROS_VACIOS);
   const hayFiltro = Object.values(filtros).some(Boolean);
@@ -82,8 +103,13 @@ export function CursosPanel() {
           <p className="texto-suave" style={{ margin: 0 }}>
             La definición de cada curso. Sus fechas concretas viven en las ediciones.
           </p>
+          {!esAdmin && (
+            <p className="texto-suave" style={{ margin: '.35rem 0 0', fontSize: '.85rem' }}>
+              Solo aparecen los cursos de tu área. El curso base y el CIM los edita la mesa directiva.
+            </p>
+          )}
         </div>
-        {esAdmin && (
+        {puedeCrear && (
           <button type="button" className="btn" onClick={() => { setEditando(null); setCreando((v) => !v); }}>
             {creando ? 'Cancelar' : 'Nuevo curso'}
           </button>
@@ -95,6 +121,8 @@ export function CursosPanel() {
           areas={areas ?? []}
           curso={editando}
           cursos={data ?? []}
+          esAdmin={esAdmin}
+          misAreas={misAreas}
           onListo={cerrar}
           onCancelar={cerrar}
         />
@@ -115,8 +143,8 @@ export function CursosPanel() {
           onChange={(e) => setFiltros({ ...filtros, areaId: e.target.value })}
         >
           <option value="">Todas las áreas</option>
-          <option value="__sin__">Transversales (sin área)</option>
-          {areas?.map((a) => (
+          {esAdmin && <option value="__sin__">Transversales (sin área)</option>}
+          {areasDelFiltro.map((a) => (
             <option key={a.id} value={a.id}>
               {a.codigo ? a.codigo + ' · ' : ''}{a.nombre}
             </option>
@@ -179,7 +207,7 @@ export function CursosPanel() {
               <th>Tipo</th>
               <th>Horas</th>
               <th>Ediciones</th>
-              {esAdmin && <th />}
+              {puedeCrear && <th />}
             </tr>
           </thead>
           <tbody>
@@ -195,6 +223,11 @@ export function CursosPanel() {
                 <td>
                   <strong>{c.nombre}</strong>
                   {c.activo === false && <> <span className="insignia">inactivo</span></>}
+                  {(c.requiere?.length ?? 0) > 0 && (
+                    <div className="texto-suave" style={{ fontSize: '.78rem', marginTop: '.15rem' }}>
+                      Exige antes: {c.requiere!.map((r) => r.codigo ?? r.nombre).join(' + ')}
+                    </div>
+                  )}
                 </td>
                 <td>
                   {c.area ? (
@@ -209,15 +242,19 @@ export function CursosPanel() {
                 <td><Insignia valor={c.kind} texto={etiquetaTipoCurso(c.kind)} /></td>
                 <td>{c.duracionHoras ?? '—'}</td>
                 <td>{c._count.ediciones}</td>
-                {esAdmin && (
+                {puedeCrear && (
                   <td>
-                    <button
-                      type="button"
-                      className="btn btn-borde btn-sm"
-                      onClick={() => { setCreando(false); setEditando(c); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    >
-                      Editar
-                    </button>
+                    {c.puedeEditar !== false ? (
+                      <button
+                        type="button"
+                        className="btn btn-borde btn-sm"
+                        onClick={() => { setCreando(false); setEditando(c); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      >
+                        Editar
+                      </button>
+                    ) : (
+                      <span className="texto-suave" style={{ fontSize: '.8rem' }}>Solo lectura</span>
+                    )}
                   </td>
                 )}
               </tr>
@@ -231,17 +268,35 @@ export function CursosPanel() {
 }
 
 function FormularioCurso({
-  areas, curso, cursos, onListo, onCancelar,
+  areas, curso, cursos, esAdmin, misAreas, onListo, onCancelar,
 }: {
   areas: Area[];
   curso: CursoConteo | null;
   cursos: CursoConteo[];
+  esAdmin: boolean;
+  misAreas: string[];
   onListo: () => void;
   onCancelar: () => void;
 }) {
-  const [f, setF] = useState(VACIO);
+  const areasElegibles = esAdmin ? areas : areas.filter((a) => misAreas.includes(a.id));
+  // Dar de alta un curso base cambia quién obtiene membresía del área; eso lo
+  // decide la mesa directiva. Un jefe arma sus talleres.
+  const tiposElegibles = esAdmin ? TIPOS : (['TALLER', 'CERTIFICACION'] as CourseKind[]);
+  // Al editar, el área y el tipo del curso quedan fijos para quien no es mesa:
+  // moverlos sacaría el curso de su alcance o cambiaría la regla de membresía.
+  const camposFijos = !esAdmin && curso !== null;
+
+  const [f, setF] = useState({
+    ...VACIO,
+    ...(esAdmin ? {} : { areaId: areasElegibles[0]?.id ?? '', kind: 'TALLER' as CourseKind }),
+  });
   const [codigoTocado, setCodigoTocado] = useState(false);
   const [slugTocado, setSlugTocado] = useState(false);
+  const [requiereIds, setRequiereIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setRequiereIds(curso?.requiere?.map((r) => r.id) ?? []);
+  }, [curso?.id]);
 
   useEffect(() => {
     if (curso) {
@@ -259,7 +314,10 @@ function FormularioCurso({
       setCodigoTocado(true);
       setSlugTocado(true);
     } else {
-      setF(VACIO);
+      setF({
+        ...VACIO,
+        ...(esAdmin ? {} : { areaId: areasElegibles[0]?.id ?? '', kind: 'TALLER' as CourseKind }),
+      });
       setCodigoTocado(false);
       setSlugTocado(false);
     }
@@ -286,9 +344,22 @@ function FormularioCurso({
     activo: f.activo,
   });
 
+  // Los requisitos viven en su propia ruta (son una relacion, no un campo) y
+  // solo los toca la mesa directiva, porque atan cursos de areas distintas.
+  const requisitosCambiaron =
+    esAdmin &&
+    JSON.stringify([...requiereIds].sort()) !==
+      JSON.stringify((curso?.requiere ?? []).map((r) => r.id).sort());
+
   const guardar = useMutation({
-    mutationFn: () =>
-      curso ? api.patch(`/courses/${curso.id}`, cuerpo()) : api.post('/courses', cuerpo()),
+    mutationFn: async () => {
+      const guardado = curso
+        ? await api.patch<{ id: string }>(`/courses/${curso.id}`, cuerpo())
+        : await api.post<{ id: string }>('/courses', cuerpo());
+      if (esAdmin && (requisitosCambiaron || (!curso && requiereIds.length)))
+        await api.put(`/courses/${guardado.id}/requisitos`, { requiereIds });
+      return guardado;
+    },
     onSuccess: onListo,
   });
 
@@ -344,20 +415,35 @@ function FormularioCurso({
 
           <div className="campo">
             <label htmlFor="c-area">Área</label>
-            <select id="c-area" value={f.areaId} onChange={(e) => setF({ ...f, areaId: e.target.value })}>
-              <option value="">Transversal (toda la asociación)</option>
-              {areas.map((a) => (
+            <select
+              id="c-area"
+              value={f.areaId}
+              disabled={camposFijos}
+              onChange={(e) => setF({ ...f, areaId: e.target.value })}
+            >
+              {esAdmin && <option value="">Transversal (toda la asociación)</option>}
+              {areasElegibles.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.codigo ? `${a.codigo} · ` : ''}{a.nombre}
                 </option>
               ))}
             </select>
+            {camposFijos && (
+              <span className="texto-suave" style={{ fontSize: '0.82rem' }}>
+                Mover un curso de área corresponde a la mesa directiva.
+              </span>
+            )}
           </div>
 
           <div className="campo">
             <label htmlFor="c-kind">Tipo</label>
-            <select id="c-kind" value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as CourseKind })}>
-              {TIPOS.map((t) => (
+            <select
+              id="c-kind"
+              value={f.kind}
+              disabled={camposFijos}
+              onChange={(e) => setF({ ...f, kind: e.target.value as CourseKind })}
+            >
+              {tiposElegibles.map((t) => (
                 <option key={t} value={t}>{etiquetaTipoCurso(t)}</option>
               ))}
             </select>
@@ -386,8 +472,14 @@ function FormularioCurso({
         </div>
 
         <div className="campo">
-          <label htmlFor="c-req">Requisitos</label>
+          <label htmlFor="c-req">
+            Qué traer y qué se pide
+            <span className="texto-suave" style={{ fontWeight: 400 }}>
+              {' '}— equipo, edad, condición física. Texto libre para el sitio público.
+            </span>
+          </label>
           <textarea id="c-req" style={{ minHeight: 60 }} value={f.requisitos}
+            placeholder="Ropa deportiva, calzado de suela firme, agua y lonche."
             onChange={(e) => setF({ ...f, requisitos: e.target.value })} />
         </div>
 
@@ -403,6 +495,46 @@ function FormularioCurso({
             onChange={(e) => { setF({ ...f, slug: sugerirSlug(e.target.value) }); setSlugTocado(true); }}
           />
         </div>
+
+        {esAdmin && (
+          <div className="campo">
+            <label>
+              Hay que acreditar antes
+              <span className="texto-suave" style={{ fontWeight: 400 }}>
+                {' '}— quien no los tenga no se puede inscribir
+              </span>
+            </label>
+            <div
+              style={{
+                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
+                gap: '.25rem .75rem', maxHeight: 190, overflowY: 'auto',
+                border: '1px solid var(--borde)', borderRadius: 8, padding: '.6rem .75rem',
+              }}
+            >
+              {cursos
+                .filter((c) => c.id !== curso?.id && (c.kind === 'AREA' || c.kind === 'CIM'))
+                .map((c) => (
+                  <label key={c.id} className="casilla" style={{ marginBottom: 0, fontSize: '.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={requiereIds.includes(c.id)}
+                      onChange={(e) =>
+                        setRequiereIds((v) =>
+                          e.target.checked ? [...v, c.id] : v.filter((x) => x !== c.id),
+                        )
+                      }
+                    />
+                    {c.codigo ? `${c.codigo} · ` : ''}{c.nombre}
+                  </label>
+                ))}
+            </div>
+            <span className="texto-suave" style={{ fontSize: '0.82rem' }}>
+              {requiereIds.length === 0
+                ? 'Sin antesala: se puede tomar de entrada.'
+                : 'Solo los cursos base y el CIM sirven de requisito; un taller no acredita membresía.'}
+            </span>
+          </div>
+        )}
 
         <label className="casilla" style={{ marginBottom: '1rem' }}>
           <input type="checkbox" checked={f.activo} onChange={(e) => setF({ ...f, activo: e.target.checked })} />

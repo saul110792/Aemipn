@@ -312,6 +312,12 @@ model Course {
   ediciones     CourseEdition[]
   declaraciones CourseClaim[]
 
+  /// Cursos que hay que tener acreditados antes de tomar este.
+  /// Alta Montaña es el caso: exige el CIM y el curso base de media montaña,
+  /// porque subir arriba de 4,000 m sin haber caminado antes no es prudente.
+  requiere     Course[] @relation("RequisitosDeCurso")
+  requeridoPor Course[] @relation("RequisitosDeCurso")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

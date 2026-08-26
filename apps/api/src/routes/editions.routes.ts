@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
@@ -7,6 +8,50 @@ import { validate } from '../middleware/validate.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 
 export const editionsRouter = Router();
+
+/**
+ * Estira la ventana de la edición para que cubra sus sesiones.
+ *
+ * Las salidas del CIM van una por semana, así que la edición dura semanas
+ * aunque se haya capturado como un fin de semana; y mover una sesión más allá
+ * del cierre dejaba la cabecera diciendo una cosa y el programa otra.
+ *
+ * Solo ensancha, nunca recorta: una edición puede abrir antes o cerrar después
+ * de sus sesiones a propósito, y eso no es asunto de esta función.
+ */
+async function ajustarVentanaDeEdicion(
+  tx: Pick<PrismaClient, 'editionActivity' | 'courseEdition'>,
+  editionId: string,
+) {
+  const [extremos, edicion] = await Promise.all([
+    tx.editionActivity.aggregate({
+      where: { editionId },
+      _min: { fechaInicio: true },
+      _max: { fechaInicio: true },
+    }),
+    tx.courseEdition.findUnique({
+      where: { id: editionId },
+      select: { fechaInicio: true, fechaFin: true },
+    }),
+  ]);
+
+  const primera = extremos._min.fechaInicio;
+  const ultima = extremos._max.fechaInicio;
+  if (!primera || !ultima || !edicion) return;
+
+  const cambios: { fechaInicio?: Date; fechaFin?: Date } = {};
+  if (primera < edicion.fechaInicio) cambios.fechaInicio = primera;
+  // La última sesión cierra ese día, no a las 00:00.
+  if (ultima > edicion.fechaFin) {
+    const cierre = new Date(ultima);
+    cierre.setHours(23, 59, 0, 0);
+    cambios.fechaFin = cierre;
+  }
+
+  if (Object.keys(cambios).length) {
+    await tx.courseEdition.update({ where: { id: editionId }, data: cambios });
+  }
+}
 editionsRouter.use(requireAuth);
 
 const editionBase = z.object({
@@ -232,11 +277,17 @@ editionsRouter.patch(
         });
       }
 
-      return tx.editionActivity.update({
+      const guardada = await tx.editionActivity.update({
         where: { id: actual.id },
         data: cambios,
         include: { area: { select: { id: true, nombre: true, slug: true, color: true } } },
       });
+
+      // Dentro de la transaccion: si la sesion se movio, la cabecera de la
+      // edicion se mueve con ella o quedan contando historias distintas.
+      await ajustarVentanaDeEdicion(tx, actual.editionId);
+
+      return guardada;
     });
 
     res.json({
@@ -389,6 +440,9 @@ editionsRouter.post(
     });
 
     await prisma.editionActivity.createMany({ data: actividades });
+    // Ocho salidas semanales no caben en un fin de semana: la edicion se
+    // estira hasta la ultima o la cabecera contradice al programa.
+    await ajustarVentanaDeEdicion(prisma, edition.id);
 
     res.status(201).json({
       creadas: actividades.length,

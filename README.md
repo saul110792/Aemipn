@@ -22,6 +22,8 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 - **Validación de cursos**: el jefe de cada área aprueba o rechaza lo que su gente declara. Aprobar el **curso base** integra al área; un taller queda en el historial sin dar acceso. Ambas partes pueden corregir la generación: el solicitante mientras esté pendiente, el área en cualquier momento
 - Miembros: alta, búsqueda, filtros, paginación, ficha completa con historial de cursos
 - Asignación de miembros a áreas con rol (jefe de área / tesorero / miembro)
+- Resumen por área para su jefe, más las estadísticas del CIM (de ahí salen los nuevos)
+- Requisitos entre cursos: Alta Montaña exige el CIM y el curso básico de media montaña
 - Solicitudes de ingreso: aceptar (crea el miembro y lo asigna a sus áreas de interés) o rechazar
 - Ediciones y CIM: roster con datos de emergencia a la mano, control de estado y de pago. Al evaluar se distingue **aprobó, reprobó y desertó**; una edición sin inscritos se borra y una que ya arrancó se cancela con motivo
 - Atajo para generar de golpe una salida por cada área en una edición del CIM
