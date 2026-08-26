@@ -9,9 +9,16 @@ import { useAuth } from '../../lib/auth';
 import { Icono, hayIcono } from '../../components/Icono';
 import { FormularioSesion } from '../../components/FormularioSesion';
 import { EditarSesion } from '../../components/EditarSesion';
+import { CancelarEdicion } from '../../components/CancelarEdicion';
 
+/** En el orden en que ocurren: se inscribe, cursa y termina de una de tres formas. */
 const ESTADOS_INSCRIPCION: EnrollmentStatus[] = [
-  'PREINSCRITO', 'INSCRITO', 'ACREDITADO', 'NO_ACREDITADO', 'BAJA',
+  'PREINSCRITO',
+  'INSCRITO',
+  'ACREDITADO',
+  'NO_ACREDITADO',
+  'DESERTO',
+  'BAJA',
 ];
 const ESTADOS_PAGO: PaymentStatus[] = ['PENDIENTE', 'PARCIAL', 'PAGADO', 'EXENTO'];
 
@@ -98,7 +105,11 @@ export function EdicionDetalle() {
         </div>
         <div className="metrica">
           <div className="valor">{inscritos.filter((i) => i.status === 'ACREDITADO').length}</div>
-          <div className="etiqueta">Acreditados</div>
+          <div className="etiqueta">Aprobaron</div>
+          <div className="texto-suave" style={{ fontSize: '0.78rem', marginTop: '0.25rem' }}>
+            {inscritos.filter((i) => i.status === 'NO_ACREDITADO').length} reprobaron ·{' '}
+            {inscritos.filter((i) => i.status === 'DESERTO').length} desertaron
+          </div>
         </div>
         <div className="metrica">
           <div className="valor" style={{ fontSize: '1.4rem' }}>{fmtMoneda(edicion.costo)}</div>
@@ -346,6 +357,10 @@ export function EdicionDetalle() {
           )}
         </div>
       </section>
+
+      {esAdmin && (
+        <CancelarEdicion edicion={edicion} inscritos={inscritos.length} />
+      )}
     </>
   );
 }

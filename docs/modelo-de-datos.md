@@ -67,6 +67,12 @@ lista de salida.
 Las sugerencias de alergia son un atajo, no una lista cerrada: se acepta texto libre, porque en un
 expediente médico la alergia rara es justo la que hay que anotar.
 
+**Borrar una edición y cancelarla no son lo mismo.**
+Se borra la que nunca arrancó: se abrió, no hubo interesados y desaparece con su programa. Solo se
+permite si nadie se inscribió. Se cancela la que sí tuvo gente: conserva inscripciones, programa y
+calificaciones, con el motivo y quién la canceló. Borrar una edición con gente dentro falsearía el
+historial de esas personas.
+
 ## Entidades
 
 | Modelo | Para qué |
@@ -92,7 +98,12 @@ expediente médico la alergia rara es justo la que hay que anotar.
 - `MemberStatus`: `ASPIRANTE` · `ACTIVO` · `INACTIVO` · `BAJA`
 - `CourseKind`: `CIM` · `AREA` · `TALLER` · `CERTIFICACION`
 - `EditionStatus`: `BORRADOR` · `INSCRIPCIONES_ABIERTAS` · `EN_CURSO` · `CONCLUIDA` · `CANCELADA`
-- `EnrollmentStatus`: `PREINSCRITO` · `INSCRITO` · `ACREDITADO` · `NO_ACREDITADO` · `BAJA`
+- `EnrollmentStatus`: `PREINSCRITO` · `INSCRITO` · `ACREDITADO` (aprobó) · `NO_ACREDITADO` (reprobó) · `DESERTO` · `BAJA`
+
+**Desertar no es reprobar.** Quien reprueba llegó al final y no acreditó; quien deserta abandonó a
+media edición. Y ninguno de los dos es una `BAJA`, que es retirarse antes de empezar o quedarse sin
+curso porque la edición se canceló. Son tres hechos distintos y el historial de una persona los
+distingue.
 - `PaymentStatus`: `PENDIENTE` · `PARCIAL` · `PAGADO` · `EXENTO`
 - `EventKind`: `CURSO` · `TALLER` · `SALIDA` · `REUNION` · `CONVOCATORIA` · `OTRO`
 - `EventMode`: `PRESENCIAL` · `EN_LINEA` · `HIBRIDA`

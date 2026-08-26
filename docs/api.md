@@ -97,6 +97,16 @@ los eventos de su área sin publicar. **Una notificación que no se puede atende
 El frontend la consulta cada minuto y al volver a la pestaña, y la invalida en cuanto se acepta
 o rechaza una solicitud, para que el contador baje sin esperar al siguiente sondeo.
 
+## Cerrar una edición
+
+| Acción | Endpoint | Cuándo |
+|---|---|---|
+| Borrar | `DELETE /api/editions/:id` | Solo si **no hay inscripciones**. Se lleva también su programa. ADMIN. |
+| Cancelar | `POST /api/editions/:id/cancelar` | Siempre. Exige `motivo`; guarda quién y cuándo. ADMIN o STAFF. |
+
+Con `darDeBajaInscritos`, quien seguía `PREINSCRITO` o `INSCRITO` pasa a `BAJA` — no a `DESERTO`,
+porque no abandonó: se quedó sin curso. Quien ya tenía resultado lo conserva.
+
 ## Editar una sesión del programa
 
 `PATCH /api/editions/:id/activities/:activityId` cambia tipo, título, **área**, fechas, lugar y

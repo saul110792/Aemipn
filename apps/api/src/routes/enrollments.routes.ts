@@ -13,7 +13,7 @@ const createSchema = z.object({
   memberId: z.string().min(1),
   editionId: z.string().min(1),
   status: z
-    .enum(['PREINSCRITO', 'INSCRITO', 'ACREDITADO', 'NO_ACREDITADO', 'BAJA'])
+    .enum(['PREINSCRITO', 'INSCRITO', 'ACREDITADO', 'NO_ACREDITADO', 'DESERTO', 'BAJA'])
     .default('PREINSCRITO'),
   paymentStatus: z.enum(['PENDIENTE', 'PARCIAL', 'PAGADO', 'EXENTO']).default('PENDIENTE'),
   montoPagado: z.coerce.number().nonnegative().optional().nullable(),

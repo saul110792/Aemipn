@@ -23,7 +23,7 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 - Miembros: alta, búsqueda, filtros, paginación, ficha completa con historial de cursos
 - Asignación de miembros a áreas con rol (jefe de área / tesorero / miembro)
 - Solicitudes de ingreso: aceptar (crea el miembro y lo asigna a sus áreas de interés) o rechazar
-- Ediciones y CIM: roster con datos de emergencia a la mano, control de estado y de pago
+- Ediciones y CIM: roster con datos de emergencia a la mano, control de estado y de pago. Al evaluar se distingue **aprobó, reprobó y desertó**; una edición sin inscritos se borra y una que ya arrancó se cancela con motivo
 - Atajo para generar de golpe una salida por cada área en una edición del CIM
 - **Catálogo**: un curso por área más sus talleres, con código sugerido a partir del nombre
 - **Áreas**: edición de sus códigos, con aviso de duplicados y de formato

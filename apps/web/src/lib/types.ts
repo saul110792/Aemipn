@@ -15,6 +15,7 @@ export type EnrollmentStatus =
   | 'INSCRITO'
   | 'ACREDITADO'
   | 'NO_ACREDITADO'
+  | 'DESERTO'
   | 'BAJA';
 export type PaymentStatus = 'PENDIENTE' | 'PARCIAL' | 'PAGADO' | 'EXENTO';
 

@@ -39,7 +39,7 @@ export function ErrorAviso({ error }: { error: unknown }) {
 export function Insignia({ valor, texto }: { valor: string; texto: string }) {
   const verde = ['ACTIVO', 'ACREDITADO', 'PAGADO', 'ACEPTADA', 'INSCRIPCIONES_ABIERTAS', 'EXENTO'];
   const ambar = ['ASPIRANTE', 'PREINSCRITO', 'PENDIENTE', 'PARCIAL', 'NUEVA', 'EN_REVISION', 'BORRADOR'];
-  const rojo = ['BAJA', 'RECHAZADA', 'CANCELADA', 'NO_ACREDITADO'];
+  const rojo = ['BAJA', 'RECHAZADA', 'CANCELADA', 'NO_ACREDITADO', 'DESERTO'];
   const azul = ['INSCRITO', 'EN_CURSO', 'CIM'];
 
   const clase = verde.includes(valor)

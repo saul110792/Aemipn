@@ -84,9 +84,10 @@ enum ActivityKind {
 enum EnrollmentStatus {
   PREINSCRITO
   INSCRITO
-  ACREDITADO
-  NO_ACREDITADO
-  BAJA
+  ACREDITADO /// aprobó
+  NO_ACREDITADO /// reprobó: llegó al final y no acreditó
+  DESERTO /// abandonó a medio curso, que no es lo mismo que reprobar
+  BAJA /// se retiró antes de empezar, o lo dieron de baja
 }
 
 /// Que clase de evento se publica en el calendario.
@@ -336,6 +337,12 @@ model CourseEdition {
   sede   String?
   estado EditionStatus @default(BORRADOR)
   notas  String?
+
+  /// Por qué se canceló. Sin el motivo, una edición cancelada no dice nada
+  /// dentro de un año, cuando alguien pregunte qué pasó con esa generación.
+  motivoCancelacion String?
+  canceladaEn       DateTime?
+  canceladaPor      String?
 
   inscripciones Enrollment[]
   actividades   EditionActivity[]

@@ -257,6 +257,94 @@ editionsRouter.delete(
 );
 
 /**
+ * DELETE /api/editions/:id
+ *
+ * Borrar de verdad, para la edicion que nunca arranco: se abrio, no hubo
+ * suficientes interesados y se cierra sin dejar rastro. Solo se permite si
+ * nadie se inscribio; con gente dentro hay que cancelar, porque su registro
+ * es un hecho y borrarlo seria falsear el historial de esas personas.
+ */
+editionsRouter.delete(
+  '/:id',
+  requireRole('ADMIN'),
+  asyncHandler(async (req, res) => {
+    const edicion = await prisma.courseEdition.findUnique({
+      where: { id: req.params.id },
+      include: { _count: { select: { inscripciones: true } } },
+    });
+    if (!edicion) throw notFound('Edicion no encontrada');
+
+    if (edicion._count.inscripciones > 0) {
+      throw badRequest(
+        `No se puede borrar: ya hay ${edicion._count.inscripciones} inscripcion(es). ` +
+          'Cancelala en su lugar, para que quede constancia de lo que paso.',
+      );
+    }
+
+    // Las sesiones se van con ella; no existen fuera de su edicion.
+    await prisma.$transaction([
+      prisma.editionActivity.deleteMany({ where: { editionId: edicion.id } }),
+      prisma.courseEdition.delete({ where: { id: edicion.id } }),
+    ]);
+
+    res.json({ ok: true, clave: edicion.clave });
+  }),
+);
+
+const cancelacionSchema = z.object({
+  motivo: z.string().min(1, 'Escribe por que se cancela').max(400),
+  /// Marca de baja a quien seguia inscrito. La edicion murio, no desertaron.
+  darDeBajaInscritos: z.boolean().optional(),
+});
+
+/**
+ * POST /api/editions/:id/cancelar
+ *
+ * Para la edicion que si arranco y no puede seguir. Conserva inscripciones,
+ * programa y calificaciones: dentro de un año alguien va a preguntar que paso
+ * con esa generacion, y una edicion borrada no responde nada.
+ */
+editionsRouter.post(
+  '/:id/cancelar',
+  requireRole('ADMIN', 'STAFF'),
+  validate(cancelacionSchema),
+  asyncHandler(async (req, res) => {
+    const { motivo, darDeBajaInscritos } = req.body as z.infer<typeof cancelacionSchema>;
+
+    const edicion = await prisma.courseEdition.findUnique({ where: { id: req.params.id } });
+    if (!edicion) throw notFound('Edicion no encontrada');
+    if (edicion.estado === 'CANCELADA') throw conflict('Esa edicion ya estaba cancelada');
+
+    const resultado = await prisma.$transaction(async (tx) => {
+      // A quien seguia en curso se le marca baja, no desercion: no abandono,
+      // se quedo sin curso. Quien ya acredito o reprobo conserva su resultado.
+      const bajas = darDeBajaInscritos
+        ? (
+            await tx.enrollment.updateMany({
+              where: { editionId: edicion.id, status: { in: ['PREINSCRITO', 'INSCRITO'] } },
+              data: { status: 'BAJA', notas: `Edicion cancelada: ${motivo}` },
+            })
+          ).count
+        : 0;
+
+      const actualizada = await tx.courseEdition.update({
+        where: { id: edicion.id },
+        data: {
+          estado: 'CANCELADA',
+          motivoCancelacion: motivo,
+          canceladaEn: new Date(),
+          canceladaPor: req.user!.email,
+        },
+      });
+
+      return { actualizada, bajas };
+    });
+
+    res.json({ ...resultado.actualizada, inscritosDadosDeBaja: resultado.bajas });
+  }),
+);
+
+/**
  * POST /api/editions/:id/activities/generar-cim
  * Atajo: crea de golpe una salida por cada area activa para una edicion del CIM.
  */
