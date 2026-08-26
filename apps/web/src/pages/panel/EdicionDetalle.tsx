@@ -204,6 +204,7 @@ export function EdicionDetalle() {
                             editionId={edicion.id}
                             actividad={a}
                             areas={areas ?? []}
+                            programa={edicion.actividades ?? []}
                             onListo={() => setEditandoSesion(null)}
                             onCancelar={() => setEditandoSesion(null)}
                           />

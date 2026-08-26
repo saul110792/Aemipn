@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import type { Area, ActivityKind, EditionActivity } from '../lib/types';
 import { ErrorAviso } from './Estado';
 import { Icono, hayIcono } from './Icono';
-import { etiqueta } from '../lib/format';
+import { etiqueta, fmtFecha } from '../lib/format';
 import { TIPOS_SESION } from './FormularioSesion';
 
 /** Fecha y hora locales en el formato que espera un input datetime-local. */
@@ -34,12 +34,15 @@ export function EditarSesion({
   editionId,
   actividad,
   areas,
+  programa,
   onListo,
   onCancelar,
 }: {
   editionId: string;
   actividad: EditionActivity & { areaId?: string | null; descripcion?: string | null };
   areas: Area[];
+  /** El resto del programa, para avisar si la fecha nueva choca con otra sesión. */
+  programa: EditionActivity[];
   onListo: () => void;
   onCancelar: () => void;
 }) {
@@ -69,6 +72,7 @@ export function EditarSesion({
         fechaFin: f.fin || null,
         lugar: f.lugar || null,
         descripcion: f.descripcion || null,
+        intercambiarSiChoca: Boolean(choque) && intercambiar,
       }),
     onSuccess: () => {
       refrescar();
@@ -84,7 +88,22 @@ export function EditarSesion({
     },
   });
 
+  const [intercambiar, setIntercambiar] = useState(true);
+
   const areaElegida = areas.find((a) => a.id === f.areaId) ?? null;
+
+  const mismoDia = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  // Qué sesión ocupa ya el día al que se está moviendo esta.
+  const choque = useMemo(() => {
+    if (!f.inicio) return null;
+    const nueva = new Date(f.inicio);
+    if (mismoDia(nueva, new Date(actividad.fechaInicio))) return null;
+    return programa.find((o) => o.id !== actividad.id && mismoDia(new Date(o.fechaInicio), nueva)) ?? null;
+  }, [f.inicio, programa, actividad]);
 
   /** Mueve inicio y fin a la vez: recorrer una salida no debe descuadrarla. */
   const recorrer = (dias: number) =>
@@ -196,6 +215,25 @@ export function EditarSesion({
           Para saltar un puente sin volver a capturar la fecha.
         </span>
       </div>
+
+      {choque && (
+        <div className="aviso aviso-info" style={{ fontSize: '0.88rem' }}>
+          <strong>Ese día ya tiene «{choque.titulo}».</strong>
+          <label className="casilla" style={{ marginTop: '0.4rem' }}>
+            <input
+              type="checkbox"
+              checked={intercambiar}
+              onChange={(e) => setIntercambiar(e.target.checked)}
+            />
+            Intercambiarlas
+          </label>
+          <div className="texto-suave" style={{ fontSize: '0.83rem' }}>
+            {intercambiar
+              ? '«' + choque.titulo + '» pasará al ' + fmtFecha(actividad.fechaInicio) + ', el hueco que deja esta.'
+              : 'Quedarán las dos el mismo día.'}
+          </div>
+        </div>
+      )}
 
       <div className="campo">
         <label htmlFor={`e-lugar-${actividad.id}`}>Lugar</label>

@@ -106,6 +106,13 @@ Poder cambiar el área importa tanto como la fecha: cuando el clima impide una s
 se hace una de fotografía, y sigue siendo la misma casilla del programa. Cambiar la fecha cubre el
 otro caso habitual, los puentes y días festivos en que no hay salida.
 
+Con `intercambiarSiChoca: true`, mover una sesión al día que ya ocupa otra **las intercambia**: la
+desplazada se va al hueco que dejó la primera, conservando su propia hora y duración. Las dos
+escrituras van en una transacción, porque media reprogramación es peor que ninguna. La respuesta
+trae `intercambiadaCon` para poder decir con quién se cambió.
+
+Sin ese flag, o al desmarcarlo, las dos quedan el mismo día — que a veces es lo que se quiere.
+
 `POST /api/editions/:id/activities/generar-cim` reparte las salidas **una por semana** desde el
 inicio de la edición. Es un punto de partida, no una programación definitiva.
 

@@ -59,7 +59,13 @@ const activityBase = z.object({
 });
 
 const activitySchema = activityBase.refine(rangoValido, mensajeRango);
-const activityUpdateSchema = activityBase.partial().refine(rangoValido, mensajeRango);
+const activityUpdateSchema = activityBase
+  .partial()
+  .extend({
+    /// Si la fecha nueva cae donde ya hay otra sesion, se intercambian.
+    intercambiarSiChoca: z.boolean().optional(),
+  })
+  .refine(rangoValido, mensajeRango);
 
 editionsRouter.get(
   '/',
@@ -158,17 +164,86 @@ editionsRouter.post(
   }),
 );
 
+/** Mismo dia natural, sin mirar la hora. */
+const mismoDia = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+/**
+ * PATCH /api/editions/:id/activities/:activityId
+ *
+ * Mover una sesion al dia de otra no debe dejar dos encimadas: con
+ * `intercambiarSiChoca` la que estorbaba se va al hueco que dejo la primera.
+ * Asi se reordena el programa sin recapturar dos fechas, que es lo que pasa
+ * cuando un puente obliga a correr una salida y las demas se recorren.
+ * Ambas se escriben en una transaccion: media reprogramacion es peor que
+ * ninguna.
+ */
 editionsRouter.patch(
   '/:id/activities/:activityId',
   requireRole('ADMIN', 'STAFF'),
   validate(activityUpdateSchema),
   asyncHandler(async (req, res) => {
-    res.json(
-      await prisma.editionActivity.update({
-        where: { id: req.params.activityId },
-        data: req.body,
-      }),
-    );
+    const { intercambiarSiChoca, ...cambios } = req.body as Record<string, unknown> & {
+      intercambiarSiChoca?: boolean;
+      fechaInicio?: Date;
+    };
+
+    const actual = await prisma.editionActivity.findUnique({
+      where: { id: req.params.activityId },
+    });
+    if (!actual) throw notFound('Sesion no encontrada');
+
+    const nuevaFecha = cambios.fechaInicio ? new Date(cambios.fechaInicio) : null;
+    const cambiaDeDia = nuevaFecha !== null && !mismoDia(nuevaFecha, actual.fechaInicio);
+
+    // Solo se busca estorbo cuando de verdad cambia de dia.
+    const estorbo =
+      intercambiarSiChoca && cambiaDeDia
+        ? (
+            await prisma.editionActivity.findMany({
+              where: { editionId: actual.editionId, NOT: { id: actual.id } },
+            })
+          ).find((o) => mismoDia(o.fechaInicio, nuevaFecha!)) ?? null
+        : null;
+
+    const resultado = await prisma.$transaction(async (tx) => {
+      if (estorbo) {
+        // La desplazada hereda el dia que dejo libre la movida, conservando
+        // su propia hora: cada salida tiene su horario y no debe perderlo.
+        const conservaHora = (base: Date, referencia: Date) => {
+          const d = new Date(base);
+          d.setHours(referencia.getHours(), referencia.getMinutes(), 0, 0);
+          return d;
+        };
+
+        const duracion = estorbo.fechaFin
+          ? estorbo.fechaFin.getTime() - estorbo.fechaInicio.getTime()
+          : null;
+        const inicioDesplazada = conservaHora(actual.fechaInicio, estorbo.fechaInicio);
+
+        await tx.editionActivity.update({
+          where: { id: estorbo.id },
+          data: {
+            fechaInicio: inicioDesplazada,
+            fechaFin: duracion === null ? null : new Date(inicioDesplazada.getTime() + duracion),
+          },
+        });
+      }
+
+      return tx.editionActivity.update({
+        where: { id: actual.id },
+        data: cambios,
+        include: { area: { select: { id: true, nombre: true, slug: true, color: true } } },
+      });
+    });
+
+    res.json({
+      ...resultado,
+      // El cliente lo usa para decir con quien se intercambio.
+      intercambiadaCon: estorbo ? { id: estorbo.id, titulo: estorbo.titulo } : null,
+    });
   }),
 );
 
