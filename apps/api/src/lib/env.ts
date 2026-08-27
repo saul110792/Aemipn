@@ -14,6 +14,17 @@ const schema = z.object({
   APP_URL: z.string().default('http://localhost:5173'),
   /// Sin esto, los correos se imprimen en la consola en lugar de enviarse.
   SMTP_URL: z.string().optional(),
+  /// Devuelve el token y el código de verificación en la respuesta del registro.
+  ///
+  /// Es una comodidad para probar sin buzón, y es también una llave: con ella
+  /// cualquiera registra una cuenta con el correo de otra persona y la verifica
+  /// sin tener acceso a ese buzón. Antes bastaba con que NODE_ENV no fuera
+  /// 'production' —y un entorno de calidad casi nunca lo es—, así que ahora se
+  /// pide encenderla a propósito.
+  EXPONER_CODIGOS_DE_PRUEBA: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
   SMTP_REMITENTE: z.string().default('AEMIPN <no-responder@aemipn.mx>'),
   /// Cuentas de prueba para entrar como jefe de area y ver los permisos
   /// desde dentro. El seed se niega a crearlas si NODE_ENV es production.
@@ -41,3 +52,11 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export const isProd = env.NODE_ENV === 'production';
+
+/**
+ * ¿Se devuelven los códigos de verificación en la respuesta?
+ *
+ * Nunca en producción, por más que la variable diga que sí: una configuración
+ * mal copiada no debe poder abrir esto.
+ */
+export const exponeCodigosDePrueba = env.EXPONER_CODIGOS_DE_PRUEBA && !isProd;

@@ -7,7 +7,7 @@ import { asyncHandler } from '../lib/asyncHandler.js';
 import { badRequest } from '../lib/errors.js';
 import { validate } from '../middleware/validate.js';
 import { crearYEnviarVerificacion, verificar } from '../lib/verificacion.js';
-import { isProd } from '../lib/env.js';
+import { exponeCodigosDePrueba } from '../lib/env.js';
 
 /** Registro y confirmación de cuenta. Todo esto ocurre sin sesión. */
 export const registroRouter = Router();
@@ -103,8 +103,8 @@ registroRouter.post(
 
     res.status(201).json({
       ...respuestaNeutra,
-      // Fuera de produccion se devuelve para poder probar sin buzon.
-      ...(isProd ? {} : { _pruebas: { token: v.token, codigo: v.codigo } }),
+      // Solo con EXPONER_CODIGOS_DE_PRUEBA=true, y nunca en produccion.
+      ...(exponeCodigosDePrueba ? { _pruebas: { token: v.token, codigo: v.codigo } } : {}),
     });
   }),
 );
