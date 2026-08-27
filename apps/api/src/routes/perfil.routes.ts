@@ -11,7 +11,6 @@ import {
   normalizarAlergias,
 } from '../lib/catalogos.js';
 import { requireAuth } from '../middleware/auth.js';
-import { vigente } from '../lib/jefaturas.js';
 
 export const perfilRouter = Router();
 perfilRouter.use(requireAuth);
@@ -226,7 +225,7 @@ perfilRouter.get(
     if (!req.user!.memberId) return res.json([]);
 
     const membresias = await prisma.areaMembership.findMany({
-      where: { memberId: req.user!.memberId, ...vigente() },
+      where: { memberId: req.user!.memberId, activo: true },
       include: { area: true },
     });
     res.json(membresias.map((m) => m.area));

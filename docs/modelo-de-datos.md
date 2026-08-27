@@ -138,8 +138,29 @@ disciplina, solo deja de mandar.
 Cada nombramiento guarda **quién lo hizo y por qué** (`asignadoPor`, `motivo`), para poder
 responder "¿desde cuándo es jefe y quién lo puso?".
 
-Encabezar un área es un `AreaRole` (`JEFE_DE_AREA`, `TESORERO`), no un rol global: alguien puede
-ser jefe de Escalada y miembro raso en Espeleología. **Un jefe no ve otra área a menos que tenga
+## Pertenecer y encabezar son dos cosas
+
+`AreaMembership` dice que alguien **pertenece** al área: lo da el curso base y no se pierde.
+`Jefatura` dice que alguien la **encabeza**: es un periodo con `desde` y `hasta`, sin restricción
+de unicidad.
+
+Estuvieron juntas y estaba mal. Con el cargo como campo de la membresía —única por persona y
+área— relevar a alguien y volver a nombrarlo **pisaba el registro anterior**, y la asociación se
+quedaba sin memoria de quién dirigió qué y cuándo. La co-jefatura tampoco cabía: dos titulares
+simultáneos no entran en una fila.
+
+Separadas, las dos preguntas se responden solas: "¿es de Escalada?" mira la membresía; "¿quién
+manda hoy?" mira las jefaturas sin `hasta` o con `hasta` futuro. Relevar no borra: pone fecha
+de término, quién relevó y por qué. Eso es lo que convierte la tabla en historial.
+
+Un cargo **siempre cuelga de una persona del padrón**, con su teléfono y su boleta. No existe
+una "cuenta de jefe": se nombra a alguien que ya está en el área, y al relevarlo sigue ahí.
+
+`CourseEdition.instructores` cierra la otra mitad de la pregunta —qué impartió cada quien—, y el
+historial las cruza por fecha en vez de llevar una lista aparte, para que no haya dos verdades.
+
+Encabezar un área es un `Cargo` (`JEFE_DE_AREA`, `JEFE_INTERINO`, `TESORERO`), no un rol global:
+alguien puede ser jefe de Escalada y miembro raso en Espeleología. **Un jefe no ve otra área a menos que tenga
 el curso aprobado de ella** — el padrón, las declaraciones y los eventos privados se filtran por
 las áreas a las que de verdad pertenece.
 

@@ -13,7 +13,7 @@ interface AreaPublica {
   contenido: string | null;
   color: string | null;
   cursos: { id: string; slug: string; nombre: string; descripcion: string | null; requisitos: string | null; duracionHoras: number | null }[];
-  miembros: { role: string; hasta: string | null; member: { nombre: string; apellidoPaterno: string; fotoUrl: string | null } }[];
+  jefaturas: { cargo: string; member: { nombre: string; apellidoPaterno: string; fotoUrl: string | null } }[];
 }
 
 export function AreaDetalle() {
@@ -54,16 +54,16 @@ export function AreaDetalle() {
       <div className="contenedor seccion">
         {data.contenido && <p style={{ maxWidth: '70ch', fontSize: '1.05rem' }}>{data.contenido}</p>}
 
-        {data.miembros.length > 0 && (
+        {data.jefaturas.length > 0 && (
           <>
             <h2 style={{ marginTop: '2rem' }}>Mesa del área</h2>
             <div className="rejilla rejilla-4">
-              {data.miembros.map((m, i) => (
+              {data.jefaturas.map((j, i) => (
                 <div key={i} className="tarjeta">
                   <div className="tarjeta-cuerpo">
-                    <span className="insignia insignia-azul">{etiqueta(m.role)}</span>
+                    <span className="insignia insignia-azul">{etiqueta(j.cargo)}</span>
                     <h3 style={{ marginTop: '0.6rem', marginBottom: 0, fontSize: '1rem' }}>
-                      {m.member.nombre} {m.member.apellidoPaterno}
+                      {j.member.nombre} {j.member.apellidoPaterno}
                     </h3>
                   </div>
                 </div>

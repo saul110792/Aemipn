@@ -60,7 +60,7 @@ const publicUser = (user: {
     nombre: string;
     apellidoPaterno: string;
     fotoUrl: string | null;
-    areas?: { areaId: string }[];
+    jefaturas?: { areaId: string }[];
   } | null;
 }) => ({
   id: user.id,
@@ -71,7 +71,7 @@ const publicUser = (user: {
   fotoUrl: user.member?.fotoUrl ?? null,
   /// Cuantas areas encabeza. El cliente lo usa para no ofrecer pantallas
   /// que la API le negaria de todos modos.
-  areasQueEncabeza: user.member?.areas?.length ?? 0,
+  areasQueEncabeza: new Set(user.member?.jefaturas?.map((j) => j.areaId) ?? []).size,
 });
 
 authRouter.post(
@@ -89,12 +89,9 @@ authRouter.post(
         nombre: true,
         apellidoPaterno: true,
         fotoUrl: true,
-        areas: {
-          where: {
-            activo: true,
-            role: { in: ['JEFE_DE_AREA', 'JEFE_INTERINO', 'TESORERO'] },
-            OR: [{ hasta: null }, { hasta: { gte: new Date() } }],
-          },
+        // Encabezar es tener un cargo en funciones, no pertenecer al area.
+        jefaturas: {
+          where: { OR: [{ hasta: null }, { hasta: { gte: new Date() } }] },
           select: { areaId: true },
         },
       },
@@ -154,12 +151,9 @@ authRouter.post(
         nombre: true,
         apellidoPaterno: true,
         fotoUrl: true,
-        areas: {
-          where: {
-            activo: true,
-            role: { in: ['JEFE_DE_AREA', 'JEFE_INTERINO', 'TESORERO'] },
-            OR: [{ hasta: null }, { hasta: { gte: new Date() } }],
-          },
+        // Encabezar es tener un cargo en funciones, no pertenecer al area.
+        jefaturas: {
+          where: { OR: [{ hasta: null }, { hasta: { gte: new Date() } }] },
           select: { areaId: true },
         },
       },

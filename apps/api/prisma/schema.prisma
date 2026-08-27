@@ -24,11 +24,12 @@ enum GlobalRole {
 }
 
 /// Rol dentro de un área específica. Un miembro puede tener rol distinto por área.
-enum AreaRole {
-  JEFE_DE_AREA /// titular; exige tener aprobado un curso del área
+/// Los puestos de una mesa de área. No hay `MIEMBRO`: pertenecer al área no
+/// es un cargo, es la condición de base sobre la que los cargos se otorgan.
+enum Cargo {
+  JEFE_DE_AREA /// titular; exige tener aprobado el curso base del área
   JEFE_INTERINO /// releva mientras nadie acreditado pueda tomarlo; siempre con fecha de término
   TESORERO
-  MIEMBRO
 }
 
 enum MemberStatus {
@@ -184,12 +185,14 @@ model Member {
   fotoUrl      String?
   notas        String?
 
-  user             User?
-  areas            AreaMembership[]
-  enrollments      Enrollment[]
-  cursosDeclarados CourseClaim[]
+  user                User?
+  areas               AreaMembership[]
+  jefaturas           Jefatura[]
+  edicionesImpartidas CourseEdition[]   @relation("InstructoresDeEdicion")
+  enrollments         Enrollment[]
+  cursosDeclarados    CourseClaim[]
   /// Actividades del CIM u otras ediciones donde esta persona es responsable.
-  actividades      EditionActivity[] @relation("ResponsableActividad")
+  actividades         EditionActivity[] @relation("ResponsableActividad")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -249,6 +252,7 @@ model Area {
   activa      Boolean  @default(true)
 
   miembros    AreaMembership[]
+  jefaturas   Jefatura[]
   cursos      Course[]
   actividades EditionActivity[]
 
@@ -261,29 +265,63 @@ model Area {
 }
 
 /// Pertenencia de un miembro a un área, con su rol. Un miembro puede estar en varias.
-model AreaMembership {
-  id       String    @id @default(cuid())
-  member   Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+/// Un cargo dentro de un área, con principio y fin.
+///
+/// Vive aparte de la membresía a propósito. Pertenecer al área es un hecho
+/// estable —lo da el curso base y no se pierde—; encabezarla es un **periodo**
+/// que empieza, termina y puede repetirse. Mientras el cargo era un campo de
+/// `AreaMembership` (única por persona y área), relevar y volver a nombrar
+/// pisaba el registro anterior y la asociación se quedaba sin memoria de
+/// quién dirigió qué y cuándo.
+///
+/// Sin restricción de unicidad: por eso caben la co-jefatura (dos vigentes a
+/// la vez) y el historial (varios cerrados de la misma persona).
+model Jefatura {
+  id       String @id @default(cuid())
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
   memberId String
-  area     Area      @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  area     Area   @relation(fields: [areaId], references: [id], onDelete: Cascade)
   areaId   String
-  role     AreaRole  @default(MIEMBRO)
-  desde    DateTime  @default(now())
-  /// Fin del nombramiento. Obligatorio para un interino: pasada esa fecha el
-  /// cargo deja de dar permisos aunque el registro siga activo.
-  hasta    DateTime?
-  activo   Boolean   @default(true)
+  cargo    Cargo
 
-  /// Correo de quien hizo el nombramiento, para poder responder "quién lo puso".
+  desde DateTime  @default(now())
+  /// Fin del periodo. `null` = en funciones. Para un interino se fija de
+  /// entrada: pasada esa fecha deja de dar permisos aunque nadie lo releve.
+  hasta DateTime?
+
+  /// Correo de quien nombró y por qué, para responder "quién lo puso".
+  asignadoPor  String?
+  motivo       String?
+  /// Y lo mismo del relevo, que es la otra mitad de la historia.
+  relevadoPor  String?
+  motivoRelevo String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([areaId, cargo, desde])
+  @@index([memberId, desde])
+  @@map("jefaturas")
+}
+
+model AreaMembership {
+  id       String   @id @default(cuid())
+  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String
+  area     Area     @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  areaId   String
+  desde    DateTime @default(now())
+  activo   Boolean  @default(true)
+
+  /// Quién la integró al área y por qué. El cargo, si lo tiene, va en Jefatura.
   asignadoPor String?
-  /// Por qué se nombró así, sobre todo cuando es un interino.
   motivo      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([memberId, areaId])
-  @@index([areaId, role])
+  @@index([areaId])
   @@map("area_memberships")
 }
 
@@ -352,6 +390,11 @@ model CourseEdition {
 
   inscripciones Enrollment[]
   actividades   EditionActivity[]
+
+  /// Quiénes la impartieron. Es lo que permite responder "qué cursos dio"
+  /// cuando se revisa el paso de alguien por una jefatura. Varios porque un
+  /// curso rara vez lo lleva una sola persona de principio a fin.
+  instructores Member[] @relation("InstructoresDeEdicion")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

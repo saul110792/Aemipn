@@ -5,7 +5,7 @@ import { asyncHandler } from '../lib/asyncHandler.js';
 import { conflict, forbidden, notFound } from '../lib/errors.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth } from '../middleware/auth.js';
-import { ROLES_DE_MANDO, areasConRol } from '../lib/jefaturas.js';
+import { CARGOS_DE_MANDO, areasConCargo } from '../lib/jefaturas.js';
 
 export const claimsRouter = Router();
 claimsRouter.use(requireAuth);
@@ -30,7 +30,7 @@ async function areasQueRevisa(user: { role: string; memberId: string | null }) {
   if (user.role === 'ADMIN' || user.role === 'STAFF') return null;
   if (!user.memberId) return [];
 
-  return areasConRol(user.memberId, ROLES_DE_MANDO);
+  return areasConCargo(user.memberId, CARGOS_DE_MANDO);
 }
 
 /** El CIM no pertenece a un área; lo resuelve quien lo coordina. */
@@ -122,8 +122,8 @@ claimsRouter.post(
       if (integraAlArea) {
         await tx.areaMembership.upsert({
           where: { memberId_areaId: { memberId: claim.memberId, areaId: claim.course.areaId! } },
-          create: { memberId: claim.memberId, areaId: claim.course.areaId!, role: 'MIEMBRO' },
-          update: { activo: true, hasta: null },
+          create: { memberId: claim.memberId, areaId: claim.course.areaId! },
+          update: { activo: true },
         });
       }
 

@@ -4,7 +4,7 @@ import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth } from '../middleware/auth.js';
-import { vigente } from '../lib/jefaturas.js';
+import { enFunciones } from '../lib/jefaturas.js';
 
 export const calendarioRouter = Router();
 calendarioRouter.use(requireAuth);
@@ -50,17 +50,22 @@ calendarioRouter.get(
     const { desde, hasta } = req.query as unknown as z.infer<typeof rangoSchema>;
     const esAdmin = req.user!.role === 'ADMIN' || req.user!.role === 'STAFF';
 
-    const membresias = req.user!.memberId
-      ? await prisma.areaMembership.findMany({
-          where: { memberId: req.user!.memberId, ...vigente() },
-          select: { areaId: true, role: true },
-        })
-      : [];
+    // Pertenecer al area decide qué se ve; encabezarla decide cuánto más.
+    const [membresias, jefaturas] = req.user!.memberId
+      ? await Promise.all([
+          prisma.areaMembership.findMany({
+            where: { memberId: req.user!.memberId, activo: true },
+            select: { areaId: true },
+          }),
+          prisma.jefatura.findMany({
+            where: { memberId: req.user!.memberId, ...enFunciones() },
+            select: { areaId: true },
+          }),
+        ])
+      : [[], []];
 
     const misAreas = membresias.map((m) => m.areaId);
-    const encabeza = membresias.some(
-      (m) => m.role === 'JEFE_DE_AREA' || m.role === 'JEFE_INTERINO' || m.role === 'TESORERO',
-    );
+    const encabeza = jefaturas.length > 0;
     // Quien programa cursos necesita ver los de todos para no encimarse.
     const vePlaneacion = esAdmin || encabeza || req.user!.role === 'JEFE_CIM';
 

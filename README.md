@@ -23,6 +23,7 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 - Miembros: alta, búsqueda, filtros, paginación, ficha completa con historial de cursos
 - Asignación de miembros a áreas con rol (jefe de área / tesorero / miembro)
 - Resumen por área para su jefe, más las estadísticas del CIM (de ahí salen los nuevos)
+- Historial de jefaturas: quién encabezó cada área, entre qué fechas y qué cursos se dieron
 - Requisitos entre cursos: Alta Montaña exige el CIM y el curso básico de media montaña
 - Solicitudes de ingreso: aceptar (crea el miembro y lo asigna a sus áreas de interés) o rechazar
 - Ediciones y CIM: roster con datos de emergencia a la mano, control de estado y de pago. Al evaluar se distingue **aprobó, reprobó y desertó**; una edición sin inscritos se borra y una que ya arrancó se cancela con motivo
@@ -48,6 +49,7 @@ y corre `npm run db:seed`. Crea doce cuentas que comparten contraseña:
 |---|---|
 | `jefe.<área>@demo.aemipn.mx` (8) | Un jefe por área, con su curso base acreditado |
 | `tesorero.alta-montana@…` | Ve el padrón de su área pero no valida cursos |
+| `exjefe.escalada-en-roca@…` | Fue jefe y ya no: aparece en el historial de Escalada |
 | `miembro.escalada-en-roca@…` | Miembro raso: solo su área, sin padrón |
 | `jefe.cim@…` | Coordina el CIM; no ve las áreas |
 | `recien.registrado@…` | Sin curso aprobado: no pertenece a ninguna área |

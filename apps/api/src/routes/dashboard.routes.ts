@@ -4,7 +4,7 @@ import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import { forbidden } from '../lib/errors.js';
 import { requireAuth } from '../middleware/auth.js';
-import { ROLES_DE_MANDO, areasConRol, vigente } from '../lib/jefaturas.js';
+import { CARGOS_DE_MANDO, areasConCargo } from '../lib/jefaturas.js';
 
 export const dashboardRouter = Router();
 dashboardRouter.use(requireAuth);
@@ -21,7 +21,7 @@ dashboardRouter.get(
   '/',
   asyncHandler(async (req, res) => {
     const esMesa = req.user!.role === 'ADMIN' || req.user!.role === 'STAFF';
-    const misAreas = esMesa ? [] : await areasConRol(req.user!.memberId, ROLES_DE_MANDO);
+    const misAreas = esMesa ? [] : await areasConCargo(req.user!.memberId, CARGOS_DE_MANDO);
 
     if (!esMesa && misAreas.length === 0) throw forbidden('No encabezas ninguna area');
 
@@ -47,7 +47,7 @@ dashboardRouter.get(
       prisma.member.groupBy({
         by: ['status'],
         _count: { _all: true },
-        ...(esMesa ? {} : { where: { areas: { some: { areaId: { in: misAreas }, ...vigente(ahora) } } } }),
+        ...(esMesa ? {} : { where: { areas: { some: { areaId: { in: misAreas }, activo: true } } } }),
       }),
       prisma.area.findMany({
         where: { activa: true, ...(esMesa ? {} : { id: { in: misAreas } }) },
@@ -154,7 +154,7 @@ async function estadisticasDelCim(misAreas: string[], esMesa: boolean, ahora: Da
   // Sin esta resta, quien repite el CIM contaría como recién llegado.
   const yaSonDeAlguna = ids.length
     ? await prisma.areaMembership.findMany({
-        where: { memberId: { in: ids }, ...vigente(ahora) },
+        where: { memberId: { in: ids }, activo: true },
         select: { memberId: true },
         distinct: ['memberId'],
       })

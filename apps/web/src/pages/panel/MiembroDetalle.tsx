@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
-import type { Area, AreaRole, Member } from '../../lib/types';
+import type { Area, CargoOMiembro, Member } from '../../lib/types';
 import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { etiqueta, fmtFecha, fmtFechaCorta, nombreCompleto } from '../../lib/format';
 import { useAuth } from '../../lib/auth';
 
-const ROLES: AreaRole[] = ['MIEMBRO', 'TESORERO', 'JEFE_DE_AREA', 'JEFE_INTERINO'];
+const CARGOS: CargoOMiembro[] = ['MIEMBRO', 'TESORERO', 'JEFE_DE_AREA', 'JEFE_INTERINO'];
 
 /** Un año a partir de hoy, en el formato que espera un input de fecha. */
 function unAnioDesdeHoy() {
@@ -22,7 +22,7 @@ export function MiembroDetalle() {
   const qc = useQueryClient();
 
   const [areaId, setAreaId] = useState('');
-  const [role, setRole] = useState<AreaRole>('MIEMBRO');
+  const [role, setRole] = useState<CargoOMiembro>('MIEMBRO');
   const [hasta, setHasta] = useState(unAnioDesdeHoy());
   const [motivo, setMotivo] = useState('');
 
@@ -39,6 +39,10 @@ export function MiembroDetalle() {
     queryFn: () => api.get<Member>(`/members/${id}`),
     enabled: Boolean(id),
   });
+
+  const sigueVigente = (hasta?: string | null) =>
+    !hasta || new Date(hasta).getTime() >= Date.now();
+  const enFunciones = (miembro?.jefaturas ?? []).filter((j) => sigueVigente(j.hasta));
 
   const { data: areas } = useQuery({
     queryKey: ['areas'],
@@ -185,60 +189,68 @@ export function MiembroDetalle() {
               {!miembro.areas?.length && <p className="texto-suave">Sin área asignada.</p>}
 
               <div className="pila">
-                {miembro.areas?.map((am) => (
-                  <div
-                    key={am.id}
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--borde)' }}
-                  >
-                    <span style={{ width: 4, height: 28, background: am.area.color ?? 'var(--roca)', borderRadius: 2 }} />
-                    <div style={{ flex: 1 }}>
-                      <strong style={{ fontSize: '0.93rem' }}>{am.area.nombre}</strong>
-                      <div className="texto-suave" style={{ fontSize: '0.82rem' }}>
-                        {etiqueta(am.role)}
-                        {am.hasta &&
-                          (new Date(am.hasta) < new Date() ? (
-                            <span style={{ color: 'var(--error)' }}>
-                              {' · venció el '}
-                              {fmtFechaCorta(am.hasta)}
-                            </span>
+                {miembro.areas?.map((am) => {
+                  // Pertenecer y encabezar son cosas distintas: lo primero es
+                  // estable, lo segundo es un periodo que empieza y termina.
+                  const cargo = enFunciones.find((j) => j.areaId === am.area.id);
+                  return (
+                    <div
+                      key={am.id}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--borde)' }}
+                    >
+                      <span style={{ width: 4, height: 28, background: am.area.color ?? 'var(--roca)', borderRadius: 2 }} />
+                      <div style={{ flex: 1 }}>
+                        <strong style={{ fontSize: '0.93rem' }}>{am.area.nombre}</strong>
+                        <div className="texto-suave" style={{ fontSize: '0.82rem' }}>
+                          {cargo ? (
+                            <>
+                              <strong style={{ color: 'var(--guinda-600)' }}>{etiqueta(cargo.cargo)}</strong>
+                              {' desde '}{fmtFechaCorta(cargo.desde)}
+                              {cargo.hasta && (
+                                <>{' · hasta '}{fmtFechaCorta(cargo.hasta)}</>
+                              )}
+                            </>
                           ) : (
-                            <>{' · hasta '}{fmtFechaCorta(am.hasta)}</>
-                          ))}
-                      </div>
-                      {am.asignadoPor && (
-                        <div className="texto-suave" style={{ fontSize: '0.76rem' }}>
-                          {'Nombrado por '}{am.asignadoPor}
-                          {am.motivo ? ' — ' + am.motivo : ''}
+                            'Miembro del área'
+                          )}
                         </div>
-                      )}
-                    </div>
-                    {esAdmin && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        {(am.role === 'JEFE_DE_AREA' || am.role === 'JEFE_INTERINO') && (
+                        {cargo?.asignadoPor && (
+                          <div className="texto-suave" style={{ fontSize: '0.76rem' }}>
+                            {'Nombrado por '}{cargo.asignadoPor}
+                            {cargo.motivo ? ' — ' + cargo.motivo : ''}
+                          </div>
+                        )}
+                      </div>
+                      {esAdmin && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          {cargo && (
+                            <button
+                              type="button"
+                              className="btn btn-borde btn-sm"
+                              onClick={() => relevar.mutate(am.area.id)}
+                              disabled={relevar.isPending}
+                              title="Cerrar el cargo; sigue como miembro del área"
+                            >
+                              Relevar
+                            </button>
+                          )}
                           <button
                             type="button"
                             className="btn btn-borde btn-sm"
-                            onClick={() => relevar.mutate(am.area.id)}
-                            disabled={relevar.isPending}
-                            title="Cerrar el cargo; sigue como miembro del área"
+                            onClick={() => quitar.mutate(am.area.id)}
+                            disabled={quitar.isPending}
+                            title="Dar de baja del área"
                           >
-                            Relevar
+                            Quitar
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          className="btn btn-borde btn-sm"
-                          onClick={() => quitar.mutate(am.area.id)}
-                          disabled={quitar.isPending}
-                          title="Dar de baja del área"
-                        >
-                          Quitar
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+
+              <HistorialDeCargos miembro={miembro} />
 
               {esAdmin && disponibles.length > 0 && (
                 <div style={{ marginTop: '1rem' }}>
@@ -253,8 +265,8 @@ export function MiembroDetalle() {
                   </div>
                   <div className="campo">
                     <label htmlFor="asignar-rol">Cargo</label>
-                    <select id="asignar-rol" value={role} onChange={(e) => setRole(e.target.value as AreaRole)}>
-                      {ROLES.map((r) => (
+                    <select id="asignar-rol" value={role} onChange={(e) => setRole(e.target.value as CargoOMiembro)}>
+                      {CARGOS.map((r) => (
                         <option
                           key={r}
                           value={r}
@@ -330,3 +342,58 @@ const Dato = ({ titulo, valor }: { titulo: string; valor: string | null | undefi
     <dd style={{ margin: 0, fontWeight: 600 }}>{valor || '—'}</dd>
   </div>
 );
+
+/**
+ * Por dónde ha pasado esta persona, y qué impartió mientras tanto.
+ *
+ * Los cargos cerrados son la parte que antes no existía: al relevar se pisaba
+ * el registro y la asociación se quedaba sin memoria de quién dirigió qué.
+ */
+function HistorialDeCargos({ miembro }: { miembro: Member }) {
+  const ahora = Date.now();
+  const cerradas = (miembro.jefaturas ?? []).filter(
+    (j) => Boolean(j.hasta) && new Date(j.hasta!).getTime() < ahora,
+  );
+  const impartidas = miembro.edicionesImpartidas ?? [];
+
+  if (cerradas.length === 0 && impartidas.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--borde)' }}>
+      {cerradas.length > 0 && (
+        <>
+          <h4 style={{ fontSize: '0.9rem', margin: '0 0 .5rem' }}>Cargos anteriores</h4>
+          <div className="pila">
+            {cerradas.map((j) => (
+              <div key={j.id} style={{ fontSize: '0.84rem', marginBottom: '.5rem' }}>
+                <strong>{etiqueta(j.cargo)}</strong>
+                {' de '}{j.area?.nombre ?? 'su área'}
+                <div className="texto-suave" style={{ fontSize: '0.8rem' }}>
+                  {fmtFechaCorta(j.desde)} — {fmtFechaCorta(j.hasta!)}
+                  {j.motivoRelevo ? ' · ' + j.motivoRelevo : ''}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {impartidas.length > 0 && (
+        <>
+          <h4 style={{ fontSize: '0.9rem', margin: '1rem 0 .5rem' }}>Cursos que ha impartido</h4>
+          <div className="pila">
+            {impartidas.map((e) => (
+              <div key={e.id} style={{ fontSize: '0.84rem', marginBottom: '.4rem' }}>
+                <code style={{ fontWeight: 700, color: 'var(--guinda)' }}>{e.clave}</code>
+                {' '}{e.course.nombre}
+                <div className="texto-suave" style={{ fontSize: '0.8rem' }}>
+                  {fmtFechaCorta(e.fechaInicio)} — {fmtFechaCorta(e.fechaFin)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

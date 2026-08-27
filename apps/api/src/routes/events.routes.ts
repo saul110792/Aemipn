@@ -5,7 +5,7 @@ import { asyncHandler } from '../lib/asyncHandler.js';
 import { forbidden, notFound } from '../lib/errors.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth } from '../middleware/auth.js';
-import { vigente } from '../lib/jefaturas.js';
+import { CARGOS_DE_MESA, enFunciones } from '../lib/jefaturas.js';
 
 export const eventsRouter = Router();
 eventsRouter.use(requireAuth);
@@ -103,7 +103,7 @@ const incluyeArea = {
 async function areasDelUsuario(memberId: string | null) {
   if (!memberId) return [];
   const m = await prisma.areaMembership.findMany({
-    where: { memberId, ...vigente() },
+    where: { memberId, activo: true },
     select: { areaId: true },
   });
   return m.map((x) => x.areaId);
@@ -184,12 +184,12 @@ async function puedeEditar(
   if (user.role === 'ADMIN' || user.role === 'STAFF') return true;
   if (!areaId || !user.memberId) return false;
 
-  const rol = await prisma.areaMembership.findFirst({
+  const rol = await prisma.jefatura.findFirst({
     where: {
       memberId: user.memberId,
       areaId,
-      role: { in: ['JEFE_DE_AREA', 'JEFE_INTERINO', 'TESORERO'] },
-      ...vigente(),
+      cargo: { in: CARGOS_DE_MESA },
+      ...enFunciones(),
     },
     select: { id: true },
   });

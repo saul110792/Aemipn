@@ -94,6 +94,13 @@ export function PanelLayout() {
             <Icono nombre="areas" />
             Áreas
           </NavLink>
+          {/* Lo ve quien manda: la mesa directiva y quien encabeza un área. */}
+          {puedeVerPadron && (
+            <NavLink to="/panel/jefaturas" className={clase}>
+              <Icono nombre="miembros" />
+              Jefaturas
+            </NavLink>
+          )}
           <NavLink to="/panel/cursos" className={clase}>
             <Icono nombre="cursos" />
             Cursos

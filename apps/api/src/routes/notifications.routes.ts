@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import { requireAuth } from '../middleware/auth.js';
-import { ROLES_DE_MANDO, ROLES_DE_MESA, areasConRol } from '../lib/jefaturas.js';
+import { CARGOS_DE_MANDO, CARGOS_DE_MESA, areasConCargo } from '../lib/jefaturas.js';
 
 export const notificationsRouter = Router();
 notificationsRouter.use(requireAuth);
@@ -36,7 +36,7 @@ async function contarDeclaracionesQueRevisa(user: { role: string; memberId: stri
   if (esAdmin) return prisma.courseClaim.count({ where: { status: 'PENDIENTE' } });
 
   const coordinaCim = user.role === 'JEFE_CIM';
-  const areas = await areasConRol(user.memberId, ROLES_DE_MANDO);
+  const areas = await areasConCargo(user.memberId, CARGOS_DE_MANDO);
 
   if (areas.length === 0 && !coordinaCim) return 0;
 
@@ -120,7 +120,7 @@ notificationsRouter.get(
       }
     } else if (req.user!.memberId) {
       // Jefe o tesorero de área: solo lo suyo.
-      const ids = await areasConRol(req.user!.memberId, ROLES_DE_MESA);
+      const ids = await areasConCargo(req.user!.memberId, CARGOS_DE_MESA);
 
       if (ids.length > 0) {
         const eventosOcultos = await prisma.event.count({

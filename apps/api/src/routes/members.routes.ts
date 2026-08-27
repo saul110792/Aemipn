@@ -14,10 +14,11 @@ import {
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import {
   MESES_MAXIMOS_INTERINO,
-  ROLES_DE_MESA,
-  areasConRol,
+  CARGOS_DE_MESA,
+  areasConCargo,
   limiteInterino,
   tieneCursoDelArea,
+  cerrarJefaturas,
 } from '../lib/jefaturas.js';
 
 export const membersRouter = Router();
@@ -77,7 +78,7 @@ async function padronesQueVe(user: { role: string; memberId: string | null }) {
   if (!user.memberId) return [];
 
   // Un jefe o tesorero ve a la gente de su area; nadie mas ve el padron.
-  return areasConRol(user.memberId, ROLES_DE_MESA);
+  return areasConCargo(user.memberId, CARGOS_DE_MESA);
 }
 
 /**
@@ -126,6 +127,11 @@ membersRouter.get(
         where,
         include: {
           areas: { where: { activo: true }, include: { area: { select: { id: true, nombre: true, slug: true, color: true } } } },
+          // Solo los cargos en funciones: en la lista interesa quien manda hoy.
+          jefaturas: {
+            where: { OR: [{ hasta: null }, { hasta: { gte: new Date() } }] },
+            select: { id: true, cargo: true, areaId: true, desde: true },
+          },
           _count: { select: { enrollments: true } },
         },
         orderBy: [{ apellidoPaterno: 'asc' }, { nombre: 'asc' }],
@@ -150,7 +156,17 @@ membersRouter.get(
     const member = await prisma.member.findUnique({
       where: { id: req.params.id },
       include: {
-        areas: { include: { area: true }, orderBy: { desde: 'asc' } },
+        areas: { where: { activo: true }, include: { area: true }, orderBy: { desde: 'asc' } },
+        // Todas, incluidas las cerradas: el paso de alguien por un cargo es
+        // parte de su ficha, no solo lo que ocupa hoy.
+        jefaturas: { include: { area: true }, orderBy: { desde: 'desc' } },
+        edicionesImpartidas: {
+          select: {
+            id: true, clave: true, fechaInicio: true, fechaFin: true, estado: true,
+            course: { select: { nombre: true, codigo: true, areaId: true } },
+          },
+          orderBy: { fechaInicio: 'desc' },
+        },
         user: { select: { id: true, email: true, role: true, activo: true, ultimoAcceso: true } },
         enrollments: {
           include: { edition: { include: { course: true } } },
@@ -205,7 +221,13 @@ membersRouter.delete(
   }),
 );
 
-/** POST /api/members/:id/areas — asignar o mover a un miembro dentro de un area. */
+/**
+ * POST /api/members/:id/areas — integrar a alguien al area, con cargo o sin él.
+ *
+ * `MIEMBRO` no es un cargo: significa "solo pertenece". Se acepta aquí porque
+ * es lo mismo que pedir la pertenencia sin mesa, y separarlo en otra ruta
+ * obligaría a la interfaz a saber cuál llamar antes de que el usuario elija.
+ */
 const assignAreaSchema = z.object({
   areaId: z.string().min(1),
   role: z.enum(['JEFE_DE_AREA', 'JEFE_INTERINO', 'TESORERO', 'MIEMBRO']).default('MIEMBRO'),
@@ -215,12 +237,19 @@ const assignAreaSchema = z.object({
 });
 
 /**
- * POST /api/members/:id/areas — asignar o mover a alguien dentro de un area.
+ * POST /api/members/:id/areas — dar un cargo a un miembro del area.
  *
- * Jefe titular exige tener aprobado un curso de esa area: el cargo aprueba
- * cursos ajenos, y no tendria sentido que lo ejerza quien no acredito el suyo.
- * Cuando nadie califica, la salida es un JEFE_INTERINO, que siempre lleva
- * fecha de termino y caduca solo.
+ * El cargo cuelga de una **persona real** del padron, con su telefono y su
+ * expediente: no existe una "cuenta de jefe" flotando. Por eso lo primero que
+ * hace es asegurarse de que pertenezca al area.
+ *
+ * Jefe titular exige tener aprobado el curso base de esa area: el cargo
+ * aprueba cursos ajenos, y no tendria sentido que lo ejerza quien no acredito
+ * el suyo. Cuando nadie califica, la salida es un JEFE_INTERINO, que siempre
+ * lleva fecha de termino y caduca solo.
+ *
+ * Cada alta abre un **periodo nuevo** y cierra el que la persona tuviera en
+ * esa area. Asi queda historia en lugar de una foto del presente.
  */
 membersRouter.post(
   '/:id/areas',
@@ -250,28 +279,54 @@ membersRouter.post(
       if (termino <= new Date()) throw badRequest('La fecha de termino ya paso');
     }
 
-    const membership = await prisma.areaMembership.upsert({
-      where: { memberId_areaId: { memberId: req.params.id, areaId } },
-      create: {
+    const ahora = new Date();
+
+    const jefatura = await prisma.$transaction(async (tx) => {
+      // El cargo cuelga de la pertenencia: si no es del area, primero lo es.
+      await tx.areaMembership.upsert({
+        where: { memberId_areaId: { memberId: req.params.id, areaId } },
+        create: {
+          memberId: req.params.id,
+          areaId,
+          asignadoPor: req.user!.email,
+          motivo: motivo ?? 'Integrado al asignarle un cargo',
+        },
+        update: { activo: true },
+      });
+
+      // Cambiar de cargo es terminar uno y empezar otro, no editar el mismo.
+      await cerrarJefaturas(tx, {
         memberId: req.params.id,
         areaId,
-        role,
-        hasta: termino,
-        asignadoPor: req.user!.email,
-        motivo: motivo ?? null,
-      },
-      update: {
-        role,
-        activo: true,
-        hasta: termino,
-        desde: new Date(),
-        asignadoPor: req.user!.email,
-        motivo: motivo ?? null,
-      },
-      include: { area: true },
+        relevadoPor: req.user!.email,
+        motivo: role === 'MIEMBRO' ? 'Pasa a miembro sin cargo' : 'Cambio de cargo',
+        cuando: ahora,
+      });
+
+      // Sin cargo no hay periodo que abrir: queda solo la pertenencia.
+      if (role === 'MIEMBRO') {
+        const m = await tx.areaMembership.findUnique({
+          where: { memberId_areaId: { memberId: req.params.id, areaId } },
+          include: { area: true },
+        });
+        return { ...m, cargo: null };
+      }
+
+      return tx.jefatura.create({
+        data: {
+          memberId: req.params.id,
+          areaId,
+          cargo: role,
+          desde: ahora,
+          hasta: termino,
+          asignadoPor: req.user!.email,
+          motivo: motivo ?? null,
+        },
+        include: { area: true, member: { select: { nombre: true, apellidoPaterno: true } } },
+      });
     });
 
-    res.json(membership);
+    res.json(jefatura);
   }),
 );
 
@@ -279,28 +334,29 @@ membersRouter.post(
  * POST /api/members/:id/areas/:areaId/relevar
  * Cierra el cargo y deja a la persona como miembro del area: el jefe saliente
  * rara vez abandona la disciplina, solo deja de mandar.
+ *
+ * No borra el periodo: le pone fecha de termino. Eso es lo que hace que el
+ * historial exista.
  */
+const relevarSchema = z.object({ motivo: z.string().max(300).optional().nullable() });
+
 membersRouter.post(
   '/:id/areas/:areaId/relevar',
   requireRole('ADMIN', 'STAFF'),
+  validate(relevarSchema),
   asyncHandler(async (req, res) => {
-    const actual = await prisma.areaMembership.findUnique({
-      where: { memberId_areaId: { memberId: req.params.id, areaId: req.params.areaId } },
-    });
-    if (!actual) throw notFound('Esa persona no pertenece al area');
+    const { motivo } = req.body as z.infer<typeof relevarSchema>;
 
-    res.json(
-      await prisma.areaMembership.update({
-        where: { id: actual.id },
-        data: {
-          role: 'MIEMBRO',
-          hasta: null,
-          asignadoPor: req.user!.email,
-          motivo: 'Relevado del cargo',
-        },
-        include: { area: true },
-      }),
-    );
+    const cerradas = await cerrarJefaturas(prisma, {
+      memberId: req.params.id,
+      areaId: req.params.areaId,
+      relevadoPor: req.user!.email,
+      motivo: motivo ?? 'Relevado del cargo',
+    });
+
+    if (cerradas.count === 0) throw notFound('Esa persona no tiene un cargo en funciones en el area');
+
+    res.json({ ok: true, cerradas: cerradas.count });
   }),
 );
 
@@ -319,9 +375,19 @@ membersRouter.delete(
   '/:id/areas/:areaId',
   requireRole('ADMIN', 'STAFF'),
   asyncHandler(async (req, res) => {
-    await prisma.areaMembership.update({
-      where: { memberId_areaId: { memberId: req.params.id, areaId: req.params.areaId } },
-      data: { activo: false, hasta: new Date() },
+    // Sacar a alguien del area sin cerrarle el cargo lo dejaria mandando
+    // en un area a la que ya no pertenece.
+    await prisma.$transaction(async (tx) => {
+      await cerrarJefaturas(tx, {
+        memberId: req.params.id,
+        areaId: req.params.areaId,
+        relevadoPor: req.user!.email,
+        motivo: 'Dado de baja del area',
+      });
+      await tx.areaMembership.update({
+        where: { memberId_areaId: { memberId: req.params.id, areaId: req.params.areaId } },
+        data: { activo: false },
+      });
     });
     res.json({ ok: true });
   }),

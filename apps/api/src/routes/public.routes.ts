@@ -70,12 +70,14 @@ publicRouter.get(
           where: { activo: true },
           select: { id: true, slug: true, nombre: true, descripcion: true, requisitos: true, duracionHoras: true },
         },
-        miembros: {
-          where: { activo: true, role: { in: ['JEFE_DE_AREA', 'TESORERO'] } },
+        // La mesa que se anuncia es la que está en funciones hoy.
+        jefaturas: {
+          where: { OR: [{ hasta: null }, { hasta: { gte: new Date() } }] },
           select: {
-            role: true,
+            cargo: true,
             member: { select: { nombre: true, apellidoPaterno: true, fotoUrl: true } },
           },
+          orderBy: { cargo: 'asc' },
         },
       },
     });

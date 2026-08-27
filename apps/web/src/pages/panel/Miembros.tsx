@@ -126,21 +126,26 @@ export function Miembros() {
                     <td>
                       <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
                         {m.areas?.length
-                          ? m.areas.map((am) => (
-                              <span
-                                key={am.id}
-                                className="insignia"
-                                title={etiqueta(am.role)}
-                                style={
-                                  am.role !== 'MIEMBRO'
-                                    ? { background: am.area.color ?? undefined, color: '#fff' }
-                                    : undefined
-                                }
-                              >
-                                {am.area.nombre}
-                                {am.role !== 'MIEMBRO' && ` · ${etiqueta(am.role)}`}
-                              </span>
-                            ))
+                          ? m.areas.map((am) => {
+                              // El cargo se pinta encima de la pertenencia: son
+                              // dos hechos distintos sobre la misma persona.
+                              const cargo = m.jefaturas?.find((j) => j.areaId === am.area.id);
+                              return (
+                                <span
+                                  key={am.id}
+                                  className="insignia"
+                                  title={cargo ? etiqueta(cargo.cargo) : 'Miembro del área'}
+                                  style={
+                                    cargo
+                                      ? { background: am.area.color ?? undefined, color: '#fff' }
+                                      : undefined
+                                  }
+                                >
+                                  {am.area.nombre}
+                                  {cargo && ` · ${etiqueta(cargo.cargo)}`}
+                                </span>
+                              );
+                            })
                           : <span className="texto-suave">—</span>}
                       </div>
                     </td>

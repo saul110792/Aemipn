@@ -1,7 +1,28 @@
 /** Tipos compartidos entre el front y la API. Reflejan el schema de Prisma. */
 
 export type GlobalRole = 'ADMIN' | 'STAFF' | 'JEFE_CIM' | 'MIEMBRO' | 'CIM';
-export type AreaRole = 'JEFE_DE_AREA' | 'JEFE_INTERINO' | 'TESORERO' | 'MIEMBRO';
+/** Los puestos de una mesa de area. MIEMBRO no es uno: es no tener ninguno. */
+export type Cargo = 'JEFE_DE_AREA' | 'JEFE_INTERINO' | 'TESORERO';
+
+/** Lo que se puede elegir al asignar: un cargo, o solo la pertenencia. */
+export type CargoOMiembro = Cargo | 'MIEMBRO';
+
+/** Un periodo al frente de un area, con principio y fin. */
+export interface Jefatura {
+  id: string;
+  cargo: Cargo;
+  areaId: string;
+  desde: string;
+  /// `null`/ausente = en funciones.
+  hasta?: string | null;
+  /// El padrón manda la versión corta, sin el área expandida ni los motivos;
+  /// la ficha del miembro y el historial del área las traen completas.
+  area?: Area;
+  asignadoPor?: string | null;
+  motivo?: string | null;
+  relevadoPor?: string | null;
+  motivoRelevo?: string | null;
+}
 export type MemberStatus = 'ASPIRANTE' | 'ACTIVO' | 'INACTIVO' | 'BAJA';
 export type CourseKind = 'CIM' | 'AREA' | 'TALLER' | 'CERTIFICACION';
 export type EditionStatus =
@@ -61,7 +82,15 @@ export interface Member {
   status: MemberStatus;
   fechaIngreso: string;
   fotoUrl: string | null;
-  areas?: { id: string; role: AreaRole; area: Area; hasta?: string | null; asignadoPor?: string | null; motivo?: string | null }[];
+  /// Pertenencia al area: estable, la da el curso base.
+  areas?: { id: string; area: Area; desde?: string; asignadoPor?: string | null; motivo?: string | null }[];
+  /// Cargos, presentes y pasados. Van aparte porque son periodos, no un estado.
+  /// En el padrón vienen solo los vigentes; en la ficha, todos.
+  jefaturas?: Jefatura[];
+  edicionesImpartidas?: {
+    id: string; clave: string; fechaInicio: string; fechaFin: string; estado: string;
+    course: { nombre: string; codigo: string | null; areaId: string | null };
+  }[];
   enrollments?: Enrollment[];
   _count?: { enrollments: number };
 }

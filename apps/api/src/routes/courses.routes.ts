@@ -6,7 +6,7 @@ import { badRequest, forbidden, notFound } from '../lib/errors.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { siguienteClave, sugerirCodigo } from '../lib/claves.js';
-import { ROLES_DE_MANDO, areasConRol } from '../lib/jefaturas.js';
+import { CARGOS_DE_MANDO, areasConCargo } from '../lib/jefaturas.js';
 import { revisarRequisitos } from '../lib/requisitos.js';
 
 const esMesa = (rol?: string) => rol === 'ADMIN' || rol === 'STAFF';
@@ -17,7 +17,7 @@ const esMesa = (rol?: string) => rol === 'ADMIN' || rol === 'STAFF';
  */
 async function areasQueAdministra(req: { user?: { role: string; memberId: string | null } }) {
   if (esMesa(req.user?.role)) return null; // null = sin restricción
-  return areasConRol(req.user?.memberId ?? null, ROLES_DE_MANDO);
+  return areasConCargo(req.user?.memberId ?? null, CARGOS_DE_MANDO);
 }
 
 export const coursesRouter = Router();

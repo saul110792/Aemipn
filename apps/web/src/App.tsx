@@ -18,6 +18,7 @@ import { Miembros } from './pages/panel/Miembros';
 import { MiembroDetalle } from './pages/panel/MiembroDetalle';
 import { Solicitudes } from './pages/panel/Solicitudes';
 import { AreasPanel } from './pages/panel/AreasPanel';
+import { Jefaturas } from './pages/panel/Jefaturas';
 import { CursosPanel } from './pages/panel/CursosPanel';
 import { Ediciones } from './pages/panel/Ediciones';
 import { Contenido } from './pages/panel/Contenido';
@@ -68,6 +69,7 @@ export function App() {
         <Route path="miembros/:id" element={<MiembroDetalle />} />
         <Route path="solicitudes" element={<Solicitudes />} />
         <Route path="areas" element={<AreasPanel />} />
+        <Route path="jefaturas" element={<Jefaturas />} />
         <Route path="cursos" element={<CursosPanel />} />
         <Route path="eventos" element={<EventosPanel />} />
         <Route path="contenido" element={<Contenido />} />
