@@ -186,3 +186,16 @@ nunca necesita saber en qué host vive la API y no hay CORS de por medio.
 - [docs/postgres.md](docs/postgres.md) — instalar PostgreSQL en este equipo
 - [docs/identidad.md](docs/identidad.md) — paleta del IPN, tipografía, iconos y logotipo
 - [docs/n8n-fase-2.md](docs/n8n-fase-2.md) — qué automatizar y dónde engancharlo
+
+### Corregir áreas capturadas por error
+
+Relevar a alguien desde el panel es **baja lógica**: conserva el registro porque un jefe saliente
+sigue perteneciendo al área. Cuando lo que hubo fue un error de captura, ese rastro estorba —y las
+declaraciones de curso base aprobadas siguen diciendo que la persona pertenece al área.
+
+```bash
+cd apps/api && npx tsx scripts/quitar-areas.ts alguien@ejemplo.mx
+```
+
+Sin `--aplicar` solo enseña qué se llevaría. Agrega `--aplicar` para borrar las membresías y
+`--con-cursos` para llevarte también las declaraciones que las otorgan.
