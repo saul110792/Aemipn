@@ -187,6 +187,40 @@ dentro. Un administrador puede inscribir de todos modos con `omitirRequisitos`; 
 queda escrita en las notas de la inscripción, porque sin rastro sería invisible al siguiente que
 revise.
 
+## Nada de precios
+
+La asociación no cobra: la participación es voluntaria. No hay `costo` en las ediciones
+ni en los eventos, ni estado de pago en las inscripciones. Se quitaron a propósito —no se
+dejaron en cero— porque una columna de precio obliga a decidir un valor en cada alta y le
+dice a quien lea el esquema que en algún momento hay que cobrar.
+
+Si algún día se registran aportaciones voluntarias, eso es otra cosa que un precio y lleva
+su propio modelo.
+
+## Preparado para la app
+
+Tres piezas existen para que una app móvil no obligue a rehacer el API:
+
+**`Asistencia`** guarda `registradaEn` —la hora del dispositivo— aparte de `createdAt`.
+En el cerro no hay señal: la lista se levanta a las 07:10 y llega al servidor a las 21:00.
+La que vale para el expediente es la primera; la segunda solo dice cuándo se enteró el
+sistema. La interfaz muestra "tomada sin señal" cuando difieren.
+
+**`PeticionIdempotente`** hace que repetir una petición no la ejecute dos veces. Una app
+que pierde la conexión a medio envío no puede saber si llegó; si reintenta arriesga
+duplicar, si no reintenta arriesga perder. La salida es que el cliente decida la identidad
+de la acción: genera una clave, la manda en la cabecera `Idempotency-Key`, y el servidor
+devuelve la respuesta guardada en los intentos siguientes. Es opcional —sin la cabecera el
+middleware no hace nada— porque la web tiene red y no la necesita.
+
+**El punto de encuentro** vive en `EditionActivity` con coordenadas, aparte de `lugar`:
+casi nunca son el mismo sitio. Uno se queda en un metro y de ahí se sube al cerro.
+
+Y en `/auth/login`, la cabecera `X-Cliente: movil` devuelve el refresh token en el cuerpo
+en vez de una cookie `httpOnly`. Una app lo guarda en el llavero del sistema, que el resto
+del teléfono no puede abrir; la web sigue con su cookie, que un XSS no puede leer. Cada una
+con la protección que le sirve.
+
 ## Relaciones
 
 ```

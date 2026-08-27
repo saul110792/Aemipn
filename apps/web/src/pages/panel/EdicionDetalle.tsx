@@ -2,9 +2,10 @@ import { Fragment, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
-import type { Area, CourseEdition, EnrollmentStatus, Member, Paginated, PaymentStatus } from '../../lib/types';
+import type { Area, CourseEdition, EnrollmentStatus, Member, Paginated } from '../../lib/types';
 import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
-import { etiqueta, fmtFechaHora, fmtMoneda, fmtRango, nombreCompleto } from '../../lib/format';
+import { PasarLista } from '../../components/PasarLista';
+import { etiqueta, fmtFechaHora, fmtRango, nombreCompleto } from '../../lib/format';
 import { useAuth } from '../../lib/auth';
 import { Icono, hayIcono } from '../../components/Icono';
 import { FormularioSesion } from '../../components/FormularioSesion';
@@ -20,7 +21,6 @@ const ESTADOS_INSCRIPCION: EnrollmentStatus[] = [
   'DESERTO',
   'BAJA',
 ];
-const ESTADOS_PAGO: PaymentStatus[] = ['PENDIENTE', 'PARCIAL', 'PAGADO', 'EXENTO'];
 
 export function EdicionDetalle() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +29,7 @@ export function EdicionDetalle() {
   const [busqueda, setBusqueda] = useState('');
   const [agregandoSesion, setAgregandoSesion] = useState(false);
   const [editandoSesion, setEditandoSesion] = useState<string | null>(null);
+  const [pasandoLista, setPasandoLista] = useState<string | null>(null);
 
   const { data: areas } = useQuery({
     queryKey: ['areas'],
@@ -100,8 +101,8 @@ export function EdicionDetalle() {
           <div className="etiqueta">Inscritos{edicion.cupo ? ` de ${edicion.cupo}` : ''}</div>
         </div>
         <div className="metrica">
-          <div className="valor">{inscritos.filter((i) => i.paymentStatus === 'PAGADO').length}</div>
-          <div className="etiqueta">Pagados</div>
+          <div className="valor">{inscritos.filter((i) => i.status === 'PREINSCRITO').length}</div>
+          <div className="etiqueta">Por confirmar</div>
         </div>
         <div className="metrica">
           <div className="valor">{inscritos.filter((i) => i.status === 'ACREDITADO').length}</div>
@@ -110,10 +111,6 @@ export function EdicionDetalle() {
             {inscritos.filter((i) => i.status === 'NO_ACREDITADO').length} reprobaron ·{' '}
             {inscritos.filter((i) => i.status === 'DESERTO').length} desertaron
           </div>
-        </div>
-        <div className="metrica">
-          <div className="valor" style={{ fontSize: '1.4rem' }}>{fmtMoneda(edicion.costo)}</div>
-          <div className="etiqueta">Cuota</div>
         </div>
       </div>
 
@@ -157,7 +154,7 @@ export function EdicionDetalle() {
                     <th>Cuándo</th>
                     <th>Lugar</th>
                     <th>Área</th>
-                    {esAdmin && <th />}
+                    <th />
                   </tr>
                 </thead>
                 <tbody>
@@ -194,20 +191,40 @@ export function EdicionDetalle() {
                           <span className="texto-suave">—</span>
                         )}
                       </td>
-                      {esAdmin && (
-                        <td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '.35rem', flexWrap: 'wrap' }}>
                           <button
                             type="button"
                             className="btn btn-borde btn-sm"
-                            onClick={() =>
-                              setEditandoSesion(editandoSesion === a.id ? null : a.id)
-                            }
+                            onClick={() => {
+                              setEditandoSesion(null);
+                              setPasandoLista(pasandoLista === a.id ? null : a.id);
+                            }}
                           >
-                            {editandoSesion === a.id ? 'Cerrar' : 'Editar'}
+                            {pasandoLista === a.id ? 'Cerrar lista' : 'Lista'}
                           </button>
-                        </td>
-                      )}
+                          {esAdmin && (
+                            <button
+                              type="button"
+                              className="btn btn-borde btn-sm"
+                              onClick={() => {
+                                setPasandoLista(null);
+                                setEditandoSesion(editandoSesion === a.id ? null : a.id);
+                              }}
+                            >
+                              {editandoSesion === a.id ? 'Cerrar' : 'Editar'}
+                            </button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
+                    {pasandoLista === a.id && (
+                      <tr>
+                        <td colSpan={6} style={{ background: 'var(--fondo)' }}>
+                          <PasarLista actividadId={a.id} />
+                        </td>
+                      </tr>
+                    )}
                     {esAdmin && editandoSesion === a.id && (
                       <tr>
                         <td colSpan={6} style={{ background: 'var(--fondo)' }}>
@@ -286,7 +303,6 @@ export function EdicionDetalle() {
                     <th>Contacto</th>
                     <th>Emergencia</th>
                     <th>Estado</th>
-                    <th>Pago</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -331,22 +347,6 @@ export function EdicionDetalle() {
                           </select>
                         ) : (
                           <Insignia valor={i.status} texto={etiqueta(i.status)} />
-                        )}
-                      </td>
-                      <td>
-                        {esAdmin ? (
-                          <select
-                            value={i.paymentStatus}
-                            onChange={(e) =>
-                              actualizar.mutate({ enrollmentId: i.id, campos: { paymentStatus: e.target.value } })
-                            }
-                          >
-                            {ESTADOS_PAGO.map((s) => (
-                              <option key={s} value={s}>{etiqueta(s)}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <Insignia valor={i.paymentStatus} texto={etiqueta(i.paymentStatus)} />
                         )}
                       </td>
                     </tr>

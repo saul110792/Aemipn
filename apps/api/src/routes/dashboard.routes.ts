@@ -40,7 +40,7 @@ dashboardRouter.get(
       solicitudesNuevas,
       declaracionesPendientes,
       edicionesActivas,
-      pagosPendientes,
+      preinscritosPorConfirmar,
       proximasActividades,
       cim,
     ] = await Promise.all([
@@ -74,7 +74,7 @@ dashboardRouter.get(
       }),
       prisma.enrollment.count({
         where: {
-          paymentStatus: { in: ['PENDIENTE', 'PARCIAL'] },
+          status: 'PREINSCRITO',
           ...(esMesa ? {} : { edition: edicionesDeMisAreas }),
         },
       }),
@@ -107,7 +107,7 @@ dashboardRouter.get(
       solicitudesNuevas,
       declaracionesPendientes,
       edicionesActivas,
-      pagosPendientes,
+      preinscritosPorConfirmar,
       proximasActividades,
       cim,
     });

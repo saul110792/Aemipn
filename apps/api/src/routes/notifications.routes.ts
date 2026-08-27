@@ -12,7 +12,7 @@ interface Pendiente {
   tipo:
     | 'SOLICITUDES'
     | 'DECLARACIONES'
-    | 'PAGOS'
+    | 'PREINSCRITOS'
     | 'EVENTOS_SIN_PUBLICAR'
     | 'EDICION_SIN_PROGRAMA';
   cantidad: number;
@@ -58,11 +58,11 @@ notificationsRouter.get(
     const pendientes: Pendiente[] = [];
 
     if (esAdmin) {
-      const [solicitudes, pagos, eventosOcultos, sinPrograma] = await Promise.all([
+      const [solicitudes, preinscritos, eventosOcultos, sinPrograma] = await Promise.all([
         prisma.membershipApplication.count({ where: { status: { in: ['NUEVA', 'EN_REVISION'] } } }),
         prisma.enrollment.count({
           where: {
-            paymentStatus: { in: ['PENDIENTE', 'PARCIAL'] },
+            status: 'PREINSCRITO',
             edition: { estado: { in: ['INSCRIPCIONES_ABIERTAS', 'EN_CURSO'] } },
           },
         }),
@@ -88,12 +88,12 @@ notificationsRouter.get(
           prioridad: 1,
         });
       }
-      if (pagos > 0) {
+      if (preinscritos > 0) {
         pendientes.push({
-          tipo: 'PAGOS',
-          cantidad: pagos,
-          titulo: 'Pagos pendientes',
-          detalle: `${pagos} inscripción(es) sin cubrir la cuota`,
+          tipo: 'PREINSCRITOS',
+          cantidad: preinscritos,
+          titulo: 'Preinscritos por confirmar',
+          detalle: `${preinscritos} persona(s) apuntada(s) sin confirmar su lugar`,
           ruta: '/panel/ediciones',
           prioridad: 2,
         });

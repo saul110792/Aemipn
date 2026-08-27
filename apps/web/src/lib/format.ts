@@ -10,7 +10,6 @@ const conHora = new Intl.DateTimeFormat('es-MX', {
   hour: '2-digit',
   minute: '2-digit',
 });
-const moneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
 
 const soloHora = new Intl.DateTimeFormat('es-MX', { hour: '2-digit', minute: '2-digit' });
 
@@ -18,8 +17,6 @@ export const fmtHora = (v: string | Date) => soloHora.format(new Date(v));
 export const fmtFecha = (v: string | Date) => fechaLarga.format(new Date(v));
 export const fmtFechaCorta = (v: string | Date) => fechaCorta.format(new Date(v));
 export const fmtFechaHora = (v: string | Date) => conHora.format(new Date(v));
-export const fmtMoneda = (v: string | number | null | undefined) =>
-  v === null || v === undefined ? '—' : moneda.format(Number(v));
 
 /** "7 – 8 de marzo de 2026" cuando cae en el mismo mes. */
 export function fmtRango(inicio: string | Date, fin: string | Date) {
@@ -69,9 +66,6 @@ export const ETIQUETAS: Record<string, string> = {
   NO_ACREDITADO: 'Reprobó',
   DESERTO: 'Desertó',
   PENDIENTE: 'Pendiente',
-  PARCIAL: 'Pago parcial',
-  PAGADO: 'Pagado',
-  EXENTO: 'Exento',
   CIM: 'CIM',
   CURSO: 'Curso',
   TALLER: 'Taller',

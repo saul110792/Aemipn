@@ -24,7 +24,7 @@ export function FormularioEdicion({ onListo }: { onListo?: (e: CourseEdition) =>
   const [clave, setClave] = useState('');
   const [claveTocada, setClaveTocada] = useState(false);
   const [form, setForm] = useState({
-    fechaInicio: '', fechaFin: '', cupo: '', costo: '', sede: '',
+    fechaInicio: '', fechaFin: '', cupo: '', sede: '',
     estado: 'BORRADOR' as CourseEdition['estado'],
   });
 
@@ -58,7 +58,6 @@ export function FormularioEdicion({ onListo }: { onListo?: (e: CourseEdition) =>
         fechaFin: form.fechaFin,
         sede: form.sede || null,
         cupo: form.cupo ? Number(form.cupo) : null,
-        costo: form.costo ? Number(form.costo) : null,
         estado: form.estado,
       }),
     onSuccess: (e) => {
@@ -166,9 +165,10 @@ export function FormularioEdicion({ onListo }: { onListo?: (e: CourseEdition) =>
               onChange={(e) => setForm({ ...form, cupo: e.target.value })} />
           </div>
           <div className="campo">
-            <label htmlFor="ed-costo">Costo (MXN)</label>
-            <input id="ed-costo" type="number" min="0" step="0.01" value={form.costo}
-              onChange={(e) => setForm({ ...form, costo: e.target.value })} />
+            <label htmlFor="ed-sede">Sede</label>
+            <input id="ed-sede" value={form.sede}
+              placeholder="Los Dinamos, Magdalena Contreras"
+              onChange={(e) => setForm({ ...form, sede: e.target.value })} />
           </div>
         </div>
 

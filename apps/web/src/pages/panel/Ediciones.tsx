@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import type { CourseEdition } from '../../lib/types';
 import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
-import { etiqueta, fmtMoneda, fmtRango } from '../../lib/format';
+import { etiqueta, fmtRango } from '../../lib/format';
 import { FormularioEdicion } from '../../components/FormularioEdicion';
 import { useAuth } from '../../lib/auth';
 
@@ -58,7 +58,6 @@ export function Ediciones() {
               <th>Fechas</th>
               <th>Sede</th>
               <th>Inscritos</th>
-              <th>Costo</th>
               <th>Estado</th>
             </tr>
           </thead>
@@ -81,7 +80,6 @@ export function Ediciones() {
                   {ed._count?.inscripciones ?? 0}
                   {ed.cupo ? ` / ${ed.cupo}` : ''}
                 </td>
-                <td>{fmtMoneda(ed.costo)}</td>
                 <td><Insignia valor={ed.estado} texto={etiqueta(ed.estado)} /></td>
               </tr>
             ))}

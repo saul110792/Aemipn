@@ -32,7 +32,7 @@ publicRouter.get(
           id: true, titulo: true, descripcion: true, kind: true,
           modalidad: true, lugar: true, urlVideoconferencia: true,
           fechaInicio: true, fechaFin: true, imagenUrl: true,
-          cupo: true, costo: true, registroUrl: true,
+          cupo: true, registroUrl: true,
           area: { select: { nombre: true, slug: true, color: true } },
         },
       }),
@@ -99,7 +99,7 @@ publicRouter.get(
       orderBy: { fechaInicio: 'asc' },
       select: {
         id: true, clave: true, fechaInicio: true, fechaFin: true,
-        inscripcionesCierran: true, cupo: true, costo: true, sede: true, estado: true,
+        inscripcionesCierran: true, cupo: true, sede: true, estado: true,
         course: { select: { nombre: true, descripcion: true, requisitos: true } },
         actividades: {
           orderBy: { fechaInicio: 'asc' },
@@ -136,7 +136,7 @@ publicRouter.get(
           ediciones: {
             where: { estado: 'INSCRIPCIONES_ABIERTAS' },
             orderBy: { fechaInicio: 'asc' },
-            select: { id: true, clave: true, fechaInicio: true, fechaFin: true, costo: true },
+            select: { id: true, clave: true, fechaInicio: true, fechaFin: true },
           },
         },
       }),

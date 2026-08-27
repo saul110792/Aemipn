@@ -38,7 +38,6 @@ export type EnrollmentStatus =
   | 'NO_ACREDITADO'
   | 'DESERTO'
   | 'BAJA';
-export type PaymentStatus = 'PENDIENTE' | 'PARCIAL' | 'PAGADO' | 'EXENTO';
 
 export interface SessionUser {
   id: string;
@@ -115,7 +114,6 @@ export interface CourseEdition {
   fechaFin: string;
   inscripcionesCierran?: string | null;
   cupo: number | null;
-  costo: string | number | null;
   sede: string | null;
   estado: EditionStatus;
   lugaresRestantes?: number | null;
@@ -145,8 +143,6 @@ export interface EditionActivity {
 export interface Enrollment {
   id: string;
   status: EnrollmentStatus;
-  paymentStatus: PaymentStatus;
-  montoPagado: string | number | null;
   fechaInscripcion: string;
   calificacion: string | null;
   member?: Member;
@@ -199,7 +195,6 @@ export interface Evento {
   publicado?: boolean;
   imagenUrl: string | null;
   cupo: number | null;
-  costo: string | number | null;
   registroUrl: string | null;
 }
 

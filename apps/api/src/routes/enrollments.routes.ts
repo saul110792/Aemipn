@@ -16,9 +16,6 @@ const createSchema = z.object({
   status: z
     .enum(['PREINSCRITO', 'INSCRITO', 'ACREDITADO', 'NO_ACREDITADO', 'DESERTO', 'BAJA'])
     .default('PREINSCRITO'),
-  paymentStatus: z.enum(['PENDIENTE', 'PARCIAL', 'PAGADO', 'EXENTO']).default('PENDIENTE'),
-  montoPagado: z.coerce.number().nonnegative().optional().nullable(),
-  referenciaPago: z.string().optional().nullable(),
   notas: z.string().optional().nullable(),
   /// Escape para casos justificados (convalidación, experiencia equivalente).
   /// Solo ADMIN, y queda escrito en las notas de la inscripción.
@@ -36,13 +33,12 @@ const updateSchema = createSchema
 enrollmentsRouter.get(
   '/',
   asyncHandler(async (req, res) => {
-    const { editionId, memberId, status, paymentStatus } = req.query as Record<string, never>;
+    const { editionId, memberId, status } = req.query as Record<string, never>;
     const inscripciones = await prisma.enrollment.findMany({
       where: {
         ...(editionId ? { editionId } : {}),
         ...(memberId ? { memberId } : {}),
         ...(status ? { status } : {}),
-        ...(paymentStatus ? { paymentStatus } : {}),
       },
       include: {
         member: { select: { id: true, nombre: true, apellidoPaterno: true, email: true, telefono: true } },

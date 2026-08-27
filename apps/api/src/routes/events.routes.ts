@@ -25,7 +25,6 @@ const eventBase = z.object({
   publicado: z.boolean().default(false),
   imagenUrl: z.string().optional().nullable(),
   cupo: z.coerce.number().int().positive().optional().nullable(),
-  costo: z.coerce.number().nonnegative().optional().nullable(),
   registroUrl: z.string().url('Debe ser una URL válida').optional().nullable(),
 });
 

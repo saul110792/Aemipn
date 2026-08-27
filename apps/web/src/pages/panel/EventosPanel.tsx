@@ -26,7 +26,6 @@ interface Formulario {
   visibilidad: EventVisibility;
   publicado: boolean;
   cupo: string;
-  costo: string;
   registroUrl: string;
 }
 
@@ -45,7 +44,6 @@ const limpiar = (v: Formulario, imagenUrl: string | null) => ({
   publicado: v.publicado,
   imagenUrl,
   cupo: v.cupo ? Number(v.cupo) : null,
-  costo: v.costo ? Number(v.costo) : null,
   registroUrl: v.registroUrl || null,
 });
 
@@ -235,8 +233,8 @@ export function EventosPanel() {
                   <input id="e-cupo" type="number" min="1" {...register('cupo')} />
                 </div>
                 <div className="campo">
-                  <label htmlFor="e-costo">Costo (MXN)</label>
-                  <input id="e-costo" type="number" min="0" step="0.01" {...register('costo')} />
+                  <label htmlFor="e-cupo">Cupo</label>
+                  <input id="e-cupo" type="number" min="1" {...register('cupo')} />
                 </div>
               </div>
 

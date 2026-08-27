@@ -115,13 +115,6 @@ enum EventVisibility {
   AREA /// solo los miembros del area a la que pertenece
 }
 
-enum PaymentStatus {
-  PENDIENTE
-  PARCIAL
-  PAGADO
-  EXENTO
-}
-
 // ---------------------------------------------------------------------------
 // Acceso
 // ---------------------------------------------------------------------------
@@ -188,6 +181,8 @@ model Member {
   user                User?
   areas               AreaMembership[]
   jefaturas           Jefatura[]
+  asistencias         Asistencia[]      @relation("AsistenciaDeMiembro")
+  asistenciasTomadas  Asistencia[]      @relation("TomoAsistencia")
   edicionesImpartidas CourseEdition[]   @relation("InstructoresDeEdicion")
   enrollments         Enrollment[]
   cursosDeclarados    CourseClaim[]
@@ -377,7 +372,6 @@ model CourseEdition {
   inscripcionesCierran DateTime?
 
   cupo   Int?
-  costo  Decimal?      @db.Decimal(10, 2)
   sede   String?
   estado EditionStatus @default(BORRADOR)
   notas  String?
@@ -405,6 +399,42 @@ model CourseEdition {
 
 /// Salida o sesión dentro de una edición.
 /// En el CIM hay una por área para que el aspirante conozca cada disciplina.
+/// Cómo se contó a alguien en una sesión.
+enum EstadoAsistencia {
+  PRESENTE
+  TARDE
+  JUSTIFICADO
+  AUSENTE
+}
+
+/// Una marca de asistencia a una sesión.
+///
+/// `registradaEn` es la hora del dispositivo que la tomó, y no siempre coincide
+/// con `createdAt`: en el cerro no hay señal, así que la lista se levanta a las
+/// 07:10 y llega al servidor a las 21:00. La que vale para el expediente es la
+/// primera; la segunda solo dice cuándo se enteró el sistema.
+model Asistencia {
+  id          String          @id @default(cuid())
+  actividad   EditionActivity @relation(fields: [actividadId], references: [id], onDelete: Cascade)
+  actividadId String
+  member      Member          @relation("AsistenciaDeMiembro", fields: [memberId], references: [id], onDelete: Cascade)
+  memberId    String
+
+  estado EstadoAsistencia
+  nota   String?
+
+  registradaPor   Member?  @relation("TomoAsistencia", fields: [registradaPorId], references: [id], onDelete: SetNull)
+  registradaPorId String?
+  registradaEn    DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([actividadId, memberId])
+  @@index([memberId])
+  @@map("asistencias")
+}
+
 model EditionActivity {
   id        String        @id @default(cuid())
   edition   CourseEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
@@ -421,8 +451,18 @@ model EditionActivity {
   lugar       String?
   cupo        Int?
 
+  /// Dónde se junta el grupo antes de arrancar, que rara vez es el mismo sitio
+  /// de la actividad: se queda uno en un metro y de ahí se sube al cerro.
+  /// Con coordenadas para poder abrirlo en el mapa del teléfono.
+  puntoEncuentro String?
+  latitud        Float?
+  longitud       Float?
+  horaEncuentro  DateTime?
+
   responsable   Member? @relation("ResponsableActividad", fields: [responsableId], references: [id], onDelete: SetNull)
   responsableId String?
+
+  asistencias Asistencia[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -439,10 +479,7 @@ model Enrollment {
   edition   CourseEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
   editionId String
 
-  status         EnrollmentStatus @default(PREINSCRITO)
-  paymentStatus  PaymentStatus    @default(PENDIENTE)
-  montoPagado    Decimal?         @db.Decimal(10, 2)
-  referenciaPago String?
+  status EnrollmentStatus @default(PREINSCRITO)
 
   fechaInscripcion  DateTime  @default(now())
   fechaAcreditacion DateTime?
@@ -454,7 +491,6 @@ model Enrollment {
 
   @@unique([memberId, editionId])
   @@index([editionId, status])
-  @@index([paymentStatus])
   @@map("enrollments")
 }
 
@@ -490,7 +526,6 @@ model Event {
 
   imagenUrl   String?
   cupo        Int?
-  costo       Decimal? @db.Decimal(10, 2)
   registroUrl String?
 
   createdAt DateTime @default(now())
@@ -575,4 +610,25 @@ model CourseClaim {
   @@index([status, createdAt])
   @@index([courseId, status])
   @@map("course_claims")
+}
+
+/// Respuesta ya emitida para una petición que el cliente puede repetir.
+///
+/// Sin esto, una app que pierde la señal a medio envío no tiene forma de saber
+/// si su petición llegó, y al reintentar pasaría lista dos veces. El cliente
+/// genera una clave por acción y la manda en cada intento; si ya se atendió,
+/// el servidor devuelve lo mismo de antes en vez de volver a ejecutar.
+model PeticionIdempotente {
+  clave  String @id
+  userId String
+  metodo String
+  ruta   String
+
+  estado    Int
+  respuesta Json
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("peticiones_idempotentes")
 }

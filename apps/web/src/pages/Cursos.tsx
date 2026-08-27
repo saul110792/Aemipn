@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import type { Course } from '../lib/types';
 import { Cargando, ErrorAviso, Insignia } from '../components/Estado';
-import { etiquetaTipoCurso, fmtMoneda, fmtRango } from '../lib/format';
+import { etiquetaTipoCurso, fmtRango } from '../lib/format';
 
 /** El sitio publico tambien separa las tres cosas: no son equivalentes. */
 const SECCIONES = [
@@ -77,7 +77,7 @@ export function Cursos() {
                   <strong style={{ fontSize: '0.85rem' }}>Inscripciones abiertas</strong>
                   {c.ediciones.map((e) => (
                     <div key={e.id} style={{ fontSize: '0.88rem' }} className="texto-suave">
-                      {e.clave} · {fmtRango(e.fechaInicio, e.fechaFin)} · {fmtMoneda(e.costo)}
+                      {e.clave} · {fmtRango(e.fechaInicio, e.fechaFin)}
                     </div>
                   ))}
                 </div>

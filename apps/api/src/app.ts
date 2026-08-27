@@ -20,6 +20,7 @@ import { registroRouter } from './routes/registro.routes.js';
 import { perfilRouter } from './routes/perfil.routes.js';
 import { claimsRouter } from './routes/claims.routes.js';
 import { calendarioRouter } from './routes/calendario.routes.js';
+import { asistenciasRouter } from './routes/asistencias.routes.js';
 import { CARPETA_SUBIDAS, mediaRouter } from './routes/media.routes.js';
 
 export function createApp() {
@@ -61,6 +62,7 @@ export function createApp() {
   app.use('/api/courses', coursesRouter);
   app.use('/api/editions', editionsRouter);
   app.use('/api/enrollments', enrollmentsRouter);
+  app.use('/api/asistencias', asistenciasRouter);
   app.use('/api/applications', applicationsRouter);
   app.use('/api/events', eventsRouter);
   app.use('/api/notificaciones', notificationsRouter);

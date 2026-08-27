@@ -65,7 +65,6 @@ const editionBase = z.object({
     inscripcionesAbren: z.coerce.date().optional().nullable(),
     inscripcionesCierran: z.coerce.date().optional().nullable(),
     cupo: z.coerce.number().int().positive().optional().nullable(),
-    costo: z.coerce.number().nonnegative().optional().nullable(),
     sede: z.string().optional().nullable(),
     estado: z
       .enum(['BORRADOR', 'INSCRIPCIONES_ABIERTAS', 'EN_CURSO', 'CONCLUIDA', 'CANCELADA'])

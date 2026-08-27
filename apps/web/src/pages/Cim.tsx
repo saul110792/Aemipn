@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import type { CourseEdition } from '../lib/types';
 import { Cargando, ErrorAviso, Insignia } from '../components/Estado';
-import { etiqueta, fmtFechaHora, fmtMoneda, fmtRango } from '../lib/format';
+import { etiqueta, fmtFechaHora, fmtRango } from '../lib/format';
 import { Icono, hayIcono } from '../components/Icono';
 
 export function Cim() {
@@ -58,10 +58,6 @@ export function Cim() {
                       <dd style={{ margin: 0, fontWeight: 600 }}>{ed.sede}</dd>
                     </div>
                   )}
-                  <div>
-                    <dt className="texto-suave" style={{ fontSize: '0.8rem' }}>Cuota de recuperación</dt>
-                    <dd style={{ margin: 0, fontWeight: 600 }}>{fmtMoneda(ed.costo)}</dd>
-                  </div>
                   {ed.lugaresRestantes !== null && ed.lugaresRestantes !== undefined && (
                     <div>
                       <dt className="texto-suave" style={{ fontSize: '0.8rem' }}>Lugares</dt>

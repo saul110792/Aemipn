@@ -124,15 +124,34 @@ authRouter.post(
       memberId: user.memberId,
     });
 
-    res.cookie(REFRESH_COOKIE, signRefreshToken(user.id), refreshCookieOptions);
-    res.json({ accessToken, user: publicUser(user) });
+    const refreshToken = signRefreshToken(user.id);
+    if (esCliente(req)) {
+      res.json({ accessToken, refreshToken, user: publicUser(user) });
+    } else {
+      res.cookie(REFRESH_COOKIE, refreshToken, refreshCookieOptions);
+      res.json({ accessToken, user: publicUser(user) });
+    }
   }),
 );
+
+/**
+ * ¿La petición viene de una app y no de un navegador?
+ *
+ * En la web el refresh vive en una cookie `httpOnly` para que un XSS no pueda
+ * leerlo. Una app no tiene ese problema ni ese mecanismo: guarda el token en el
+ * llavero del sistema, que el resto del teléfono no puede abrir. Por eso se le
+ * entrega en el cuerpo — pero solo si lo pide explícitamente, para no debilitar
+ * a la web devolviéndoselo a todo el mundo.
+ */
+const esCliente = (req: { header: (n: string) => string | undefined }) =>
+  req.header('x-cliente')?.toLowerCase() === 'movil';
 
 authRouter.post(
   '/refresh',
   asyncHandler(async (req, res) => {
-    const token = req.cookies?.[REFRESH_COOKIE];
+    // La app lo manda en el cuerpo; el navegador, en la cookie.
+    const token = (req.body as { refreshToken?: string } | undefined)?.refreshToken
+      ?? req.cookies?.[REFRESH_COOKIE];
     if (!token) throw unauthorized('No hay sesion activa');
 
     let userId: string;

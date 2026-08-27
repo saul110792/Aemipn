@@ -156,7 +156,6 @@ export function MiembroDetalle() {
                         <th>Edición</th>
                         <th>Inscripción</th>
                         <th>Estado</th>
-                        <th>Pago</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -170,7 +169,6 @@ export function MiembroDetalle() {
                           </td>
                           <td className="texto-suave">{fmtFechaCorta(e.fechaInscripcion)}</td>
                           <td><Insignia valor={e.status} texto={etiqueta(e.status)} /></td>
-                          <td><Insignia valor={e.paymentStatus} texto={etiqueta(e.paymentStatus)} /></td>
                         </tr>
                       ))}
                     </tbody>

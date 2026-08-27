@@ -24,6 +24,8 @@ un sitio informativo público y un panel interno para llevar el control de miemb
 - Asignación de miembros a áreas con rol (jefe de área / tesorero / miembro)
 - Resumen por área para su jefe, más las estadísticas del CIM (de ahí salen los nuevos)
 - Historial de jefaturas: quién encabezó cada área, entre qué fechas y qué cursos se dieron
+- Pasar lista por sesión, conservando la hora real cuando se tomó sin señal
+- Sin precios: la participación es voluntaria
 - Requisitos entre cursos: Alta Montaña exige el CIM y el curso básico de media montaña
 - Solicitudes de ingreso: aceptar (crea el miembro y lo asigna a sus áreas de interés) o rechazar
 - Ediciones y CIM: roster con datos de emergencia a la mano, control de estado y de pago. Al evaluar se distingue **aprobó, reprobó y desertó**; una edición sin inscritos se borra y una que ya arrancó se cancela con motivo

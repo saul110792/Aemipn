@@ -1,7 +1,7 @@
 import type { Evento } from '../lib/types';
 import { Icono, hayIcono } from './Icono';
 import { Insignia } from './Estado';
-import { etiqueta, fmtHora, fmtMoneda } from '../lib/format';
+import { etiqueta, fmtHora } from '../lib/format';
 
 /** Tarjeta de evento con su bloque de fecha, modalidad y como llegar. */
 export function TarjetaEvento({ evento, mostrarVisibilidad = false }: { evento: Evento; mostrarVisibilidad?: boolean }) {
@@ -63,7 +63,6 @@ export function TarjetaEvento({ evento, mostrarVisibilidad = false }: { evento: 
                 </span>
               )}
               {evento.cupo != null && <span>Cupo {evento.cupo}</span>}
-              {evento.costo != null && Number(evento.costo) > 0 && <span>{fmtMoneda(evento.costo)}</span>}
             </div>
 
             {evento.descripcion && (
