@@ -14,3 +14,6 @@ apps/api/prisma/*.db
 # Imagenes subidas desde el panel (no van al repositorio)
 apps/api/uploads/*
 !apps/api/uploads/.gitkeep
+
+# Exportaciones de la conversacion: pueden llevar contexto que no toca publicar.
+bitacora-*.md
