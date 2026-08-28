@@ -191,6 +191,30 @@ nunca necesita saber en qué host vive la API y no hay CORS de por medio.
 - [docs/identidad.md](docs/identidad.md) — paleta del IPN, tipografía, iconos y logotipo
 - [docs/n8n-fase-2.md](docs/n8n-fase-2.md) — qué automatizar y dónde engancharlo
 
+### "does not provide an export named 'constants'"
+
+Es Node viejo, aunque el mensaje no lo diga. `nvm` es de bash y **en fish no se
+carga solo**, así que la terminal toma el Node del sistema:
+
+```bash
+fish_add_path --prepend ~/.nvm/versions/node/v20.20.2/bin
+```
+
+`npm run dev` y `npm run build` ya comprueban la versión antes de arrancar y lo
+dicen con todas sus letras.
+
+### "does not provide an export named 'constants'"
+
+Es Node viejo, aunque el mensaje no lo diga. `nvm` es de bash y **en fish no se
+carga solo**, así que la terminal toma el Node del sistema:
+
+```bash
+fish_add_path --prepend ~/.nvm/versions/node/v20.20.2/bin
+```
+
+`npm run dev` y `npm run build` ya comprueban la versión antes de arrancar y lo
+dicen con todas sus letras.
+
 ### Si desaparecen los `.env`
 
 Están en `.gitignore`, así que **git no los restaura**: un `git clean -fdx` o un

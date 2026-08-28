@@ -10,6 +10,9 @@
     "apps/*"
   ],
   "scripts": {
+    "comprobar-node": "node scripts/comprobar-node.cjs",
+    "predev": "node scripts/comprobar-node.cjs",
+    "prebuild": "node scripts/comprobar-node.cjs",
     "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "npm run dev -w @aemipn/api",
     "dev:web": "npm run dev -w @aemipn/web",
