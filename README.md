@@ -191,6 +191,20 @@ nunca necesita saber en qué host vive la API y no hay CORS de por medio.
 - [docs/identidad.md](docs/identidad.md) — paleta del IPN, tipografía, iconos y logotipo
 - [docs/n8n-fase-2.md](docs/n8n-fase-2.md) — qué automatizar y dónde engancharlo
 
+### Si desaparecen los `.env`
+
+Están en `.gitignore`, así que **git no los restaura**: un `git clean -fdx` o un
+"descartar todo lo no rastreado" se los lleva junto con `node_modules`. Los
+`.env.example` sí están versionados y sirven de plantilla:
+
+```bash
+cp apps/api/.env.example apps/api/.env && cp apps/web/.env.example apps/web/.env.local
+```
+
+Luego genera secretos nuevos con `openssl rand -base64 48` y pon
+`SEED_CUENTAS_DEMO=true`. Los datos no se pierden: viven en Postgres, no en la
+carpeta. Y para limpiar sin llevarse los `.env`, `git clean -fd` **sin la `-x`**.
+
 ### Corregir áreas capturadas por error
 
 Relevar a alguien desde el panel es **baja lógica**: conserva el registro porque un jefe saliente
