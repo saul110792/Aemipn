@@ -1,0 +1,634 @@
+// AEMIPN — Asociación de Excursionismo y Montañismo del IPN
+// Modelo de datos: miembros, áreas (disciplinas), cursos y el CIM.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+/// Rol a nivel de toda la asociación (mesa directiva / acceso al panel).
+enum GlobalRole {
+  ADMIN /// mesa directiva: ve y edita todo
+  STAFF /// apoyo administrativo: captura, no borra
+  JEFE_CIM /// coordina el curso introductorio; no ve las áreas salvo que tenga el curso
+  MIEMBRO /// tiene al menos un curso de área aprobado
+  CIM /// solo acreditó el curso introductorio: ve únicamente lo del CIM
+}
+
+/// Rol dentro de un área específica. Un miembro puede tener rol distinto por área.
+/// Los puestos de una mesa de área. No hay `MIEMBRO`: pertenecer al área no
+/// es un cargo, es la condición de base sobre la que los cargos se otorgan.
+enum Cargo {
+  JEFE_DE_AREA /// titular; exige tener aprobado el curso base del área
+  JEFE_INTERINO /// releva mientras nadie acreditado pueda tomarlo; siempre con fecha de término
+  TESORERO
+}
+
+enum MemberStatus {
+  ASPIRANTE // solicitud aprobada, aún sin completar requisitos
+  ACTIVO
+  INACTIVO // sin actividad en la temporada
+  BAJA
+}
+
+enum ApplicationStatus {
+  NUEVA
+  EN_REVISION
+  ACEPTADA
+  RECHAZADA
+}
+
+/// Tipo de curso. CIM es el curso introductorio que se imparte 3-4 veces al año.
+/// Una persona declara haber tomado un curso; el área lo confirma.
+enum ClaimStatus {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+}
+
+/// Un area tiene un curso propio -el que da la membresia- y varios talleres.
+enum CourseKind {
+  CIM /// curso introductorio, transversal a toda la asociacion
+  AREA /// el curso de un area; acreditarlo es lo que integra a ella
+  TALLER /// formacion complementaria dentro de un area
+  CERTIFICACION
+}
+
+enum EditionStatus {
+  BORRADOR
+  INSCRIPCIONES_ABIERTAS
+  EN_CURSO
+  CONCLUIDA
+  CANCELADA
+}
+
+/// Qué clase de sesión es una actividad dentro de una edición.
+/// Un curso técnico se arma combinando estas piezas.
+enum ActivityKind {
+  CLASE_TEORICA
+  SALIDA_1_DIA
+  CAMPAMENTO
+  EXAMEN_TEORICO
+  EXAMEN_PRACTICO
+  PRESENTACION_FINAL
+  OTRA
+}
+
+enum EnrollmentStatus {
+  PREINSCRITO
+  INSCRITO
+  ACREDITADO /// aprobó
+  NO_ACREDITADO /// reprobó: llegó al final y no acreditó
+  DESERTO /// abandonó a medio curso, que no es lo mismo que reprobar
+  BAJA /// se retiró antes de empezar, o lo dieron de baja
+}
+
+/// Que clase de evento se publica en el calendario.
+enum EventKind {
+  CURSO
+  TALLER
+  SALIDA
+  REUNION
+  CONVOCATORIA
+  OTRO
+}
+
+/// Donde ocurre. Determina si se exige lugar fisico, liga de videoconferencia o ambos.
+enum EventMode {
+  PRESENCIAL
+  EN_LINEA
+  HIBRIDA
+}
+
+/// Quien puede verlo.
+enum EventVisibility {
+  PUBLICO /// cualquier visitante del sitio
+  MIEMBROS /// cualquier miembro con sesion
+  AREA /// solo los miembros del area a la que pertenece
+}
+
+// ---------------------------------------------------------------------------
+// Acceso
+// ---------------------------------------------------------------------------
+
+model User {
+  id                String     @id @default(cuid())
+  email             String     @unique
+  passwordHash      String
+  role              GlobalRole @default(MIEMBRO)
+  activo            Boolean    @default(true)
+  /// Hasta que no se verifica el correo, la cuenta no puede iniciar sesión.
+  emailVerificadoEn DateTime?
+  ultimoAcceso      DateTime?
+
+  verificaciones EmailVerification[]
+
+  /// Un usuario del panel normalmente corresponde a un miembro.
+  member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  memberId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Personas
+// ---------------------------------------------------------------------------
+
+model Member {
+  id              String  @id @default(cuid())
+  nombre          String
+  apellidoPaterno String
+  apellidoMaterno String?
+  email           String  @unique
+  telefono        String?
+
+  fechaNacimiento DateTime?
+  /// Boleta del IPN cuando aplica; los miembros externos no la tienen.
+  boleta          String?   @unique
+  escuela         String? // ESIA, ESCOM, ENCB, externo...
+
+  // Datos que la logística de salidas necesita a la mano.
+  /// Uno de los ocho grupos del catálogo, o nulo si no se sabe.
+  tipoSangre         String?
+  /// Varias, cada una por separado: en campo se consultan de un vistazo y
+  /// una cadena suelta obliga a leer para encontrar lo importante.
+  alergias           String[]
+  padecimientos      String?
+  contactoEmergencia String?
+  telefonoEmergencia String?
+  numeroSeguroSocial String?
+  direccion          String?
+  /// Lesiones u operaciones que puedan influir en la montaña.
+  lesiones           String?
+
+  status       MemberStatus @default(ASPIRANTE)
+  fechaIngreso DateTime     @default(now())
+  fechaBaja    DateTime?
+  fotoUrl      String?
+  notas        String?
+
+  user                User?
+  areas               AreaMembership[]
+  jefaturas           Jefatura[]
+  asistencias         Asistencia[]      @relation("AsistenciaDeMiembro")
+  asistenciasTomadas  Asistencia[]      @relation("TomoAsistencia")
+  edicionesImpartidas CourseEdition[]   @relation("InstructoresDeEdicion")
+  enrollments         Enrollment[]
+  cursosDeclarados    CourseClaim[]
+  /// Actividades del CIM u otras ediciones donde esta persona es responsable.
+  actividades         EditionActivity[] @relation("ResponsableActividad")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([apellidoPaterno, nombre])
+  @@map("members")
+}
+
+/// Solicitud pública de ingreso. Al aceptarse se convierte en Member.
+model MembershipApplication {
+  id              String   @id @default(cuid())
+  nombre          String
+  apellidoPaterno String
+  apellidoMaterno String?
+  email           String
+  telefono        String?
+  escuela         String?
+  boleta          String?
+  /// Áreas de interés declaradas en el formulario (slugs).
+  areasInteres    String[]
+  experiencia     String?
+  mensaje         String?
+
+  status        ApplicationStatus @default(NUEVA)
+  revisadaPor   String?
+  revisadaEn    DateTime?
+  motivoRechazo String?
+  /// Member creado a partir de esta solicitud, si fue aceptada.
+  memberId      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@map("membership_applications")
+}
+
+// ---------------------------------------------------------------------------
+// Áreas (disciplinas)
+// ---------------------------------------------------------------------------
+
+model Area {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  /// Abreviatura del área. Provisional hasta recibir el catálogo oficial.
+  codigo      String?  @unique
+  nombre      String
+  descripcion String?
+  /// Texto largo para la página informativa pública.
+  contenido   String?
+  imagenUrl   String?
+  /// Fotos de la actividad del área, para el carrusel del sitio público.
+  galeria     String[]
+  color       String? // acento para la UI
+  orden       Int      @default(0)
+  activa      Boolean  @default(true)
+
+  miembros    AreaMembership[]
+  jefaturas   Jefatura[]
+  cursos      Course[]
+  actividades EditionActivity[]
+
+  eventos Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("areas")
+}
+
+/// Pertenencia de un miembro a un área, con su rol. Un miembro puede estar en varias.
+/// Un cargo dentro de un área, con principio y fin.
+///
+/// Vive aparte de la membresía a propósito. Pertenecer al área es un hecho
+/// estable —lo da el curso base y no se pierde—; encabezarla es un **periodo**
+/// que empieza, termina y puede repetirse. Mientras el cargo era un campo de
+/// `AreaMembership` (única por persona y área), relevar y volver a nombrar
+/// pisaba el registro anterior y la asociación se quedaba sin memoria de
+/// quién dirigió qué y cuándo.
+///
+/// Sin restricción de unicidad: por eso caben la co-jefatura (dos vigentes a
+/// la vez) y el historial (varios cerrados de la misma persona).
+model Jefatura {
+  id       String @id @default(cuid())
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String
+  area     Area   @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  areaId   String
+  cargo    Cargo
+
+  desde DateTime  @default(now())
+  /// Fin del periodo. `null` = en funciones. Para un interino se fija de
+  /// entrada: pasada esa fecha deja de dar permisos aunque nadie lo releve.
+  hasta DateTime?
+
+  /// Correo de quien nombró y por qué, para responder "quién lo puso".
+  asignadoPor  String?
+  motivo       String?
+  /// Y lo mismo del relevo, que es la otra mitad de la historia.
+  relevadoPor  String?
+  motivoRelevo String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([areaId, cargo, desde])
+  @@index([memberId, desde])
+  @@map("jefaturas")
+}
+
+model AreaMembership {
+  id       String   @id @default(cuid())
+  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String
+  area     Area     @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  areaId   String
+  desde    DateTime @default(now())
+  activo   Boolean  @default(true)
+
+  /// Quién la integró al área y por qué. El cargo, si lo tiene, va en Jefatura.
+  asignadoPor String?
+  motivo      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([memberId, areaId])
+  @@index([areaId])
+  @@map("area_memberships")
+}
+
+// ---------------------------------------------------------------------------
+// Cursos
+// ---------------------------------------------------------------------------
+
+/// Catálogo: la definición de un curso, independiente de cuándo se imparte.
+model Course {
+  id            String     @id @default(cuid())
+  slug          String     @unique
+  /// Abreviatura del curso; encabeza la clave de sus ediciones.
+  /// "Curso Básico de Escalada en Roca" -> CBER -> CBER_2026A
+  codigo        String?    @unique
+  nombre        String
+  kind          CourseKind @default(TALLER)
+  descripcion   String?
+  contenido     String?
+  requisitos    String?
+  duracionHoras Int?
+  /// null cuando el curso es transversal a toda la asociación (caso del CIM).
+  area          Area?      @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  areaId        String?
+  activo        Boolean    @default(true)
+
+  ediciones     CourseEdition[]
+  declaraciones CourseClaim[]
+
+  /// Cursos que hay que tener acreditados antes de tomar este.
+  /// Alta Montaña es el caso: exige el CIM y el curso base de media montaña,
+  /// porque subir arriba de 4,000 m sin haber caminado antes no es prudente.
+  requiere     Course[] @relation("RequisitosDeCurso")
+  requeridoPor Course[] @relation("RequisitosDeCurso")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind, activo])
+  @@map("courses")
+}
+
+/// Una impartición concreta del curso. El CIM tiene 3-4 ediciones por año.
+model CourseEdition {
+  id       String @id @default(cuid())
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+  /// Clave legible: "CIM 2026-1", "ESCALADA-2026-VERANO".
+  clave    String @unique
+
+  fechaInicio          DateTime
+  fechaFin             DateTime
+  inscripcionesAbren   DateTime?
+  inscripcionesCierran DateTime?
+
+  cupo   Int?
+  sede   String?
+  estado EditionStatus @default(BORRADOR)
+  notas  String?
+
+  /// Por qué se canceló. Sin el motivo, una edición cancelada no dice nada
+  /// dentro de un año, cuando alguien pregunte qué pasó con esa generación.
+  motivoCancelacion String?
+  canceladaEn       DateTime?
+  canceladaPor      String?
+
+  inscripciones Enrollment[]
+  actividades   EditionActivity[]
+
+  /// Quiénes la impartieron. Es lo que permite responder "qué cursos dio"
+  /// cuando se revisa el paso de alguien por una jefatura. Varios porque un
+  /// curso rara vez lo lleva una sola persona de principio a fin.
+  instructores Member[] @relation("InstructoresDeEdicion")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([estado, fechaInicio])
+  @@map("course_editions")
+}
+
+/// Salida o sesión dentro de una edición.
+/// En el CIM hay una por área para que el aspirante conozca cada disciplina.
+/// Cómo se contó a alguien en una sesión.
+enum EstadoAsistencia {
+  PRESENTE
+  TARDE
+  JUSTIFICADO
+  AUSENTE
+}
+
+/// Una marca de asistencia a una sesión.
+///
+/// `registradaEn` es la hora del dispositivo que la tomó, y no siempre coincide
+/// con `createdAt`: en el cerro no hay señal, así que la lista se levanta a las
+/// 07:10 y llega al servidor a las 21:00. La que vale para el expediente es la
+/// primera; la segunda solo dice cuándo se enteró el sistema.
+model Asistencia {
+  id          String          @id @default(cuid())
+  actividad   EditionActivity @relation(fields: [actividadId], references: [id], onDelete: Cascade)
+  actividadId String
+  member      Member          @relation("AsistenciaDeMiembro", fields: [memberId], references: [id], onDelete: Cascade)
+  memberId    String
+
+  estado EstadoAsistencia
+  nota   String?
+
+  registradaPor   Member?  @relation("TomoAsistencia", fields: [registradaPorId], references: [id], onDelete: SetNull)
+  registradaPorId String?
+  registradaEn    DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([actividadId, memberId])
+  @@index([memberId])
+  @@map("asistencias")
+}
+
+model EditionActivity {
+  id        String        @id @default(cuid())
+  edition   CourseEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
+  editionId String
+  /// El área que imparte esta salida. null si es una sesión general (bienvenida, teoría).
+  area      Area?         @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  areaId    String?
+
+  kind        ActivityKind @default(CLASE_TEORICA)
+  titulo      String
+  descripcion String?
+  fechaInicio DateTime
+  fechaFin    DateTime?
+  lugar       String?
+  cupo        Int?
+
+  /// Dónde se junta el grupo antes de arrancar, que rara vez es el mismo sitio
+  /// de la actividad: se queda uno en un metro y de ahí se sube al cerro.
+  /// Con coordenadas para poder abrirlo en el mapa del teléfono.
+  puntoEncuentro String?
+  latitud        Float?
+  longitud       Float?
+  horaEncuentro  DateTime?
+
+  responsable   Member? @relation("ResponsableActividad", fields: [responsableId], references: [id], onDelete: SetNull)
+  responsableId String?
+
+  asistencias Asistencia[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([editionId, fechaInicio])
+  @@map("edition_activities")
+}
+
+/// Un miembro inscrito en una edición. Un miembro puede tener uno o más cursos.
+model Enrollment {
+  id        String        @id @default(cuid())
+  member    Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId  String
+  edition   CourseEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
+  editionId String
+
+  status EnrollmentStatus @default(PREINSCRITO)
+
+  fechaInscripcion  DateTime  @default(now())
+  fechaAcreditacion DateTime?
+  calificacion      String?
+  notas             String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([memberId, editionId])
+  @@index([editionId, status])
+  @@map("enrollments")
+}
+
+// ---------------------------------------------------------------------------
+// Eventos y contenido
+// ---------------------------------------------------------------------------
+
+/// Curso, taller, salida o reunion que se anuncia en el calendario.
+/// A diferencia de CourseEdition, no lleva inscripciones ni acreditacion:
+/// es difusion. Un evento puede apuntar a una edicion si se quiere inscribir.
+model Event {
+  id          String    @id @default(cuid())
+  titulo      String
+  descripcion String?
+  contenido   String?
+  kind        EventKind @default(TALLER)
+
+  modalidad           EventMode @default(PRESENCIAL)
+  /// Obligatorio si la modalidad es PRESENCIAL o HIBRIDA.
+  lugar               String?
+  /// Obligatorio si la modalidad es EN_LINEA o HIBRIDA.
+  urlVideoconferencia String?
+
+  fechaInicio DateTime
+  fechaFin    DateTime?
+
+  /// null cuando el evento es de toda la asociacion.
+  area   Area?   @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  areaId String?
+
+  visibilidad EventVisibility @default(PUBLICO)
+  publicado   Boolean         @default(false)
+
+  imagenUrl   String?
+  cupo        Int?
+  registroUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([publicado, visibilidad, fechaInicio])
+  @@index([areaId, fechaInicio])
+  @@map("events")
+}
+
+/// Archivo subido desde el panel. El archivo vive en apps/api/uploads y
+/// se sirve en /uploads/<nombre>; aqui queda su registro para la galeria.
+model MediaAsset {
+  id        String  @id @default(cuid())
+  url       String  @unique
+  filename  String
+  mime      String
+  size      Int
+  /// Texto alternativo, para que las fotos no queden mudas para un lector de pantalla.
+  alt       String?
+  subidoPor String?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("media_assets")
+}
+
+// ---------------------------------------------------------------------------
+// Registro y validacion
+// ---------------------------------------------------------------------------
+
+/// Codigo y liga que confirman que el correo existe y es de quien se registra.
+/// Se guarda el hash, nunca el valor: quien lea la base no puede activar cuentas.
+model EmailVerification {
+  id         String    @id @default(cuid())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  /// SHA-256 de la liga larga.
+  tokenHash  String    @unique
+  /// SHA-256 del codigo corto que se teclea a mano.
+  codigoHash String
+  expiraEn   DateTime
+  usadoEn    DateTime?
+  intentos   Int       @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, usadoEn])
+  @@map("email_verifications")
+}
+
+/// Curso que un miembro declara haber tomado, a la espera de que su area lo
+/// confirme. El anio y la letra identifican la generacion aunque esa edicion
+/// sea anterior al sistema y no exista como CourseEdition.
+model CourseClaim {
+  id       String @id @default(cuid())
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+
+  /// Entre 1980 y el anio en curso.
+  anio  Int
+  /// Generacion dentro del anio: A, B, C, D o E.
+  letra String
+
+  status        ClaimStatus @default(PENDIENTE)
+  /// Quien hizo la ultima correccion y cuando. Importa saber si el dato lo
+  /// arreglo la propia persona o el area con su registro en la mano.
+  editadaPor    String?
+  editadaEn     DateTime?
+  revisadaPor   String?
+  revisadaEn    DateTime?
+  motivoRechazo String?
+  notas         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([memberId, courseId, anio, letra])
+  @@index([status, createdAt])
+  @@index([courseId, status])
+  @@map("course_claims")
+}
+
+/// Respuesta ya emitida para una petición que el cliente puede repetir.
+///
+/// Sin esto, una app que pierde la señal a medio envío no tiene forma de saber
+/// si su petición llegó, y al reintentar pasaría lista dos veces. El cliente
+/// genera una clave por acción y la manda en cada intento; si ya se atendió,
+/// el servidor devuelve lo mismo de antes en vez de volver a ejecutar.
+model PeticionIdempotente {
+  clave  String @id
+  userId String
+  metodo String
+  ruta   String
+
+  estado    Int
+  respuesta Json
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("peticiones_idempotentes")
+}
