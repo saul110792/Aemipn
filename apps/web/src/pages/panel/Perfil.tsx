@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import type { Area, Course } from '../../lib/types';
 import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { Icono, hayIcono } from '../../components/Icono';
-import { etiqueta } from '../../lib/format';
+import { etiqueta, fmtFecha } from '../../lib/format';
 import { CampoEtiquetas } from '../../components/CampoEtiquetas';
 import {
   ALERGIAS_SUGERIDAS,
   LARGO_MAXIMO_ALERGIA,
   MAXIMO_ALERGIAS,
+  SERVICIOS_MEDICOS_SUGERIDOS,
   TIPOS_DE_SANGRE,
 } from '../../lib/catalogos';
+
+/** Valor del <select> cuando la institución no está en la lista sugerida. */
+const OTRO_SERVICIO = '__otro__';
 
 const ANIO_MINIMO = 1980;
 const LETRAS = ['A', 'B', 'C', 'D', 'E'] as const;
@@ -41,9 +46,13 @@ interface PerfilPropio {
   id: string;
   nombre: string;
   apellidoPaterno: string;
-  numeroSeguroSocial: string | null;
+  servicioMedico: string | null;
+  numeroAfiliacion: string | null;
   contactoEmergencia: string | null;
   telefonoEmergencia: string | null;
+  contactoEmergencia2: string | null;
+  telefonoEmergencia2: string | null;
+  consentimientoDatosSensiblesEn: string | null;
   direccion: string | null;
   lesiones: string | null;
   tipoSangre: string | null;
@@ -67,36 +76,60 @@ export function Perfil() {
   });
 
   const [f, setF] = useState({
-    telefono: '', numeroSeguroSocial: '', contactoEmergencia: '', telefonoEmergencia: '',
-    direccion: '', lesiones: '', tipoSangre: '',
+    telefono: '', numeroAfiliacion: '', contactoEmergencia: '', telefonoEmergencia: '',
+    contactoEmergencia2: '', telefonoEmergencia2: '', direccion: '', lesiones: '', tipoSangre: '',
   });
   const [alergias, setAlergias] = useState<string[]>([]);
+  const [servicioSelect, setServicioSelect] = useState('');
+  const [servicioTexto, setServicioTexto] = useState('');
+  const [aceptoAviso, setAceptoAviso] = useState(false);
 
   useEffect(() => {
     if (!data) return;
     setF({
       telefono: data.telefono ?? '',
-      numeroSeguroSocial: data.numeroSeguroSocial ?? '',
+      numeroAfiliacion: data.numeroAfiliacion ?? '',
       contactoEmergencia: data.contactoEmergencia ?? '',
       telefonoEmergencia: data.telefonoEmergencia ?? '',
+      contactoEmergencia2: data.contactoEmergencia2 ?? '',
+      telefonoEmergencia2: data.telefonoEmergencia2 ?? '',
       direccion: data.direccion ?? '',
       lesiones: data.lesiones ?? '',
       tipoSangre: data.tipoSangre ?? '',
     });
     setAlergias(data.alergias ?? []);
+
+    const guardado = data.servicioMedico ?? '';
+    if (guardado && (SERVICIOS_MEDICOS_SUGERIDOS as readonly string[]).includes(guardado)) {
+      setServicioSelect(guardado);
+      setServicioTexto('');
+    } else if (guardado) {
+      setServicioSelect(OTRO_SERVICIO);
+      setServicioTexto(guardado);
+    } else {
+      setServicioSelect('');
+      setServicioTexto('');
+    }
   }, [data?.id]);
+
+  const yaConsintio = Boolean(data?.consentimientoDatosSensiblesEn);
+  const servicioMedico = servicioSelect === OTRO_SERVICIO ? servicioTexto.trim() : servicioSelect;
 
   const guardar = useMutation({
     mutationFn: () =>
       api.patch('/perfil', {
         telefono: f.telefono || null,
-        numeroSeguroSocial: f.numeroSeguroSocial,
+        servicioMedico,
+        numeroAfiliacion: f.numeroAfiliacion,
         contactoEmergencia: f.contactoEmergencia,
         telefonoEmergencia: f.telefonoEmergencia,
+        contactoEmergencia2: f.contactoEmergencia2 || null,
+        telefonoEmergencia2: f.telefonoEmergencia2 || null,
         direccion: f.direccion || null,
         lesiones: f.lesiones || null,
         tipoSangre: f.tipoSangre || null,
         alergias,
+        ...(aceptoAviso ? { consentimiento: true } : {}),
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['perfil'] });
@@ -108,8 +141,13 @@ export function Perfil() {
   if (error) return <ErrorAviso error={error} />;
   if (!data) return null;
 
-  const obligatoriosListos =
-    f.numeroSeguroSocial.trim() && f.contactoEmergencia.trim() && f.telefonoEmergencia.trim();
+  const obligatoriosListos = Boolean(
+    servicioMedico &&
+      f.numeroAfiliacion.trim() &&
+      f.contactoEmergencia.trim() &&
+      f.telefonoEmergencia.trim() &&
+      (yaConsintio || aceptoAviso),
+  );
 
   return (
     <>
@@ -124,8 +162,8 @@ export function Perfil() {
 
       {!data.perfilCompleto && (
         <div className="aviso aviso-ambar" style={{ background: 'var(--alerta-fondo)', borderColor: '#f0d9a8', color: '#7c4a04' }}>
-          Falta tu <strong>NSS</strong> y tu <strong>contacto de emergencia</strong>. Sin eso no
-          puedes inscribirte a una salida: son los datos que se llevan a campo.
+          Falta tu <strong>servicio médico</strong> y tu <strong>contacto de emergencia</strong>.
+          Sin eso no puedes inscribirte a una salida: son los datos que se llevan a campo.
         </div>
       )}
       {guardar.error != null && <ErrorAviso error={guardar.error} />}
@@ -137,15 +175,46 @@ export function Perfil() {
 
           <div className="campos-2">
             <div className="campo">
-              <label htmlFor="p-nss">Número de Seguro Social *</label>
-              <input id="p-nss" value={f.numeroSeguroSocial} inputMode="numeric"
-                onChange={(e) => setF({ ...f, numeroSeguroSocial: e.target.value })} />
+              <label htmlFor="p-servicio">Servicio médico *</label>
+              <select id="p-servicio" value={servicioSelect}
+                onChange={(e) => setServicioSelect(e.target.value)}>
+                <option value="">Elige uno…</option>
+                {SERVICIOS_MEDICOS_SUGERIDOS.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+                <option value={OTRO_SERVICIO}>Otro, especificar…</option>
+              </select>
+            </div>
+            {servicioSelect === OTRO_SERVICIO && (
+              <div className="campo">
+                <label htmlFor="p-servicio-otro">¿Cuál?</label>
+                <input id="p-servicio-otro" value={servicioTexto} placeholder="GNP, AXA, Seguros Monterrey…"
+                  onChange={(e) => setServicioTexto(e.target.value)} />
+              </div>
+            )}
+            <div className="campo">
+              <label htmlFor="p-afiliacion">Número de afiliación *</label>
+              <input id="p-afiliacion" value={f.numeroAfiliacion} inputMode="numeric"
+                onChange={(e) => setF({ ...f, numeroAfiliacion: e.target.value })} />
             </div>
             <div className="campo">
               <label htmlFor="p-tel">Tu teléfono</label>
               <input id="p-tel" type="tel" value={f.telefono}
                 onChange={(e) => setF({ ...f, telefono: e.target.value })} />
             </div>
+            <div className="campo">
+              <label htmlFor="p-sangre">Tipo de sangre</label>
+              <select id="p-sangre" value={f.tipoSangre}
+                onChange={(e) => setF({ ...f, tipoSangre: e.target.value })}>
+                <option value="">No lo sé</option>
+                {TIPOS_DE_SANGRE.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="campos-2" style={{ marginTop: '0.5rem' }}>
             <div className="campo">
               <label htmlFor="p-ce">Contacto de emergencia · nombre *</label>
               <input id="p-ce" value={f.contactoEmergencia}
@@ -157,14 +226,20 @@ export function Perfil() {
                 onChange={(e) => setF({ ...f, telefonoEmergencia: e.target.value })} />
             </div>
             <div className="campo">
-              <label htmlFor="p-sangre">Tipo de sangre</label>
-              <select id="p-sangre" value={f.tipoSangre}
-                onChange={(e) => setF({ ...f, tipoSangre: e.target.value })}>
-                <option value="">No lo sé</option>
-                {TIPOS_DE_SANGRE.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
+              <label htmlFor="p-ce2">
+                Segundo contacto · nombre
+                <span className="texto-suave" style={{ fontWeight: 400 }}> — opcional</span>
+              </label>
+              <input id="p-ce2" value={f.contactoEmergencia2}
+                onChange={(e) => setF({ ...f, contactoEmergencia2: e.target.value })} />
+            </div>
+            <div className="campo">
+              <label htmlFor="p-te2">
+                Segundo contacto · teléfono
+                <span className="texto-suave" style={{ fontWeight: 400 }}> — opcional</span>
+              </label>
+              <input id="p-te2" type="tel" value={f.telefonoEmergencia2}
+                onChange={(e) => setF({ ...f, telefonoEmergencia2: e.target.value })} />
             </div>
           </div>
 
@@ -212,6 +287,25 @@ export function Perfil() {
               Lo ve la mesa directiva y el responsable de tu salida. Sirve para cuidarte, no para excluirte.
             </span>
           </div>
+
+          {yaConsintio ? (
+            <p className="texto-suave" style={{ fontSize: '0.85rem' }}>
+              Aceptaste el <Link to="/aviso-de-privacidad">aviso de privacidad</Link> el{' '}
+              {fmtFecha(data.consentimientoDatosSensiblesEn!)}.
+            </p>
+          ) : (
+            <label className="casilla" style={{ alignItems: 'flex-start', marginBottom: '1rem' }}>
+              <input type="checkbox" checked={aceptoAviso}
+                onChange={(e) => setAceptoAviso(e.target.checked)} />
+              <span>
+                Tipo de sangre, alergias, padecimientos y servicio médico son datos personales{' '}
+                <strong>sensibles</strong>. He leído el{' '}
+                <Link to="/aviso-de-privacidad" target="_blank">aviso de privacidad</Link> y
+                autorizo su tratamiento para fines de seguridad en las actividades de la
+                asociación.
+              </span>
+            </label>
+          )}
 
           <button type="button" className="btn btn-verde"
             disabled={!obligatoriosListos || guardar.isPending}
