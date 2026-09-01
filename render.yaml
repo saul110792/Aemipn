@@ -72,10 +72,15 @@ services:
   # Render corre exista o no trafico en el sitio -un proceso en segundo plano
   # del web service normal no es confiable en el plan gratuito, que se apaga
   # solo tras estar inactivo.
+  #
+  # Los Cron Jobs de Render no tienen nivel gratuito: cobran por segundo de
+  # ejecucion real, con un minimo de 1 USD/mes por servicio sin importar el
+  # plan. "0.5c-512mb" es el mas chico que ofrecen -de sobra para una consulta
+  # a la base y unos cuantos push por corrida.
   - type: cron
     name: aemipn-recordatorios
     runtime: node
-    plan: starter
+    plan: 0.5c-512mb
     region: oregon
     schedule: "0 * * * *"
     buildCommand: npm install && npm run build -w @aemipn/api
