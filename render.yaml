@@ -47,8 +47,9 @@ services:
       - key: SMTP_REMITENTE
         value: "AEMIPN <no-responder@aemipn.mx>"
 
-staticSites:
-  - name: aemipn-web
+  - type: web
+    name: aemipn-web
+    runtime: static
     buildCommand: npm install && npm run build -w @aemipn/web
     staticPublishPath: apps/web/dist
     routes:
