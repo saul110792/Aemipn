@@ -1,0 +1,66 @@
+databases:
+  - name: aemipn-db
+    databaseName: aemipn
+    plan: free
+    region: oregon
+
+services:
+  - type: web
+    name: aemipn-api
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run build -w @aemipn/api
+    startCommand: npm run db:deploy -w @aemipn/api && npm start -w @aemipn/api
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aemipn-db
+          property: connectionString
+      # Dominio del Static Site (aemipn-web). Ajusta si Render le puso otro nombre.
+      - key: CORS_ORIGIN
+        value: https://aemipn-web.onrender.com
+      - key: APP_URL
+        value: https://aemipn-web.onrender.com
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 30d
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: SEED_CUENTAS_DEMO
+        value: "false"
+      - key: EXPONER_CODIGOS_DE_PRUEBA
+        value: "false"
+      # Sin esto los correos de verificacion solo se imprimen en los logs.
+      - key: SMTP_URL
+        sync: false
+      - key: SMTP_REMITENTE
+        value: "AEMIPN <no-responder@aemipn.mx>"
+
+staticSites:
+  - name: aemipn-web
+    buildCommand: npm install && npm run build -w @aemipn/web
+    staticPublishPath: apps/web/dist
+    routes:
+      # Mismo origen para el navegador: la cookie de sesion (SameSite=Lax)
+      # solo funciona si el sitio y la API se ven como un mismo dominio.
+      - type: rewrite
+        source: /api/*
+        destination: https://aemipn-api.onrender.com/api/*
+      - type: rewrite
+        source: /uploads/*
+        destination: https://aemipn-api.onrender.com/uploads/*
+      # Client-side routing de React Router.
+      - type: rewrite
+        source: /*
+        destination: /index.html

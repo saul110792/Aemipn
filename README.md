@@ -190,6 +190,7 @@ nunca necesita saber en qué host vive la API y no hay CORS de por medio.
 - [docs/postgres.md](docs/postgres.md) — instalar PostgreSQL en este equipo
 - [docs/identidad.md](docs/identidad.md) — paleta del IPN, tipografía, iconos y logotipo
 - [docs/n8n-fase-2.md](docs/n8n-fase-2.md) — qué automatizar y dónde engancharlo
+- [docs/render.md](docs/render.md) — publicar en Render con `render.yaml`
 
 ### "does not provide an export named 'constants'"
 
