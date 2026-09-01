@@ -6,6 +6,7 @@ import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { etiqueta, fmtFecha, fmtFechaHora, fmtRango } from '../../lib/format';
 import { Icono, hayIcono } from '../../components/Icono';
 import { Emblema } from '../../components/Marca';
+import { AvisoBeta } from '../../components/AvisoBeta';
 import type { CourseEdition, EditionActivity } from '../../lib/types';
 
 interface SalidaCim {
@@ -59,7 +60,14 @@ export function Dashboard() {
     enabled: puedeVerResumen,
   });
 
-  if (!puedeVerResumen) return <BienvenidaMiembro />;
+  if (!puedeVerResumen) {
+    return (
+      <>
+        <AvisoBeta />
+        <BienvenidaMiembro />
+      </>
+    );
+  }
   if (isLoading) return <Cargando />;
   if (error) return <ErrorAviso error={error} />;
   if (!data) return null;
@@ -69,6 +77,7 @@ export function Dashboard() {
 
   return (
     <>
+      <AvisoBeta />
       <div className="panel-encabezado">
         <div>
           <h1>Resumen</h1>

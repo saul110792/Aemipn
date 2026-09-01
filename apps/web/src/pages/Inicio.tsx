@@ -6,6 +6,7 @@ import { fmtRango } from '../lib/format';
 import { TarjetaArea } from '../components/TarjetaArea';
 import { Icono } from '../components/Icono';
 import { TarjetaEvento } from '../components/TarjetaEvento';
+import { AvisoBeta } from '../components/AvisoBeta';
 
 export function Inicio() {
   const { data: areas } = useQuery({
@@ -44,6 +45,10 @@ export function Inicio() {
           </div>
         </div>
       </header>
+
+      <div className="contenedor" style={{ paddingTop: '1.25rem' }}>
+        <AvisoBeta />
+      </div>
 
       {proxima && (
         <section style={{ background: '#fff', borderBottom: '1px solid var(--borde)', padding: '1.25rem 0' }}>
