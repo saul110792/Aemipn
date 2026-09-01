@@ -200,6 +200,7 @@ model Member {
   cursosDeclarados    CourseClaim[]
   /// Actividades del CIM u otras ediciones donde esta persona es responsable.
   actividades         EditionActivity[] @relation("ResponsableActividad")
+  eventosConfirmados  EventRsvp[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -544,9 +545,28 @@ model Event {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  rsvps EventRsvp[]
+
   @@index([publicado, visibilidad, fechaInicio])
   @@index([areaId, fechaInicio])
   @@map("events")
+}
+
+/// "Voy a asistir" a un evento: intención declarada, no asistencia tomada.
+/// Distinto de Asistencia (que es el pase de lista real, después del hecho,
+/// y sobre una sesión de curso, no sobre un Event de talleres/salidas).
+model EventRsvp {
+  id       String @id @default(cuid())
+  event    Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId  String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, memberId])
+  @@index([eventId])
+  @@map("event_rsvps")
 }
 
 /// Archivo subido desde el panel. El archivo vive en apps/api/uploads y

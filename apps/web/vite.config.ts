@@ -19,7 +19,10 @@ export default defineConfig({
         short_name: 'AEMIPN',
         description: 'Asociación de Excursionismo y Montañismo del IPN',
         lang: 'es-MX',
-        start_url: '/',
+        // La app instalada abre directo al calendario, no a la portada
+        // informativa: para quien la instala, lo que importa es lo operativo.
+        // Sin sesión, /panel redirige solo a /login.
+        start_url: '/panel/calendario',
         scope: '/',
         display: 'standalone',
         background_color: '#611232',

@@ -7,6 +7,7 @@ import { Cargando, ErrorAviso } from '../../components/Estado';
 import { CalendarioAnual } from '../../components/CalendarioAnual';
 import { Icono, hayIcono } from '../../components/Icono';
 import { fmtFechaHora } from '../../lib/format';
+import { descargarICS } from '../../lib/ics';
 import {
   DIAS_CORTOS, acomodarSemana, aDia, mismoDia, nombreMes, semanasDelMes, sumarDias,
   type EntradaCalendario, type RespuestaCalendario,
@@ -255,6 +256,21 @@ export function Calendario() {
                   Ver detalle
                 </button>
               )}
+              <button
+                type="button"
+                className="btn btn-borde btn-sm"
+                onClick={() =>
+                  descargarICS({
+                    titulo: detalle.titulo,
+                    descripcion: detalle.detalle,
+                    lugar: detalle.lugar,
+                    inicio: detalle.inicio,
+                    fin: detalle.fin,
+                  })
+                }
+              >
+                <Icono nombre="calendario" /> Agregar a mi calendario
+              </button>
               <button type="button" className="btn btn-borde btn-sm" onClick={() => setDetalle(null)}>
                 Cerrar
               </button>

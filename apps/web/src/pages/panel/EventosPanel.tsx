@@ -8,7 +8,58 @@ import { Cargando, ErrorAviso } from '../../components/Estado';
 import { TarjetaEvento } from '../../components/TarjetaEvento';
 import { SelectorImagen } from '../../components/SelectorImagen';
 import { Icono } from '../../components/Icono';
-import { etiqueta } from '../../lib/format';
+import { etiqueta, fmtFechaHora } from '../../lib/format';
+
+interface Asistente {
+  id: string;
+  nombre: string;
+  apellidoPaterno: string;
+  telefono: string | null;
+  tipoSangre: string | null;
+  alergias: string[];
+  confirmadoEl: string;
+}
+
+/** Quién confirmó "voy a asistir", con lo que hace falta llevar a campo. */
+function ModalAsistentes({ evento, onCerrar }: { evento: Evento; onCerrar: () => void }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['events', evento.id, 'asistentes'],
+    queryFn: () => api.get<Asistente[]>(`/events/${evento.id}/asistentes`),
+  });
+
+  return (
+    <div className="modal-fondo" onClick={onCerrar}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="modal-cerrar" aria-label="Cerrar" onClick={onCerrar}>
+          ×
+        </button>
+        <h2 style={{ marginTop: 0, fontSize: '1.15rem' }}>Van a «{evento.titulo}»</h2>
+
+        {isLoading && <Cargando />}
+        {error && <ErrorAviso error={error} />}
+        {data?.length === 0 && <div className="vacio">Nadie ha confirmado todavía.</div>}
+
+        {data && data.length > 0 && (
+          <div className="pila">
+            {data.map((a) => (
+              <div key={a.id} style={{ borderBottom: '1px solid var(--borde)', paddingBottom: '0.5rem' }}>
+                <strong>{a.nombre} {a.apellidoPaterno}</strong>
+                <div className="texto-suave" style={{ fontSize: '0.85rem' }}>
+                  {a.telefono ?? 'Sin teléfono'}
+                  {a.tipoSangre && ` · Sangre ${a.tipoSangre}`}
+                  {a.alergias.length > 0 && ` · Alergias: ${a.alergias.join(', ')}`}
+                </div>
+                <div className="texto-suave" style={{ fontSize: '0.78rem' }}>
+                  Confirmó el {fmtFechaHora(a.confirmadoEl)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const TIPOS = ['CURSO', 'TALLER', 'SALIDA', 'REUNION', 'CONVOCATORIA', 'OTRO'] as const;
 const MODALIDADES: EventMode[] = ['PRESENCIAL', 'EN_LINEA', 'HIBRIDA'];
@@ -61,6 +112,7 @@ export function EventosPanel() {
   const puedeGestionar = (e: Evento) =>
     esAdmin || Boolean(e.areaId && user?.areaIdsQueEncabeza?.includes(e.areaId));
   const [creando, setCreando] = useState(false);
+  const [verAsistentesDe, setVerAsistentesDe] = useState<Evento | null>(null);
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const [verBiblioteca, setVerBiblioteca] = useState(false);
 
@@ -332,6 +384,9 @@ export function EventosPanel() {
                     >
                       Borrar
                     </button>
+                    <button type="button" className="btn btn-borde btn-sm" onClick={() => setVerAsistentesDe(e)}>
+                      Ver quién va{(e.rsvpCount ?? 0) > 0 ? ` (${e.rsvpCount})` : ''}
+                    </button>
                   </div>
                 )}
               </div>
@@ -349,6 +404,10 @@ export function EventosPanel() {
             ))}
           </div>
         </>
+      )}
+
+      {verAsistentesDe && (
+        <ModalAsistentes evento={verAsistentesDe} onCerrar={() => setVerAsistentesDe(null)} />
       )}
     </>
   );

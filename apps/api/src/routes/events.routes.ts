@@ -96,7 +96,30 @@ const eventUpdateSchema = eventBase.partial().superRefine(revisar);
 
 const incluyeArea = {
   area: { select: { id: true, nombre: true, slug: true, color: true } },
+  _count: { select: { rsvps: true } },
 } as const;
+
+/**
+ * Aplana el _count y agrega `voyAsistir`, sin exponer quién más confirmó:
+ * eso solo lo ve quien puede editar el evento, por /asistentes.
+ */
+function conRsvp<T extends { id: string; _count: { rsvps: number } }>(
+  evento: T,
+  misRsvps: Set<string>,
+) {
+  const { _count, ...resto } = evento;
+  return { ...resto, rsvpCount: _count.rsvps, voyAsistir: misRsvps.has(evento.id) };
+}
+
+/** Ids de evento a los que este miembro ya confirmó asistencia. */
+async function misRsvpsDe(memberId: string | null, eventIds: string[]) {
+  if (!memberId || eventIds.length === 0) return new Set<string>();
+  const filas = await prisma.eventRsvp.findMany({
+    where: { memberId, eventId: { in: eventIds } },
+    select: { eventId: true },
+  });
+  return new Set(filas.map((f) => f.eventId));
+}
 
 /** Areas activas del usuario; base para decidir que eventos privados puede ver. */
 async function areasDelUsuario(memberId: string | null) {
@@ -153,15 +176,30 @@ eventsRouter.get(
           }),
     };
 
-    res.json(
-      await prisma.event.findMany({
-        where,
-        include: incluyeArea,
-        orderBy: { fechaInicio: 'asc' },
-      }),
-    );
+    const eventos = await prisma.event.findMany({
+      where,
+      include: incluyeArea,
+      orderBy: { fechaInicio: 'asc' },
+    });
+    const misRsvps = await misRsvpsDe(req.user!.memberId, eventos.map((e) => e.id));
+
+    res.json(eventos.map((e) => conRsvp(e, misRsvps)));
   }),
 );
+
+/** ¿Puede esta persona ver este evento? Misma regla que aplica el listado. */
+async function puedeVerEvento(
+  user: { role: string; memberId: string | null },
+  evento: { publicado: boolean; visibilidad: string; areaId: string | null },
+) {
+  if (user.role === 'ADMIN' || user.role === 'STAFF') return true;
+  if (!evento.publicado) return false;
+  if (evento.visibilidad === 'AREA') {
+    const misAreas = await areasDelUsuario(user.memberId);
+    return Boolean(evento.areaId && misAreas.includes(evento.areaId));
+  }
+  return true;
+}
 
 eventsRouter.get(
   '/:id',
@@ -171,19 +209,14 @@ eventsRouter.get(
       include: incluyeArea,
     });
     if (!evento) throw notFound('Evento no encontrado');
-
-    const esAdmin = req.user!.role === 'ADMIN' || req.user!.role === 'STAFF';
-    if (!esAdmin) {
+    if (!(await puedeVerEvento(req.user!, evento))) {
+      // Mismo mensaje que antes: no delatar si el problema es "no existe" o "es privado".
       if (!evento.publicado) throw notFound('Evento no encontrado');
-      if (evento.visibilidad === 'AREA') {
-        const misAreas = await areasDelUsuario(req.user!.memberId);
-        if (!evento.areaId || !misAreas.includes(evento.areaId)) {
-          throw forbidden('Este evento es privado del área');
-        }
-      }
+      throw forbidden('Este evento es privado del área');
     }
 
-    res.json(evento);
+    const misRsvps = await misRsvpsDe(req.user!.memberId, [evento.id]);
+    res.json(conRsvp(evento, misRsvps));
   }),
 );
 
@@ -220,7 +253,8 @@ eventsRouter.post(
       throw forbidden('Solo puedes publicar eventos de tu área');
     }
 
-    res.status(201).json(await prisma.event.create({ data, include: incluyeArea }));
+    const creado = await prisma.event.create({ data, include: incluyeArea });
+    res.status(201).json(conRsvp(creado, new Set()));
   }),
 );
 
@@ -241,13 +275,13 @@ eventsRouter.patch(
       }
     }
 
-    res.json(
-      await prisma.event.update({
-        where: { id: actual.id },
-        data: req.body,
-        include: incluyeArea,
-      }),
-    );
+    const actualizado = await prisma.event.update({
+      where: { id: actual.id },
+      data: req.body,
+      include: incluyeArea,
+    });
+    const misRsvps = await misRsvpsDe(req.user!.memberId, [actualizado.id]);
+    res.json(conRsvp(actualizado, misRsvps));
   }),
 );
 
@@ -260,5 +294,77 @@ eventsRouter.delete(
 
     await prisma.event.delete({ where: { id: actual.id } });
     res.json({ ok: true });
+  }),
+);
+
+/**
+ * POST /api/events/:id/asistire — "voy a asistir".
+ *
+ * Solo a quien puede ver el evento: no tendría sentido confirmar asistencia
+ * a algo que ni siquiera debería aparecerle. Sin miembro (una cuenta sin
+ * ficha) no hay a quién asociar la confirmación.
+ */
+eventsRouter.post(
+  '/:id/asistire',
+  asyncHandler(async (req, res) => {
+    if (!req.user!.memberId) throw forbidden('Tu cuenta no tiene ficha de miembro');
+
+    const evento = await prisma.event.findUnique({ where: { id: req.params.id } });
+    if (!evento) throw notFound('Evento no encontrado');
+    if (!(await puedeVerEvento(req.user!, evento))) throw forbidden();
+
+    await prisma.eventRsvp.upsert({
+      where: { eventId_memberId: { eventId: evento.id, memberId: req.user!.memberId } },
+      create: { eventId: evento.id, memberId: req.user!.memberId },
+      update: {},
+    });
+
+    const rsvpCount = await prisma.eventRsvp.count({ where: { eventId: evento.id } });
+    res.status(201).json({ voyAsistir: true, rsvpCount });
+  }),
+);
+
+/** DELETE /api/events/:id/asistire — cancelar la confirmación. */
+eventsRouter.delete(
+  '/:id/asistire',
+  asyncHandler(async (req, res) => {
+    if (!req.user!.memberId) throw forbidden('Tu cuenta no tiene ficha de miembro');
+
+    await prisma.eventRsvp.deleteMany({
+      where: { eventId: req.params.id, memberId: req.user!.memberId },
+    });
+
+    const rsvpCount = await prisma.eventRsvp.count({ where: { eventId: req.params.id } });
+    res.json({ voyAsistir: false, rsvpCount });
+  }),
+);
+
+/**
+ * GET /api/events/:id/asistentes — quién confirmó, con datos de contacto.
+ *
+ * Solo para quien puede editar el evento: es la misma logística que ya ve
+ * en el roster de una edición, no algo para publicar a cualquiera.
+ */
+eventsRouter.get(
+  '/:id/asistentes',
+  asyncHandler(async (req, res) => {
+    const evento = await prisma.event.findUnique({ where: { id: req.params.id } });
+    if (!evento) throw notFound('Evento no encontrado');
+    if (!(await puedeEditar(req.user!, evento.areaId))) throw forbidden();
+
+    const confirmados = await prisma.eventRsvp.findMany({
+      where: { eventId: evento.id },
+      include: {
+        member: {
+          select: {
+            id: true, nombre: true, apellidoPaterno: true, telefono: true,
+            tipoSangre: true, alergias: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    res.json(confirmados.map((c) => ({ ...c.member, confirmadoEl: c.createdAt })));
   }),
 );

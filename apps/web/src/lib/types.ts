@@ -210,6 +210,9 @@ export interface Evento {
   area: Pick<Area, 'nombre' | 'slug' | 'color'> | null;
   visibilidad?: EventVisibility;
   publicado?: boolean;
+  /// Cuantos confirmaron "voy a asistir", y si quien pregunta ya lo hizo.
+  rsvpCount?: number;
+  voyAsistir?: boolean;
   imagenUrl: string | null;
   cupo: number | null;
   registroUrl: string | null;
