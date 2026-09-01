@@ -1,9 +1,42 @@
+import { resolve4 } from 'node:dns/promises';
 import { env, isProd } from './env.js';
 
 export interface Mensaje {
   para: string;
   asunto: string;
   texto: string;
+}
+
+/**
+ * nodemailer resuelve el host por IPv4 *o IPv6 al azar* (ver su
+ * `formatDNSValue`), y varios entornos en la nube -Render incluido- anuncian
+ * una interfaz IPv6 que no tiene salida real a internet: la mitad de las
+ * veces la conexión truena con "ENETUNREACH" hacia una IP v6 de Gmail, aunque
+ * el usuario y la contraseña sean correctos.
+ *
+ * Se resuelve la IPv4 a mano y se conecta directo a ella, dejando el hostname
+ * solo para el SNI/TLS. Si por lo que sea no se puede resolver, se cae de
+ * vuelta al comportamiento normal de nodemailer.
+ */
+async function crearTransporteSmtp() {
+  const { createTransport } = await import('nodemailer');
+  const url = new URL(env.SMTP_URL!);
+  const opciones = {
+    host: url.hostname,
+    port: Number(url.port) || (url.protocol === 'smtps:' ? 465 : 587),
+    secure: url.protocol === 'smtps:',
+    auth: { user: decodeURIComponent(url.username), pass: decodeURIComponent(url.password) },
+    tls: { servername: url.hostname },
+  };
+
+  try {
+    const [ipv4] = await resolve4(url.hostname);
+    if (ipv4) opciones.host = ipv4;
+  } catch {
+    // Sin IPv4 resoluble, se intenta con el hostname tal cual.
+  }
+
+  return createTransport(opciones);
 }
 
 /**
@@ -41,10 +74,7 @@ export async function enviarCorreo(m: Mensaje): Promise<{ entregado: boolean; mo
     return { entregado: true, motor: 'consola' };
   }
 
-  // nodemailer se carga solo si de verdad hay SMTP, para no volverlo
-  // dependencia obligatoria de quien no manda correo.
-  const { createTransport } = await import('nodemailer');
-  const transporte = createTransport(env.SMTP_URL);
+  const transporte = await crearTransporteSmtp();
   await transporte.sendMail({
     from: env.SMTP_REMITENTE,
     to: m.para,
