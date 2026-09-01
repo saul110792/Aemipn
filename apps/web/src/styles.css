@@ -258,8 +258,11 @@ tbody tr:hover { background: var(--guinda-100); }
 .crece { flex: 1; }
 
 @media (max-width: 780px) {
-  .panel { grid-template-columns: 1fr; }
-  .panel-lateral { display: flex; gap: 0.25rem; overflow-x: auto; padding: 0.6rem; }
+  /* Sin esto, el min-height del .panel se reparte entre las dos filas
+     (barra y contenido) y estira tambien la barra de navegacion: el fondo
+     del enlace activo se ve como un rectangulo gigante en vez de una pildora. */
+  .panel { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .panel-lateral { display: flex; gap: 0.25rem; overflow-x: auto; padding: 0.6rem; align-items: center; }
   .panel-lateral .grupo { display: none; }
   .panel-lateral a { white-space: nowrap; margin: 0; }
   .panel-contenido { padding: 1.25rem; }
