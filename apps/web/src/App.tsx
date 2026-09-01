@@ -12,6 +12,7 @@ import { Unete } from './pages/Unete';
 import { Verificar } from './pages/Verificar';
 import { Eventos } from './pages/Eventos';
 import { Login } from './pages/Login';
+import { AvisoPrivacidad } from './pages/AvisoPrivacidad';
 
 import { Dashboard } from './pages/panel/Dashboard';
 import { Miembros } from './pages/panel/Miembros';
@@ -50,6 +51,7 @@ export function App() {
         <Route path="cursos" element={<Cursos />} />
         <Route path="unete" element={<Unete />} />
         <Route path="verificar" element={<Verificar />} />
+        <Route path="aviso-de-privacidad" element={<AvisoPrivacidad />} />
         <Route path="login" element={<Login />} />
       </Route>
 

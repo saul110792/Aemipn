@@ -116,7 +116,8 @@ export function SitioLayout() {
               <Link to="/unete">Quiero unirme</Link> · <Link to="/login">Acceso de miembros</Link>{' '}
               · <button type="button" className="enlace-boton" onClick={() => setMostrarContacto(true)}>
                 Contáctanos
-              </button>
+              </button>{' '}
+              · <Link to="/aviso-de-privacidad">Aviso de privacidad</Link>
             </p>
 
             {redesActivas.length > 0 && (

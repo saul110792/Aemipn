@@ -78,8 +78,14 @@ export interface Member {
   escuela: string | null;
   tipoSangre: string | null;
   alergias?: string[];
+  padecimientos?: string | null;
+  servicioMedico?: string | null;
+  numeroAfiliacion?: string | null;
   contactoEmergencia: string | null;
   telefonoEmergencia: string | null;
+  contactoEmergencia2?: string | null;
+  telefonoEmergencia2?: string | null;
+  consentimientoDatosSensiblesEn?: string | null;
   status: MemberStatus;
   fechaIngreso: string;
   fotoUrl: string | null;

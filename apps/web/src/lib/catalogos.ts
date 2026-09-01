@@ -10,6 +10,21 @@ export const TIPOS_DE_SANGRE = [
 
 export type TipoDeSangre = (typeof TIPOS_DE_SANGRE)[number];
 
+/**
+ * Instituciones de servicio médico más comunes. No es una lista cerrada
+ * -- validada como texto libre en la API, no como enum -- porque hay tantas
+ * aseguradoras privadas de gastos médicos mayores que fijarlas de antemano
+ * dejaría a la mitad escribiendo "Otro" de todos modos.
+ */
+export const SERVICIOS_MEDICOS_SUGERIDOS = [
+  'IMSS',
+  'ISSSTE',
+  'PEMEX',
+  'Sedena',
+  'Semar',
+  'Particular / Gastos médicos mayores',
+] as const;
+
 export const ALERGIAS_SUGERIDAS = [
   'Penicilina',
   'Sulfas',
