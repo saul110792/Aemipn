@@ -144,6 +144,22 @@ publicRouter.get(
   }),
 );
 
+/** GET /api/public/configuracion — redes sociales del pie del sitio. */
+publicRouter.get(
+  '/configuracion',
+  asyncHandler(async (_req, res) => {
+    const s = await prisma.siteSettings.findUnique({ where: { id: 'global' } });
+    res.json({
+      facebookUrl: s?.facebookUrl ?? null,
+      instagramUrl: s?.instagramUrl ?? null,
+      xUrl: s?.xUrl ?? null,
+      youtubeUrl: s?.youtubeUrl ?? null,
+      tiktokUrl: s?.tiktokUrl ?? null,
+      whatsappUrl: s?.whatsappUrl ?? null,
+    });
+  }),
+);
+
 /** Un formulario publico necesita freno: 5 envios por hora e IP. */
 const solicitudLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -183,5 +199,32 @@ publicRouter.post(
       ok: true,
       mensaje: 'Recibimos tu solicitud. La mesa directiva te contactara por correo.',
     });
+  }),
+);
+
+const contactoSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es obligatorio'),
+  email: z.string().email('Correo invalido'),
+  telefono: z.string().optional().nullable(),
+  /// Sin area: el mensaje es para la mesa directiva.
+  areaId: z.string().optional().nullable(),
+  mensaje: z.string().min(1, 'Escribe un mensaje').max(2000),
+});
+
+/**
+ * POST /api/public/contacto — formulario "Contáctanos" del pie del sitio.
+ *
+ * Sin sesión ni eco de datos, igual que las solicitudes de ingreso: quien
+ * escribe no necesita saber si su mensaje llegó a la mesa directiva o a un
+ * área en particular, solo que se recibió.
+ */
+publicRouter.post(
+  '/contacto',
+  solicitudLimiter,
+  validate(contactoSchema),
+  asyncHandler(async (req, res) => {
+    const data = req.body as z.infer<typeof contactoSchema>;
+    await prisma.contactMessage.create({ data: { ...data, email: data.email.toLowerCase() } });
+    res.status(201).json({ ok: true, mensaje: 'Recibimos tu mensaje. Te responderán pronto.' });
   }),
 );

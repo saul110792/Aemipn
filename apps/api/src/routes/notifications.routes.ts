@@ -14,7 +14,8 @@ interface Pendiente {
     | 'DECLARACIONES'
     | 'PREINSCRITOS'
     | 'EVENTOS_SIN_PUBLICAR'
-    | 'EDICION_SIN_PROGRAMA';
+    | 'EDICION_SIN_PROGRAMA'
+    | 'MENSAJES_CONTACTO';
   cantidad: number;
   titulo: string;
   detalle: string;
@@ -49,6 +50,21 @@ async function contarDeclaracionesQueRevisa(user: { role: string; memberId: stri
       ],
     },
   });
+}
+
+/**
+ * Cuantos mensajes de "Contáctanos" sin leer puede ver esta persona.
+ * Mismo reparto que sus eventos: sin área es de la mesa directiva, con área
+ * es de quien encabece esa área en particular.
+ */
+async function contarMensajesSinLeer(user: { role: string; memberId: string | null }) {
+  const esAdmin = user.role === 'ADMIN' || user.role === 'STAFF';
+  if (esAdmin) return prisma.contactMessage.count({ where: { leidoEn: null } });
+
+  const areas = await areasConCargo(user.memberId, CARGOS_DE_MESA);
+  if (areas.length === 0) return 0;
+
+  return prisma.contactMessage.count({ where: { leidoEn: null, areaId: { in: areas } } });
 }
 
 notificationsRouter.get(
@@ -156,6 +172,22 @@ notificationsRouter.get(
             : `${declaraciones} cursos declarados esperan tu visto bueno`,
         ruta: '/panel/validaciones',
         prioridad: 1,
+      });
+    }
+
+    // Mensajes de contacto: cada quien ve solo los suyos, igual que sus eventos.
+    const mensajesContacto = await contarMensajesSinLeer(req.user!);
+    if (mensajesContacto > 0) {
+      pendientes.push({
+        tipo: 'MENSAJES_CONTACTO',
+        cantidad: mensajesContacto,
+        titulo: mensajesContacto === 1 ? 'Mensaje de contacto' : 'Mensajes de contacto',
+        detalle:
+          mensajesContacto === 1
+            ? 'Alguien escribió desde el sitio y espera respuesta'
+            : `${mensajesContacto} mensajes del sitio esperan respuesta`,
+        ruta: '/panel/contacto',
+        prioridad: 2,
       });
     }
 

@@ -251,7 +251,8 @@ model Area {
   cursos      Course[]
   actividades EditionActivity[]
 
-  eventos Event[]
+  eventos          Event[]
+  mensajesContacto ContactMessage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -618,6 +619,49 @@ model CourseClaim {
 /// si su petición llegó, y al reintentar pasaría lista dos veces. El cliente
 /// genera una clave por acción y la manda en cada intento; si ya se atendió,
 /// el servidor devuelve lo mismo de antes en vez de volver a ejecutar.
+/// Configuración global del sitio: no pertenece a ningún área.
+///
+/// Fila única a propósito (id fijo, sin @default(cuid())): así se hace un
+/// upsert por id conocido en vez de andar buscando "la primera fila que haya".
+model SiteSettings {
+  id String @id @default("global")
+
+  facebookUrl  String?
+  instagramUrl String?
+  xUrl         String?
+  youtubeUrl   String?
+  tiktokUrl    String?
+  whatsappUrl  String?
+
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+/// Mensaje del formulario público "Contáctanos".
+///
+/// Sin área: va dirigido a la mesa directiva. Con área: al jefe/tesorero de
+/// esa área en particular, igual que a quién puede editar sus eventos.
+model ContactMessage {
+  id       String @id @default(cuid())
+  nombre   String
+  email    String
+  telefono String?
+  mensaje  String
+
+  area   Area?   @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  areaId String?
+
+  /// Sin leer hasta que alguien con permiso para verlo lo abre.
+  leidoEn DateTime?
+  leidoPor String?
+
+  createdAt DateTime @default(now())
+
+  @@index([areaId, leidoEn])
+  @@map("contact_messages")
+}
+
 model PeticionIdempotente {
   clave  String @id
   userId String
