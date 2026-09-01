@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomInt } from 'node:crypto';
 import { prisma } from './prisma.js';
 import { env } from './env.js';
-import { enviarCorreo } from './correo.js';
+import { enviarCorreo, plantillaVerificacion } from './correo.js';
 
 /** Vigencia de una verificación. Pasada esta ventana hay que pedir otra. */
 export const HORAS_VIGENCIA = 24;
@@ -56,6 +56,7 @@ export async function crearYEnviarVerificacion(userId: string, email: string, no
       `La liga y el código sirven durante ${HORAS_VIGENCIA} horas.`,
       'Si no fuiste tú, ignora este mensaje: la cuenta no se activa sola.',
     ].join('\n'),
+    html: plantillaVerificacion({ nombre, liga, codigo, horasVigencia: HORAS_VIGENCIA }),
   });
 
   // Se devuelven para poder probarlo sin buzón; nunca salen por la API.
