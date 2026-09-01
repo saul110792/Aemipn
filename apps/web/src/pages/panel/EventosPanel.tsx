@@ -54,6 +54,12 @@ export function EventosPanel() {
   // Los eventos pasados solo le interesan a quien gestiona: administracion
   // y quien encabeza un area. La API igual los filtra si alguien mas los pide.
   const puedeVerPasados = esAdmin || (user?.areasQueEncabeza ?? 0) > 0;
+  // Publicar/despublicar/borrar es lo mismo que ya exige la API (events.routes.ts
+  // puedeEditar): la mesa directiva sobre cualquiera, o el jefe/tesorero de ESA
+  // area en particular. Un evento de "toda la asociacion" (sin area) solo lo
+  // toca la mesa directiva.
+  const puedeGestionar = (e: Evento) =>
+    esAdmin || Boolean(e.areaId && user?.areaIdsQueEncabeza?.includes(e.areaId));
   const [creando, setCreando] = useState(false);
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const [verBiblioteca, setVerBiblioteca] = useState(false);
@@ -305,24 +311,26 @@ export function EventosPanel() {
             {proximos.map((e) => (
               <div key={e.id}>
                 <TarjetaEvento evento={e} mostrarVisibilidad />
-                <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem' }}>
-                  <button
-                    type="button"
-                    className="btn btn-borde btn-sm"
-                    onClick={() => alternarPublicado.mutate({ id: e.id, publicado: !e.publicado })}
-                  >
-                    {e.publicado ? 'Despublicar' : 'Publicar'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-borde btn-sm"
-                    onClick={() => {
-                      if (confirm(`¿Borrar «${e.titulo}»?`)) borrar.mutate(e.id);
-                    }}
-                  >
-                    Borrar
-                  </button>
-                </div>
+                {puedeGestionar(e) && (
+                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem' }}>
+                    <button
+                      type="button"
+                      className="btn btn-borde btn-sm"
+                      onClick={() => alternarPublicado.mutate({ id: e.id, publicado: !e.publicado })}
+                    >
+                      {e.publicado ? 'Despublicar' : 'Publicar'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-borde btn-sm"
+                      onClick={() => {
+                        if (confirm(`¿Borrar «${e.titulo}»?`)) borrar.mutate(e.id);
+                      }}
+                    >
+                      Borrar
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

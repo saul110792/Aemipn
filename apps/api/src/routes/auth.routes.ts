@@ -72,6 +72,9 @@ const publicUser = (user: {
   /// Cuantas areas encabeza. El cliente lo usa para no ofrecer pantallas
   /// que la API le negaria de todos modos.
   areasQueEncabeza: new Set(user.member?.jefaturas?.map((j) => j.areaId) ?? []).size,
+  /// Cuales areas, para ocultar acciones (publicar/borrar un evento, etc.)
+  /// que solo el jefe/tesorero de ESA area en particular puede usar.
+  areaIdsQueEncabeza: [...new Set(user.member?.jefaturas?.map((j) => j.areaId) ?? [])],
 });
 
 authRouter.post(

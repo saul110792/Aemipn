@@ -48,6 +48,8 @@ export interface SessionUser {
   fotoUrl: string | null;
   /** Cuantas areas encabeza como jefe o tesorero. */
   areasQueEncabeza?: number;
+  /** Cuales, para permisos por area especifica (publicar/borrar un evento, etc). */
+  areaIdsQueEncabeza?: string[];
 }
 
 export interface Area {
