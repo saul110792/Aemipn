@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { api } from '../lib/api';
 import { ErrorAviso } from '../components/Estado';
 import { Icono } from '../components/Icono';
+import { SelectorEscuela } from '../components/SelectorEscuela';
 
 interface Formulario {
   nombre: string;
@@ -31,6 +32,7 @@ export function Unete() {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<Formulario>();
 
@@ -123,7 +125,11 @@ export function Unete() {
             </div>
             <div className="campo">
               <label htmlFor="r-escuela">Escuela o unidad</label>
-              <input id="r-escuela" placeholder="ESIA, ESCOM, ENCB, externo…" {...register('escuela')} />
+              <SelectorEscuela
+                id="r-escuela"
+                value={watch('escuela') ?? ''}
+                onChange={(v) => setValue('escuela', v)}
+              />
             </div>
           </div>
 

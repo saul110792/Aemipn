@@ -8,6 +8,7 @@ import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { etiqueta, fmtFechaCorta, nombreCompleto } from '../../lib/format';
 import { useAuth } from '../../lib/auth';
 import { TIPOS_DE_SANGRE } from '../../lib/catalogos';
+import { SelectorEscuela } from '../../components/SelectorEscuela';
 
 const ESTADOS: MemberStatus[] = ['ASPIRANTE', 'ACTIVO', 'INACTIVO', 'BAJA'];
 
@@ -191,7 +192,7 @@ function FormularioMiembro({
   guardando: boolean;
   error: unknown;
 }) {
-  const { register, handleSubmit, formState: { errors } } = useForm<Record<string, string>>();
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<Record<string, string>>();
 
   return (
     <div className="tarjeta" style={{ marginBottom: '1.5rem' }}>
@@ -235,7 +236,11 @@ function FormularioMiembro({
             </div>
             <div className="campo">
               <label htmlFor="n-escuela">Escuela</label>
-              <input id="n-escuela" {...register('escuela')} />
+              <SelectorEscuela
+                id="n-escuela"
+                value={watch('escuela') ?? ''}
+                onChange={(v) => setValue('escuela', v)}
+              />
             </div>
             <div className="campo">
               <label htmlFor="n-status">Estado</label>
