@@ -38,7 +38,10 @@ el origen. El frontend no necesita saber en qué dominio vive la API, tal como e
    |---|---|
    | `SEED_ADMIN_EMAIL` | El correo del primer administrador |
    | `SEED_ADMIN_PASSWORD` | Su contraseña — cámbiala luego desde el panel |
-   | `SMTP_URL` | `smtp://usuario:contrasena@host:puerto` de tu proveedor. Sin esto, los correos de verificación solo quedan en los logs del servicio |
+   | `BREVO_API_KEY` | La API key de tu cuenta de [Brevo](https://www.brevo.com) (capa gratis: 300 correos/día). **Necesaria en el plan free**: Render bloquea las conexiones salientes a los puertos SMTP (25/465/587), así que `SMTP_URL` con Gmail u otro proveedor por SMTP normal no funciona ahí sin importar la configuración — la API de Brevo viaja por HTTPS (443), que nunca se bloquea. Ver [docs/correo.md](correo.md) |
+
+   Si en vez de Render free usas un plan de pago (o cualquier otro host sin ese bloqueo), puedes
+   usar `SMTP_URL` en su lugar — `BREVO_API_KEY` tiene prioridad si ambas están presentes.
 
    `JWT_ACCESS_SECRET` y `JWT_REFRESH_SECRET` los genera Render solos (`generateValue: true`) —
    no hace falta tocarlos.

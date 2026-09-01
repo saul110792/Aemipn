@@ -7,6 +7,42 @@ export interface Mensaje {
   texto: string;
 }
 
+/** Separa "AEMIPN <no-responder@aemipn.mx>" en nombre y correo. */
+function partirRemitente(remitente: string) {
+  const m = remitente.match(/^(.*?)\s*<(.+)>$/);
+  return m ? { name: m[1].trim(), email: m[2].trim() } : { name: remitente, email: remitente };
+}
+
+/**
+ * Envía por la API HTTP de Brevo (antes Sendinblue).
+ *
+ * Hace falta en Render: su plan gratuito bloquea las conexiones salientes a
+ * los puertos SMTP (25, 465, 587), así que Gmail —o cualquier SMTP— quedan
+ * inservibles ahí sin importar la configuración. La API de Brevo viaja por
+ * HTTPS (443), que nunca se bloquea.
+ */
+async function enviarPorBrevo(m: Mensaje) {
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': env.BREVO_API_KEY!,
+      'content-type': 'application/json',
+      accept: 'application/json',
+    },
+    body: JSON.stringify({
+      sender: partirRemitente(env.SMTP_REMITENTE),
+      to: [{ email: m.para }],
+      subject: m.asunto,
+      textContent: m.texto,
+    }),
+  });
+
+  if (!res.ok) {
+    const detalle = await res.text().catch(() => '');
+    throw new Error(`Brevo respondió ${res.status}: ${detalle}`);
+  }
+}
+
 /**
  * nodemailer resuelve el host por IPv4 *o IPv6 al azar* (ver su
  * `formatDNSValue`), y varios entornos en la nube -Render incluido- anuncian
@@ -40,46 +76,52 @@ async function crearTransporteSmtp() {
 }
 
 /**
- * Envío de correo con dos motores.
+ * Envío de correo con tres motores, en este orden de preferencia:
+ * Brevo (BREVO_API_KEY) → SMTP (SMTP_URL) → consola.
  *
- * Sin credenciales SMTP configuradas, el mensaje se escribe en la consola del
- * servidor: en desarrollo eso basta para copiar la liga o el código y seguir
- * probando, sin depender de un buzón real.
+ * Sin ninguna credencial configurada, el mensaje se escribe en la consola
+ * del servidor: en desarrollo eso basta para copiar la liga o el código y
+ * seguir probando, sin depender de un buzón real.
  *
- * Con SMTP_URL definido se usa un envío real. La firma no cambia, así que el
- * resto del código no se entera de cuál está activo.
+ * La firma no cambia entre motores, así que el resto del código no se
+ * entera de cuál está activo.
  */
 export async function enviarCorreo(m: Mensaje): Promise<{ entregado: boolean; motor: string }> {
-  if (!env.SMTP_URL) {
-    // En producción esto es un problema, no una comodidad: hay que avisarlo.
-    if (isProd) {
-      console.error(
-        `[correo] SMTP_URL no está configurado. El mensaje para ${m.para} NO se envió.`,
-      );
-      return { entregado: false, motor: 'ninguno' };
-    }
-
-    console.log(
-      [
-        '',
-        '  ┌─ correo simulado ' + '─'.repeat(46),
-        `  │ Para:   ${m.para}`,
-        `  │ Asunto: ${m.asunto}`,
-        '  │',
-        ...m.texto.split('\n').map((l) => `  │ ${l}`),
-        '  └' + '─'.repeat(64),
-        '',
-      ].join('\n'),
-    );
-    return { entregado: true, motor: 'consola' };
+  if (env.BREVO_API_KEY) {
+    await enviarPorBrevo(m);
+    return { entregado: true, motor: 'brevo' };
   }
 
-  const transporte = await crearTransporteSmtp();
-  await transporte.sendMail({
-    from: env.SMTP_REMITENTE,
-    to: m.para,
-    subject: m.asunto,
-    text: m.texto,
-  });
-  return { entregado: true, motor: 'smtp' };
+  if (env.SMTP_URL) {
+    const transporte = await crearTransporteSmtp();
+    await transporte.sendMail({
+      from: env.SMTP_REMITENTE,
+      to: m.para,
+      subject: m.asunto,
+      text: m.texto,
+    });
+    return { entregado: true, motor: 'smtp' };
+  }
+
+  // En producción esto es un problema, no una comodidad: hay que avisarlo.
+  if (isProd) {
+    console.error(
+      `[correo] Ni BREVO_API_KEY ni SMTP_URL están configurados. El mensaje para ${m.para} NO se envió.`,
+    );
+    return { entregado: false, motor: 'ninguno' };
+  }
+
+  console.log(
+    [
+      '',
+      '  ┌─ correo simulado ' + '─'.repeat(46),
+      `  │ Para:   ${m.para}`,
+      `  │ Asunto: ${m.asunto}`,
+      '  │',
+      ...m.texto.split('\n').map((l) => `  │ ${l}`),
+      '  └' + '─'.repeat(64),
+      '',
+    ].join('\n'),
+  );
+  return { entregado: true, motor: 'consola' };
 }

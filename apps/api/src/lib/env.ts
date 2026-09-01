@@ -12,8 +12,16 @@ const schema = z.object({
   JWT_REFRESH_TTL: z.string().default('30d'),
   /// Dirección pública del sitio; se usa para armar la liga de verificación.
   APP_URL: z.string().default('http://localhost:5173'),
-  /// Sin esto, los correos se imprimen en la consola en lugar de enviarse.
+  /// Sin esto ni BREVO_API_KEY, los correos se imprimen en la consola.
   SMTP_URL: z.string().optional(),
+  /// Envío por la API HTTP de Brevo en vez de SMTP.
+  ///
+  /// Hace falta en Render: su plan gratuito bloquea las conexiones salientes
+  /// a los puertos SMTP (25, 465, 587), así que Gmail y cualquier otro SMTP
+  /// quedan inservibles ahí sin importar la configuración. La API de Brevo
+  /// viaja por HTTPS (443), que nunca se bloquea. Si está presente, tiene
+  /// prioridad sobre SMTP_URL.
+  BREVO_API_KEY: z.string().optional(),
   /// Devuelve el token y el código de verificación en la respuesta del registro.
   ///
   /// Es una comodidad para probar sin buzón, y es también una llave: con ella

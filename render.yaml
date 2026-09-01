@@ -47,7 +47,12 @@ services:
         value: "false"
       - key: EXPONER_CODIGOS_DE_PRUEBA
         value: "false"
-      # Sin esto los correos de verificacion solo se imprimen en los logs.
+      # El plan free de Render bloquea los puertos SMTP (25/465/587): SMTP_URL
+      # no sirve aqui. BREVO_API_KEY manda por HTTPS y tiene prioridad sobre
+      # SMTP_URL si ambas estan presentes. Sin ninguna, el correo de
+      # verificacion solo se imprime en los logs.
+      - key: BREVO_API_KEY
+        sync: false
       - key: SMTP_URL
         sync: false
       - key: SMTP_REMITENTE
