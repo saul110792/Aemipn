@@ -206,6 +206,72 @@ export function Dashboard() {
   );
 }
 
+interface SalidaCimPublica {
+  titulo: string;
+  fechaInicio: string;
+  lugar: string | null;
+  area: { nombre: string; slug: string; color: string | null } | null;
+}
+
+interface EdicionCimPublica {
+  id: string;
+  clave: string;
+  actividades: SalidaCimPublica[];
+}
+
+/**
+ * Aviso para "no se te olvide apoyar en el CIM", con las salidas que
+ * todavía faltan. Sin sesión de por medio: /public/cim ya trae justo lo que
+ * el sitio informativo muestra, así que un miembro raso lo ve igual.
+ */
+function AvisoCim() {
+  const { data } = useQuery({
+    queryKey: ['public', 'cim'],
+    queryFn: () => api.get<EdicionCimPublica[]>('/public/cim'),
+  });
+
+  const ahora = Date.now();
+  const restantes = (data ?? []).flatMap((e) => e.actividades)
+    .filter((a) => new Date(a.fechaInicio).getTime() >= ahora)
+    .sort((a, b) => new Date(a.fechaInicio).getTime() - new Date(b.fechaInicio).getTime());
+
+  // Sin convocatoria abierta no hay nada que recordar: el enlace de siempre.
+  if (!data || data.length === 0) {
+    return (
+      <Link to="/cim" className="btn btn-borde">
+        <Icono nombre="brujula" /> Conoce el Curso Introductorio al Montañismo
+      </Link>
+    );
+  }
+
+  const visibles = restantes.slice(0, 3);
+  const faltan = restantes.length - visibles.length;
+
+  return (
+    <div className="aviso aviso-info" style={{ margin: 0, textAlign: 'left' }}>
+      <strong>
+        <Icono nombre="brujula" /> No se te olvide apoyar en el CIM
+      </strong>
+      {visibles.length > 0 ? (
+        <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.2rem' }}>
+          {visibles.map((s, i) => (
+            <li key={i}>
+              {s.area?.nombre ? `${s.area.nombre}: ` : ''}
+              <strong>{s.titulo}</strong> — {fmtFecha(s.fechaInicio)}
+            </li>
+          ))}
+          {faltan > 0 && <li className="texto-suave">y {faltan} más…</li>}
+        </ul>
+      ) : (
+        <p style={{ margin: '0.35rem 0 0' }}>Ya no quedan salidas pendientes en esta edición.</p>
+      )}
+      <Link to="/cim" style={{ display: 'inline-block', marginTop: '0.5rem', fontSize: '0.88rem' }}>
+        Ver la convocatoria completa →
+      </Link>
+    </div>
+  );
+}
+
 /**
  * Lo que ve quien todavía no encabeza nada: el resumen de la asociación no
  * es asunto suyo, pero llegar a un error en rojo el primer día que entra al
@@ -223,20 +289,18 @@ function BienvenidaMiembro() {
           ¡Bienvenido{primerNombre ? `, ${primerNombre}` : ''}!
         </h1>
         <p className="texto-suave" style={{ maxWidth: '38ch', margin: '0 auto' }}>
-          El Resumen es para quien dirige un área o la mesa directiva. Mientras te integras, esto
-          es lo que puedes hacer:
+          Mientras te integras, esto es lo que puedes hacer:
         </p>
 
         <div className="pila" style={{ textAlign: 'left', marginTop: '1.75rem', gap: '0.6rem' }}>
           <Link to="/panel/perfil" className="btn btn-verde">
             <Icono nombre="miembros" /> Completa tu expediente y declara tus cursos
           </Link>
-          <Link to="/panel/calendario" className="btn btn-borde">
+          {/* btn-peligro es la unica roja del sistema; aqui es solo color, no advertencia. */}
+          <Link to="/panel/calendario" className="btn btn-peligro">
             <Icono nombre="calendario" /> Ve el calendario de actividades
           </Link>
-          <Link to="/cim" className="btn btn-borde">
-            <Icono nombre="brujula" /> Conoce el Curso Introductorio al Montañismo
-          </Link>
+          <AvisoCim />
         </div>
       </div>
     </div>
