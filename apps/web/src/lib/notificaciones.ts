@@ -6,7 +6,8 @@ export type TipoPendiente =
   | 'DECLARACIONES'
   | 'PAGOS'
   | 'EVENTOS_SIN_PUBLICAR'
-  | 'EDICION_SIN_PROGRAMA';
+  | 'EDICION_SIN_PROGRAMA'
+  | 'MENSAJES_CONTACTO';
 
 export interface Pendiente {
   tipo: TipoPendiente;

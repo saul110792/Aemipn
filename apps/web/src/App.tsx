@@ -22,6 +22,7 @@ import { Jefaturas } from './pages/panel/Jefaturas';
 import { CursosPanel } from './pages/panel/CursosPanel';
 import { Ediciones } from './pages/panel/Ediciones';
 import { Contenido } from './pages/panel/Contenido';
+import { MensajesContacto } from './pages/panel/MensajesContacto';
 import { EventosPanel } from './pages/panel/EventosPanel';
 import { Perfil } from './pages/panel/Perfil';
 import { Validaciones } from './pages/panel/Validaciones';
@@ -73,6 +74,7 @@ export function App() {
         <Route path="cursos" element={<CursosPanel />} />
         <Route path="eventos" element={<EventosPanel />} />
         <Route path="contenido" element={<Contenido />} />
+        <Route path="contacto" element={<MensajesContacto />} />
         <Route path="ediciones" element={<Ediciones />} />
         <Route path="ediciones/:id" element={<EdicionDetalle />} />
       </Route>

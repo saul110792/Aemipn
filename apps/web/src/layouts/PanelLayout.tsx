@@ -14,6 +14,8 @@ export function PanelLayout() {
   // encabeza un area. Un miembro consulta su propio expediente.
   const puedeVerPadron =
     esAdmin || (user?.areasQueEncabeza ?? 0) > 0;
+  const mensajesContacto =
+    pendientes?.pendientes.find((p) => p.tipo === 'MENSAJES_CONTACTO')?.cantidad ?? 0;
   const navigate = useNavigate();
 
   const salir = async () => {
@@ -114,14 +116,20 @@ export function PanelLayout() {
             Eventos
           </NavLink>
 
+          {(esAdmin || puedeVerPadron) && <div className="grupo">Sitio público</div>}
           {esAdmin && (
-            <>
-              <div className="grupo">Sitio público</div>
-              <NavLink to="/panel/contenido" className={clase}>
-                <Icono nombre="imagen" />
-                Textos e imágenes
-              </NavLink>
-            </>
+            <NavLink to="/panel/contenido" className={clase}>
+              <Icono nombre="imagen" />
+              Textos e imágenes
+            </NavLink>
+          )}
+          {/* Un mensaje sin área es de la mesa directiva; con área, de quien la encabeza. */}
+          {(esAdmin || puedeVerPadron) && (
+            <NavLink to="/panel/contacto" className={clase}>
+              <Icono nombre="whatsapp" />
+              Mensajes de contacto
+              {mensajesContacto > 0 && <span className="conteo-lateral">{mensajesContacto}</span>}
+            </NavLink>
           )}
         </aside>
 
