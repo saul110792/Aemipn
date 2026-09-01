@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { useAuth } from '../../lib/auth';
 import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { etiqueta, fmtFecha, fmtFechaHora, fmtRango } from '../../lib/format';
 import { Icono, hayIcono } from '../../components/Icono';
+import { Emblema } from '../../components/Marca';
 import type { CourseEdition, EditionActivity } from '../../lib/types';
 
 interface SalidaCim {
@@ -46,11 +48,18 @@ interface Resumen {
 }
 
 export function Dashboard() {
+  const { user, esAdmin } = useAuth();
+  // El resumen es para quien dirige: la mesa directiva y quien encabeza un
+  // area. La API lo rechaza igual para cualquier otro, asi que ni se pide.
+  const puedeVerResumen = esAdmin || (user?.areasQueEncabeza ?? 0) > 0;
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard'],
     queryFn: () => api.get<Resumen>('/dashboard'),
+    enabled: puedeVerResumen,
   });
 
+  if (!puedeVerResumen) return <BienvenidaMiembro />;
   if (isLoading) return <Cargando />;
   if (error) return <ErrorAviso error={error} />;
   if (!data) return null;
@@ -194,6 +203,43 @@ export function Dashboard() {
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * Lo que ve quien todavía no encabeza nada: el resumen de la asociación no
+ * es asunto suyo, pero llegar a un error en rojo el primer día que entra al
+ * panel es peor bienvenida que no mostrarle nada.
+ */
+function BienvenidaMiembro() {
+  const { user } = useAuth();
+  const primerNombre = user?.nombre?.split(' ')[0];
+
+  return (
+    <div className="tarjeta" style={{ maxWidth: 560, margin: '2.5rem auto', textAlign: 'center' }}>
+      <div className="tarjeta-cuerpo" style={{ padding: '2.5rem 2rem' }}>
+        <Emblema tamano={52} />
+        <h1 style={{ marginTop: '1rem', fontSize: '1.4rem' }}>
+          ¡Bienvenido{primerNombre ? `, ${primerNombre}` : ''}!
+        </h1>
+        <p className="texto-suave" style={{ maxWidth: '38ch', margin: '0 auto' }}>
+          El Resumen es para quien dirige un área o la mesa directiva. Mientras te integras, esto
+          es lo que puedes hacer:
+        </p>
+
+        <div className="pila" style={{ textAlign: 'left', marginTop: '1.75rem', gap: '0.6rem' }}>
+          <Link to="/panel/perfil" className="btn btn-verde">
+            <Icono nombre="miembros" /> Completa tu expediente y declara tus cursos
+          </Link>
+          <Link to="/panel/calendario" className="btn btn-borde">
+            <Icono nombre="calendario" /> Ve el calendario de actividades
+          </Link>
+          <Link to="/cim" className="btn btn-borde">
+            <Icono nombre="brujula" /> Conoce el Curso Introductorio al Montañismo
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }
 
