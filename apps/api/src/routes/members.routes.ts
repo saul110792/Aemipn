@@ -12,6 +12,7 @@ import {
   normalizarAlergias,
 } from '../lib/catalogos.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { crearYEnviarVerificacion } from '../lib/verificacion.js';
 import {
   MESES_MAXIMOS_INTERINO,
   CARGOS_DE_MESA,
@@ -167,7 +168,9 @@ membersRouter.get(
           },
           orderBy: { fechaInicio: 'desc' },
         },
-        user: { select: { id: true, email: true, role: true, activo: true, ultimoAcceso: true } },
+        user: {
+          select: { id: true, email: true, role: true, activo: true, ultimoAcceso: true, emailVerificadoEn: true },
+        },
         enrollments: {
           include: { edition: { include: { course: true } } },
           orderBy: { fechaInscripcion: 'desc' },
@@ -431,5 +434,29 @@ membersRouter.post(
     });
 
     res.status(201).json(user);
+  }),
+);
+
+/**
+ * POST /api/members/:id/reenviar-verificacion
+ *
+ * Para cuando el correo de confirmación no salió (sin SMTP_URL, por ejemplo):
+ * un administrador puede pedir otra liga sin que la persona tenga que hacerlo
+ * desde el sitio público. Invalida la anterior, igual que un reenvío normal.
+ */
+membersRouter.post(
+  '/:id/reenviar-verificacion',
+  requireRole('ADMIN', 'STAFF'),
+  asyncHandler(async (req, res) => {
+    const member = await prisma.member.findUnique({
+      where: { id: req.params.id },
+      include: { user: { select: { id: true, email: true, emailVerificadoEn: true } } },
+    });
+    if (!member) throw notFound('Miembro no encontrado');
+    if (!member.user) throw badRequest('Esta persona todavía no tiene cuenta de acceso');
+    if (member.user.emailVerificadoEn) throw badRequest('Ya confirmó su correo; no hace falta reenviar nada');
+
+    await crearYEnviarVerificacion(member.user.id, member.user.email, member.nombre);
+    res.json({ ok: true });
   }),
 );

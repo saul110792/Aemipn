@@ -92,6 +92,15 @@ export interface Member {
   }[];
   enrollments?: Enrollment[];
   _count?: { enrollments: number };
+  /// Cuenta de acceso al panel, si ya tiene una.
+  user?: {
+    id: string;
+    email: string;
+    role: string;
+    activo: boolean;
+    ultimoAcceso: string | null;
+    emailVerificadoEn: string | null;
+  } | null;
 }
 
 export interface Course {

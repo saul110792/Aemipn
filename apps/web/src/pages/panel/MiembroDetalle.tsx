@@ -80,6 +80,11 @@ export function MiembroDetalle() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['member', id] }),
   });
 
+  const reenviarCorreo = useMutation({
+    mutationFn: () => api.post(`/members/${id}/reenviar-verificacion`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['member', id] }),
+  });
+
   if (isLoading) return <Cargando />;
   if (error) return <ErrorAviso error={error} />;
   if (!miembro) return null;
@@ -124,6 +129,38 @@ export function MiembroDetalle() {
                 <Dato titulo="Ingreso" valor={fmtFecha(miembro.fechaIngreso)} />
                 <Dato titulo="Estado" valor={etiqueta(miembro.status)} />
               </dl>
+
+              {esAdmin && miembro.user && (
+                <div style={{ marginTop: '1rem', paddingTop: '0.9rem', borderTop: '1px solid var(--borde)' }}>
+                  {miembro.user.emailVerificadoEn ? (
+                    <span className="texto-suave" style={{ fontSize: '0.85rem' }}>
+                      Correo confirmado el {fmtFechaCorta(miembro.user.emailVerificadoEn)}.
+                    </span>
+                  ) : (
+                    <>
+                      <span className="texto-suave" style={{ fontSize: '0.85rem' }}>
+                        Todavía no confirma su correo — no puede iniciar sesión.
+                      </span>
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <button
+                          type="button"
+                          className="btn btn-borde btn-sm"
+                          disabled={reenviarCorreo.isPending}
+                          onClick={() => reenviarCorreo.mutate()}
+                        >
+                          {reenviarCorreo.isPending ? 'Enviando…' : 'Reenviar correo de confirmación'}
+                        </button>
+                        {reenviarCorreo.isSuccess && (
+                          <span className="texto-suave" style={{ fontSize: '0.82rem', marginLeft: '0.6rem' }}>
+                            Enviado. Si no llega, revisa que SMTP_URL esté configurado.
+                          </span>
+                        )}
+                        {reenviarCorreo.error != null && <ErrorAviso error={reenviarCorreo.error} />}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </section>
 
