@@ -131,6 +131,7 @@ model User {
 
   verificaciones EmailVerification[]
   recuperaciones PasswordReset[]
+  suscripcionesPush PushSubscription[]
 
   /// Un usuario del panel normalmente corresponde a un miembro.
   member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
@@ -564,6 +565,9 @@ model EventRsvp {
   memberId String
 
   createdAt DateTime @default(now())
+  /// Cuándo se le mandó el push de recordatorio. Null = todavía no le toca
+  /// o no tiene notificaciones activas; evita mandarlo dos veces.
+  recordatorioEnviadoEn DateTime?
 
   @@unique([eventId, memberId])
   @@index([eventId])
@@ -629,6 +633,22 @@ model PasswordReset {
 
   @@index([userId, usadoEn])
   @@map("password_resets")
+}
+
+/// Una suscripcion de Web Push por dispositivo/navegador. Un mismo usuario
+/// puede tener varias (celular, computadora): se le manda a todas.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 /// Curso que un miembro declara haber tomado, a la espera de que su area lo

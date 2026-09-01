@@ -57,6 +57,46 @@ services:
         sync: false
       - key: SMTP_REMITENTE
         value: "AEMIPN <no-responder@aemipn.mx>"
+      # Notificaciones push (eventos nuevos, recordatorio de "voy a asistir").
+      # Se generan UNA sola vez en local con `npx web-push generate-vapid-keys`
+      # y se pegan aqui a mano; sin ellas el envio se salta en silencio.
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: "mailto:no-responder@aemipn.mx"
+
+  # Revisa cada hora quien confirmo una salida que empieza en ~24 horas y le
+  # manda el recordatorio push. Aparte del web service porque un Cron Job de
+  # Render corre exista o no trafico en el sitio -un proceso en segundo plano
+  # del web service normal no es confiable en el plan gratuito, que se apaga
+  # solo tras estar inactivo.
+  - type: cron
+    name: aemipn-recordatorios
+    runtime: node
+    plan: starter
+    region: oregon
+    schedule: "0 * * * *"
+    buildCommand: npm install && npm run build -w @aemipn/api
+    startCommand: npm run recordatorios -w @aemipn/api
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 20.20.2
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aemipn-db
+          property: connectionString
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: "mailto:no-responder@aemipn.mx"
 
   - type: web
     name: aemipn-web

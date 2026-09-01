@@ -6,6 +6,7 @@ import { forbidden, notFound } from '../lib/errors.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth } from '../middleware/auth.js';
 import { CARGOS_DE_MESA, enFunciones } from '../lib/jefaturas.js';
+import { enviarPush } from '../lib/push.js';
 
 export const eventsRouter = Router();
 eventsRouter.use(requireAuth);
@@ -245,6 +246,35 @@ async function puedeEditar(
   return Boolean(rol);
 }
 
+/**
+ * Push a quien le interesa un evento recién publicado: los miembros activos
+ * del área (si es de un área), o todos los miembros activos si es "de toda
+ * la asociación". Sin llaves VAPID configuradas, enviarPush no hace nada.
+ */
+async function notificarNuevoEvento(evento: { areaId: string | null; titulo: string }) {
+  const userIds = evento.areaId
+    ? (
+        await prisma.areaMembership.findMany({
+          where: { areaId: evento.areaId, activo: true, member: { user: { isNot: null } } },
+          select: { member: { select: { user: { select: { id: true } } } } },
+        })
+      ).map((f) => f.member.user!.id)
+    : (
+        await prisma.member.findMany({
+          where: { status: 'ACTIVO', user: { isNot: null } },
+          select: { user: { select: { id: true } } },
+        })
+      ).map((f) => f.user!.id);
+
+  if (userIds.length === 0) return;
+
+  await enviarPush(userIds, {
+    titulo: evento.areaId ? 'Nuevo evento en tu área' : 'Nuevo evento para toda la asociación',
+    cuerpo: evento.titulo,
+    url: '/panel/eventos',
+  });
+}
+
 eventsRouter.post(
   '/',
   validate(eventSchema),
@@ -256,6 +286,7 @@ eventsRouter.post(
     }
 
     const creado = await prisma.event.create({ data, include: incluyeArea });
+    if (creado.publicado) void notificarNuevoEvento(creado);
     res.status(201).json(conRsvp(creado, new Set()));
   }),
 );
@@ -282,6 +313,9 @@ eventsRouter.patch(
       data: req.body,
       include: incluyeArea,
     });
+    // Solo al pasar de borrador a publicado: editar o despublicar uno que ya
+    // se avisó no debe volver a notificar a todos.
+    if (actualizado.publicado && !actual.publicado) void notificarNuevoEvento(actualizado);
     const misRsvps = await misRsvpsDe(req.user!.memberId, [actualizado.id]);
     res.json(conRsvp(actualizado, misRsvps));
   }),

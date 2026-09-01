@@ -7,6 +7,7 @@ import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { Icono, hayIcono } from '../../components/Icono';
 import { etiqueta, fmtFecha } from '../../lib/format';
 import { CampoEtiquetas } from '../../components/CampoEtiquetas';
+import { NotificacionesPush } from '../../components/NotificacionesPush';
 import {
   ALERGIAS_SUGERIDAS,
   LARGO_MAXIMO_ALERGIA,
@@ -168,6 +169,8 @@ export function Perfil() {
       )}
       {guardar.error != null && <ErrorAviso error={guardar.error} />}
       {guardado && <div className="aviso aviso-ok">Expediente actualizado.</div>}
+
+      <NotificacionesPush />
 
       <section className="tarjeta" style={{ marginBottom: '1.5rem' }}>
         <div className="tarjeta-cuerpo">

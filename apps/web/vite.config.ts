@@ -6,13 +6,16 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      // Solo el cascaron de la app (JS/CSS/imagenes de build) se precachea.
-      // /api y /uploads nunca pasan por aqui: la ficha de un miembro o el
-      // padron no deben poder verse "offline" con datos viejos.
-      workbox: {
-        navigateFallbackDenylist: [/^\/api/, /^\/uploads/],
+      // Un service worker propio (src/sw.ts) en vez de que Workbox lo genere
+      // entero: hace falta para recibir push y cachear el calendario aparte
+      // del resto de /api, cosas que el modo generado no permite tocar.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,png,svg,ico,webmanifest}'],
       },
+      registerType: 'autoUpdate',
       includeAssets: ['logo-ipn.svg', 'logo-ipn-blanco.svg', 'escudo-aemipn.png'],
       manifest: {
         name: 'AEMIPN — Excursionismo y Montañismo IPN',
@@ -40,6 +43,16 @@ export default defineConfig({
     port: 5173,
     // El front llama a rutas /api/* y Vite las reenvia a la API.
     // Asi no hay CORS en desarrollo y el codigo no necesita saber el host.
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
+    },
+  },
+  // `vite preview` sirve el build de produccion (incluye el service worker
+  // real, que `vite dev` no genera) — necesita el mismo reenvio que arriba.
+  preview: {
     proxy: {
       '/api': {
         target: 'http://localhost:4000',

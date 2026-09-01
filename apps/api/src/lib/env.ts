@@ -45,6 +45,13 @@ const schema = z.object({
   SEED_DEMO_DOMINIO: z.string().default('demo.aemipn.mx'),
   SEED_ADMIN_EMAIL: z.string().email().default('admin@aemipn.mx'),
   SEED_ADMIN_PASSWORD: z.string().min(8).default('Aemipn2026!'),
+  /// Notificaciones push (eventos nuevos, recordatorios de "voy a asistir").
+  /// Sin ambas, el envío se salta en silencio: es una mejora, no un requisito
+  /// para que el resto del sitio funcione. Se generan una sola vez con
+  /// `npx web-push generate-vapid-keys` y no cambian entre despliegues.
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().default('mailto:no-responder@aemipn.mx'),
 });
 
 const parsed = schema.safeParse(process.env);
