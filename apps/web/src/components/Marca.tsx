@@ -54,7 +54,7 @@ export function Marca({ subtitulo = 'Excursionismo y Montañismo · IPN' }: { su
     <>
       <Emblema />
       <span className="marca-texto">
-        AEMIPN
+        AEMIPN <span className="marca-beta">- BETA</span>
         <span>{subtitulo}</span>
       </span>
     </>

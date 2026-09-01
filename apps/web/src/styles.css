@@ -177,6 +177,7 @@ a:hover { text-decoration: underline; }
 .insignia-roja { background: var(--error-fondo); color: #86122a; }
 .insignia-azul { background: var(--info-fondo); color: #144a71; }
 .insignia-guinda { background: var(--guinda-100); color: var(--guinda); }
+.marca-texto .marca-beta { display: inline; color: #ff6b4a; font-weight: 800; opacity: 1; }
 
 /* ---------- Tablas ---------- */
 .tabla-envoltura { overflow-x: auto; background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio); }
@@ -332,7 +333,7 @@ tbody tr:hover { background: var(--guinda-100); }
 }
 .evento-fecha .dia { font-family: var(--fuente-titulo); font-size: 1.75rem; font-weight: 800; display: block; }
 .evento-fecha .mes { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; }
-.evento-fecha .anio { font-size: 0.7rem; opacity: 0.75; }
+.evento-fecha .evento-anio { font-size: 0.7rem; opacity: 0.75; }
 .evento-meta { display: flex; gap: 0.4rem 0.9rem; flex-wrap: wrap; color: var(--texto-suave); font-size: 0.88rem; margin: 0.4rem 0 0.6rem; }
 .evento-meta span { display: inline-flex; align-items: center; gap: 0.35rem; }
 
@@ -775,6 +776,10 @@ tbody tr:hover { background: var(--guinda-100); }
   padding: 0.45rem 0.55rem; border-radius: 7px; color: var(--texto);
 }
 .etiquetas-sugerencias button:hover { background: var(--guinda-100); color: var(--guinda); }
+.etiquetas-categoria {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--texto-suave); padding: 0.5rem 0.55rem 0.2rem;
+}
 
 /* Panel de edición de una sesión, dentro de la tabla del programa. */
 .editar-sesion {
