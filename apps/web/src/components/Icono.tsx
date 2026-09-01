@@ -25,7 +25,22 @@ export type NombreIcono =
   | 'lugar'
   | 'video'
   | 'imagen'
-  | 'texto';
+  | 'texto'
+  // --- Redes sociales ---
+  | 'facebook'
+  | 'instagram'
+  | 'x'
+  | 'youtube'
+  | 'tiktok'
+  | 'whatsapp'
+  // --- Tecnologías (pie del sitio) ---
+  | 'react'
+  | 'vite'
+  | 'typescript'
+  | 'nodejs'
+  | 'express'
+  | 'postgresql'
+  | 'prisma';
 
 const TRAZOS: Record<NombreIcono, JSX.Element> = {
   // --- Areas ---
@@ -196,6 +211,78 @@ const TRAZOS: Record<NombreIcono, JSX.Element> = {
       <path d="M4 21h7" />
     </>
   ),
+
+  // --- Redes sociales ---
+  facebook: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="4" />
+      <path d="M14 20v-6.5h2.2l.4-2.7H14V9c0-.9.4-1.4 1.5-1.4H17V5.3c-.5-.1-1.3-.2-2-.2-2 0-3.4 1.2-3.4 3.4v2.3H9.5v2.7h2.1V20" />
+    </>
+  ),
+  instagram: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4.2" />
+      <circle cx="17.2" cy="6.8" r="0.7" fill="currentColor" stroke="none" />
+    </>
+  ),
+  x: (
+    <>
+      <path d="M5 5l14 14" />
+      <path d="M19 5L5 19" />
+    </>
+  ),
+  youtube: (
+    <>
+      <rect x="2.5" y="6" width="19" height="12" rx="3.5" />
+      <path d="M10.3 9.6l5 2.4-5 2.4z" />
+    </>
+  ),
+  tiktok: (
+    <>
+      <path d="M13 3v11.5a3.5 3.5 0 11-3.5-3.5" />
+      <path d="M13 3c.3 2.8 2.3 4.7 5 5" />
+    </>
+  ),
+  whatsapp: (
+    <>
+      <path d="M12 3a8.5 8.5 0 00-7.2 13l-1 4 4.2-1.1A8.5 8.5 0 1012 3z" />
+      <path d="M8.7 9c.2-.5.4-.5.7-.5h.4c.2 0 .3.1.4.4.1.3.5 1.2.5 1.3.1.1.1.3 0 .4-.1.2-.2.3-.3.4-.1.1-.2.2-.1.4.2.3.7 1 1.4 1.6.8.7 1.4 1 1.7.8.1-.1.3-.3.4-.5.1-.2.2-.2.4-.1l1.1.6c.1.1.3.1.3.3 0 .3-.4 1-.9 1.2-.4.2-.9.3-2-.4-1.3-.8-2.2-2-2.4-2.2-.2-.3-.7-1-.7-1.9 0-.9.5-1.3.6-1.5z" />
+    </>
+  ),
+
+  // --- Tecnologías ---
+  react: (
+    <>
+      <circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="12" rx="9" ry="3.8" />
+      <ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(60 12 12)" />
+      <ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(120 12 12)" />
+    </>
+  ),
+  vite: <path d="M13 2L4 13h6l-1 9 10-14h-6z" />,
+  typescript: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <path d="M7 8h4M9 8v8" />
+      <path d="M14 15.3c.4.4.9.6 1.5.6.9 0 1.5-.4 1.5-1.1 0-.7-.6-1-1.5-1.3-1-.3-1.5-.7-1.5-1.4 0-.7.6-1.1 1.5-1.1.6 0 1 .2 1.4.5" />
+    </>
+  ),
+  nodejs: <path d="M12 2.5l8 4.6v9.8l-8 4.6-8-4.6V7.1z" />,
+  express: (
+    <>
+      <path d="M9 8l-4 4 4 4" />
+      <path d="M15 8l4 4-4 4" />
+    </>
+  ),
+  postgresql: (
+    <>
+      <ellipse cx="12" cy="5.5" rx="8" ry="3" />
+      <path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13" />
+      <path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" />
+    </>
+  ),
+  prisma: <path d="M11.3 3.3a1 1 0 011.6.3l7 14.5a1 1 0 01-1 1.4l-15.4-1a1 1 0 01-.8-1.5z" />,
 };
 
 interface Props {
