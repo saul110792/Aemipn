@@ -7,8 +7,14 @@ import { TarjetaArea } from '../components/TarjetaArea';
 import { Icono } from '../components/Icono';
 import { TarjetaEvento } from '../components/TarjetaEvento';
 import { AvisoBeta } from '../components/AvisoBeta';
+import { useAuth } from '../lib/auth';
 
 export function Inicio() {
+  const { user } = useAuth();
+  // El rol se queda en CIM hasta validar el curso base de un area: a partir
+  // de ahi ya es miembro de verdad y "Únete" no le sirve de nada.
+  const mostrarUnete = !user || user.role === 'CIM';
+
   const { data: areas } = useQuery({
     queryKey: ['public', 'areas'],
     queryFn: () => api.get<Area[]>('/public/areas'),
@@ -36,9 +42,11 @@ export function Inicio() {
             comunidad y un curso introductorio que abre la puerta a todas ellas.
           </p>
           <div className="acciones-apiladas" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1.5rem' }}>
-            <Link to="/unete" className="btn btn-claro">
-              <Icono nombre="miembros" /> Quiero unirme
-            </Link>
+            {mostrarUnete && (
+              <Link to="/unete" className="btn btn-claro">
+                <Icono nombre="miembros" /> Quiero unirme
+              </Link>
+            )}
             <Link to="/cim" className="btn btn-verde">
               <Icono nombre="brujula" /> Conocer el CIM
             </Link>

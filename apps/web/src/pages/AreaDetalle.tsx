@@ -4,6 +4,7 @@ import { api } from '../lib/api';
 import { Cargando, ErrorAviso } from '../components/Estado';
 import { etiqueta } from '../lib/format';
 import { Icono, hayIcono } from '../components/Icono';
+import { useAuth } from '../lib/auth';
 
 interface AreaPublica {
   id: string;
@@ -18,6 +19,10 @@ interface AreaPublica {
 
 export function AreaDetalle() {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
+  // El rol se queda en CIM hasta validar el curso base de un area: a partir
+  // de ahi ya es miembro de verdad y "Únete" no le sirve de nada.
+  const mostrarUnete = !user || user.role === 'CIM';
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['public', 'area', slug],
@@ -89,11 +94,13 @@ export function AreaDetalle() {
           </>
         )}
 
-        <div style={{ marginTop: '2.5rem' }}>
-          <Link to="/unete" className="btn btn-verde">
-            Quiero unirme a {data.nombre}
-          </Link>
-        </div>
+        {mostrarUnete && (
+          <div style={{ marginTop: '2.5rem' }}>
+            <Link to="/unete" className="btn btn-verde">
+              Quiero unirme a {data.nombre}
+            </Link>
+          </div>
+        )}
       </div>
     </>
   );

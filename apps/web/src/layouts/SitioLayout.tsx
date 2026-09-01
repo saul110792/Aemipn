@@ -13,7 +13,6 @@ const enlaces = [
   { to: '/eventos', texto: 'Eventos' },
   { to: '/cim', texto: 'CIM' },
   { to: '/cursos', texto: 'Cursos' },
-  { to: '/unete', texto: 'Únete' },
 ];
 
 /** Solo se muestra el icono de la red cuyo campo trae URL. */
@@ -47,6 +46,9 @@ export function SitioLayout() {
     queryFn: () => api.get<SiteSettings>('/public/configuracion'),
   });
   const redesActivas = REDES.filter((r) => config?.[r.campo]);
+  // El rol se queda en CIM hasta que se le valida el curso base de un area:
+  // a partir de ahi ya es miembro de verdad y "Únete" no le sirve de nada.
+  const mostrarUnete = !user || user.role === 'CIM';
 
   // Al navegar, el menú desplegable debe cerrarse solo.
   useEffect(() => setAbierto(false), [pathname]);
@@ -89,6 +91,11 @@ export function SitioLayout() {
                 {e.texto}
               </NavLink>
             ))}
+            {mostrarUnete && (
+              <NavLink to="/unete" className={({ isActive }) => (isActive ? 'activo' : '')}>
+                Únete
+              </NavLink>
+            )}
             <Link to={user ? '/panel' : '/login'} className="btn btn-verde btn-sm nav-cta">
               {user ? 'Ir al panel' : 'Iniciar sesión'}
             </Link>
@@ -113,7 +120,12 @@ export function SitioLayout() {
               Ocho disciplinas de montaña · Curso Introductorio al Montañismo (CIM) varias veces al año
             </p>
             <p style={{ marginBottom: redesActivas.length ? '0.9rem' : 0 }}>
-              <Link to="/unete">Quiero unirme</Link> · <Link to="/login">Acceso de miembros</Link>{' '}
+              {mostrarUnete && (
+                <>
+                  <Link to="/unete">Quiero unirme</Link> ·{' '}
+                </>
+              )}
+              <Link to="/login">Acceso de miembros</Link>{' '}
               · <button type="button" className="enlace-boton" onClick={() => setMostrarContacto(true)}>
                 Contáctanos
               </button>{' '}

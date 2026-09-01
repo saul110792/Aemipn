@@ -5,8 +5,14 @@ import type { CourseEdition } from '../lib/types';
 import { Cargando, ErrorAviso, Insignia } from '../components/Estado';
 import { etiqueta, fmtFechaHora, fmtRango } from '../lib/format';
 import { Icono, hayIcono } from '../components/Icono';
+import { useAuth } from '../lib/auth';
 
 export function Cim() {
+  const { user } = useAuth();
+  // El rol se queda en CIM hasta validar el curso base de un area: a partir
+  // de ahi ya es miembro de verdad y "Únete" no le sirve de nada.
+  const mostrarUnete = !user || user.role === 'CIM';
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['public', 'cim'],
     queryFn: () => api.get<CourseEdition[]>('/public/cim'),
@@ -34,7 +40,15 @@ export function Cim() {
         {data?.length === 0 && (
           <div className="aviso aviso-info">
             No hay convocatorias abiertas en este momento. El CIM se abre tres o cuatro veces al
-            año — deja tus datos en <Link to="/unete">Únete</Link> y te avisamos de la siguiente.
+            año
+            {mostrarUnete ? (
+              <>
+                {' '}— deja tus datos en <Link to="/unete">Únete</Link> y te avisamos de la
+                siguiente.
+              </>
+            ) : (
+              '.'
+            )}
           </div>
         )}
 
@@ -108,11 +122,13 @@ export function Cim() {
                   </>
                 )}
 
-                <div style={{ marginTop: '1.25rem' }}>
-                  <Link to="/unete" className="btn btn-verde">
-                    Registrarme en el CIM
-                  </Link>
-                </div>
+                {mostrarUnete && (
+                  <div style={{ marginTop: '1.25rem' }}>
+                    <Link to="/unete" className="btn btn-verde">
+                      Registrarme en el CIM
+                    </Link>
+                  </div>
+                )}
               </div>
             </article>
           ))}
