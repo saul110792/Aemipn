@@ -221,15 +221,17 @@ eventsRouter.get(
 );
 
 /**
- * Puede crear y editar quien sea ADMIN/STAFF, o el jefe/tesorero del area
- * a la que pertenece el evento. Asi cada area publica lo suyo.
+ * Puede crear y editar quien sea ADMIN/STAFF, el jefe/tesorero del area a
+ * la que pertenece el evento, o el coordinador del CIM cuando el evento es
+ * "de toda la asociacion" (sin area propia, como sus convocatorias).
  */
 async function puedeEditar(
   user: { role: string; memberId: string | null },
   areaId: string | null | undefined,
 ) {
   if (user.role === 'ADMIN' || user.role === 'STAFF') return true;
-  if (!areaId || !user.memberId) return false;
+  if (!areaId) return user.role === 'JEFE_CIM';
+  if (!user.memberId) return false;
 
   const rol = await prisma.jefatura.findFirst({
     where: {

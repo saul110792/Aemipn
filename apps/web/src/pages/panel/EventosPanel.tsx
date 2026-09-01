@@ -111,12 +111,21 @@ export function EventosPanel() {
   // toca la mesa directiva.
   const puedeGestionar = (e: Evento) =>
     esAdmin || Boolean(e.areaId && user?.areaIdsQueEncabeza?.includes(e.areaId));
+  // Mismo criterio que puedeEditar en la API: mesa directiva, el jefe/tesorero
+  // de un área, o el coordinador del CIM (sus convocatorias son de "toda la
+  // asociación", sin área propia). Un miembro raso no crea eventos.
+  const esJefeCim = user?.role === 'JEFE_CIM';
+  const puedeCrear = esAdmin || esJefeCim || (user?.areaIdsQueEncabeza?.length ?? 0) > 0;
+  const puedeElegirToda = esAdmin || esJefeCim;
   const [creando, setCreando] = useState(false);
   const [verAsistentesDe, setVerAsistentesDe] = useState<Evento | null>(null);
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const [verBiblioteca, setVerBiblioteca] = useState(false);
 
   const { data: areas } = useQuery({ queryKey: ['areas'], queryFn: () => api.get<Area[]>('/areas') });
+  // Solo las áreas que este usuario puede publicar: todas si es mesa
+  // directiva, o nomás la(s) suya(s) si es jefe/tesorero de área.
+  const areasParaCrear = esAdmin ? areas : areas?.filter((a) => user?.areaIdsQueEncabeza?.includes(a.id));
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['events', puedeVerPasados],
@@ -181,12 +190,14 @@ export function EventosPanel() {
             miembros, o solo su área.
           </p>
         </div>
-        <button type="button" className="btn" onClick={() => setCreando((v) => !v)}>
-          {creando ? 'Cancelar' : 'Nuevo evento'}
-        </button>
+        {puedeCrear && (
+          <button type="button" className="btn" onClick={() => setCreando((v) => !v)}>
+            {creando ? 'Cancelar' : 'Nuevo evento'}
+          </button>
+        )}
       </div>
 
-      {creando && (
+      {creando && puedeCrear && (
         <div className="tarjeta" style={{ marginBottom: '1.5rem' }}>
           <div className="tarjeta-cuerpo">
             <h3>Nuevo evento</h3>
@@ -217,8 +228,8 @@ export function EventosPanel() {
                 <div className="campo">
                   <label htmlFor="e-area">Área</label>
                   <select id="e-area" {...register('areaId')}>
-                    <option value="">Toda la asociación</option>
-                    {areas?.map((a) => (
+                    {puedeElegirToda && <option value="">Toda la asociación</option>}
+                    {areasParaCrear?.map((a) => (
                       <option key={a.id} value={a.id}>{a.nombre}</option>
                     ))}
                   </select>
