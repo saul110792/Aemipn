@@ -108,6 +108,16 @@ async function areasDelUsuario(memberId: string | null) {
   return m.map((x) => x.areaId);
 }
 
+/** ¿Encabeza alguna área (jefe titular, interino o tesorero) en funciones? */
+async function encabezaAlgunArea(memberId: string | null) {
+  if (!memberId) return false;
+  const j = await prisma.jefatura.findFirst({
+    where: { memberId, ...enFunciones() },
+    select: { id: true },
+  });
+  return Boolean(j);
+}
+
 /**
  * GET /api/events
  * Un ADMIN/STAFF ve todo. Un miembro ve lo publico, lo de miembros, y lo
@@ -119,11 +129,16 @@ eventsRouter.get(
     const { areaId, desde, incluirPasados } = req.query as Record<string, string | undefined>;
     const esAdmin = req.user!.role === 'ADMIN' || req.user!.role === 'STAFF';
 
+    // Los eventos pasados solo interesan a quien gestiona: administracion y
+    // quien encabeza un area. Un miembro que pida incluirPasados igual se
+    // queda solo con lo proximo, sin necesidad de un error.
+    const puedeVerPasados = esAdmin || (await encabezaAlgunArea(req.user!.memberId));
+
     const misAreas = esAdmin ? [] : await areasDelUsuario(req.user!.memberId);
 
     const where = {
       ...(areaId ? { areaId } : {}),
-      ...(incluirPasados === 'true'
+      ...(incluirPasados === 'true' && puedeVerPasados
         ? {}
         : { fechaInicio: { gte: desde ? new Date(desde) : new Date() } }),
       ...(esAdmin

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { api } from '../../lib/api';
+import { useAuth } from '../../lib/auth';
 import type { Area, Evento, EventMode, EventVisibility } from '../../lib/types';
 import { Cargando, ErrorAviso } from '../../components/Estado';
 import { TarjetaEvento } from '../../components/TarjetaEvento';
@@ -49,6 +50,10 @@ const limpiar = (v: Formulario, imagenUrl: string | null) => ({
 
 export function EventosPanel() {
   const qc = useQueryClient();
+  const { user, esAdmin } = useAuth();
+  // Los eventos pasados solo le interesan a quien gestiona: administracion
+  // y quien encabeza un area. La API igual los filtra si alguien mas los pide.
+  const puedeVerPasados = esAdmin || (user?.areasQueEncabeza ?? 0) > 0;
   const [creando, setCreando] = useState(false);
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const [verBiblioteca, setVerBiblioteca] = useState(false);
@@ -56,8 +61,8 @@ export function EventosPanel() {
   const { data: areas } = useQuery({ queryKey: ['areas'], queryFn: () => api.get<Area[]>('/areas') });
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['events'],
-    queryFn: () => api.get<Evento[]>('/events?incluirPasados=true'),
+    queryKey: ['events', puedeVerPasados],
+    queryFn: () => api.get<Evento[]>(puedeVerPasados ? '/events?incluirPasados=true' : '/events'),
   });
 
   const {
@@ -101,7 +106,9 @@ export function EventosPanel() {
 
   const ahora = new Date();
   const proximos = data?.filter((e) => new Date(e.fechaFin ?? e.fechaInicio) >= ahora) ?? [];
-  const pasados = data?.filter((e) => new Date(e.fechaFin ?? e.fechaInicio) < ahora) ?? [];
+  const pasados = puedeVerPasados
+    ? data?.filter((e) => new Date(e.fechaFin ?? e.fechaInicio) < ahora) ?? []
+    : [];
 
   return (
     <>
