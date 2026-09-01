@@ -209,6 +209,28 @@ export interface Evento {
   registroUrl: string | null;
 }
 
+export interface SiteSettings {
+  facebookUrl: string | null;
+  instagramUrl: string | null;
+  xUrl: string | null;
+  youtubeUrl: string | null;
+  tiktokUrl: string | null;
+  whatsappUrl: string | null;
+}
+
+export interface ContactMessage {
+  id: string;
+  nombre: string;
+  email: string;
+  telefono: string | null;
+  mensaje: string;
+  areaId: string | null;
+  area: { nombre: string; color: string | null } | null;
+  leidoEn: string | null;
+  leidoPor: string | null;
+  createdAt: string;
+}
+
 export interface MediaAsset {
   id: string;
   url: string;

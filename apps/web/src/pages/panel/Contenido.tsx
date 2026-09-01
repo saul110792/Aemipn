@@ -1,29 +1,60 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
-import type { Area } from '../../lib/types';
+import type { Area, SiteSettings } from '../../lib/types';
 import { Cargando, ErrorAviso } from '../../components/Estado';
 import { SelectorImagen } from '../../components/SelectorImagen';
-import { Icono, hayIcono } from '../../components/Icono';
+import { Icono, hayIcono, type NombreIcono } from '../../components/Icono';
+
+const REDES: { campo: keyof SiteSettings; icono: NombreIcono; etiqueta: string; placeholder: string }[] = [
+  { campo: 'facebookUrl', icono: 'facebook', etiqueta: 'Facebook', placeholder: 'https://facebook.com/…' },
+  { campo: 'instagramUrl', icono: 'instagram', etiqueta: 'Instagram', placeholder: 'https://instagram.com/…' },
+  { campo: 'xUrl', icono: 'x', etiqueta: 'X (Twitter)', placeholder: 'https://x.com/…' },
+  { campo: 'youtubeUrl', icono: 'youtube', etiqueta: 'YouTube', placeholder: 'https://youtube.com/@…' },
+  { campo: 'tiktokUrl', icono: 'tiktok', etiqueta: 'TikTok', placeholder: 'https://tiktok.com/@…' },
+  { campo: 'whatsappUrl', icono: 'whatsapp', etiqueta: 'WhatsApp', placeholder: 'https://wa.me/52…' },
+];
 
 /**
  * Gestion de contenido: los textos e imagenes que ve el publico.
- * Edita el area elegida y su galeria del carrusel sin tocar codigo.
+ * Edita el area elegida y su galeria del carrusel, y las redes sociales del
+ * pie del sitio, sin tocar codigo.
  */
 export function Contenido() {
   const qc = useQueryClient();
   const [areaId, setAreaId] = useState<string>('');
-  const [pestana, setPestana] = useState<'textos' | 'imagenes'>('textos');
+  const [pestana, setPestana] = useState<'textos' | 'imagenes' | 'redes'>('textos');
   const [guardado, setGuardado] = useState(false);
 
   const [form, setForm] = useState({ nombre: '', descripcion: '', contenido: '', color: '' });
   const [galeria, setGaleria] = useState<string[]>([]);
   const [portada, setPortada] = useState<string | null>(null);
+  const [redes, setRedes] = useState<Record<keyof SiteSettings, string>>({
+    facebookUrl: '', instagramUrl: '', xUrl: '', youtubeUrl: '', tiktokUrl: '', whatsappUrl: '',
+  });
 
   const { data: areas, isLoading } = useQuery({
     queryKey: ['areas'],
     queryFn: () => api.get<Area[]>('/areas'),
   });
+
+  const { data: config } = useQuery({
+    queryKey: ['public', 'configuracion'],
+    queryFn: () => api.get<SiteSettings>('/public/configuracion'),
+  });
+
+  // Cargar las redes sociales guardadas en el formulario.
+  useEffect(() => {
+    if (!config) return;
+    setRedes({
+      facebookUrl: config.facebookUrl ?? '',
+      instagramUrl: config.instagramUrl ?? '',
+      xUrl: config.xUrl ?? '',
+      youtubeUrl: config.youtubeUrl ?? '',
+      tiktokUrl: config.tiktokUrl ?? '',
+      whatsappUrl: config.whatsappUrl ?? '',
+    });
+  }, [config]);
 
   const activa = areas?.find((a) => a.id === areaId) ?? areas?.[0];
 
@@ -58,11 +89,31 @@ export function Contenido() {
     },
   });
 
+  const guardarRedes = useMutation({
+    mutationFn: () =>
+      api.patch('/configuracion', {
+        facebookUrl: redes.facebookUrl || null,
+        instagramUrl: redes.instagramUrl || null,
+        xUrl: redes.xUrl || null,
+        youtubeUrl: redes.youtubeUrl || null,
+        tiktokUrl: redes.tiktokUrl || null,
+        whatsappUrl: redes.whatsappUrl || null,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['public', 'configuracion'] });
+      setGuardado(true);
+    },
+  });
+
   if (isLoading) return <Cargando />;
   if (!areas?.length) return <div className="vacio">No hay áreas registradas.</div>;
 
   const alternarFoto = (url: string) =>
     setGaleria((g) => (g.includes(url) ? g.filter((x) => x !== url) : [...g, url]));
+
+  const enRedes = pestana === 'redes';
+  const guardando = enRedes ? guardarRedes.isPending : guardar.isPending;
+  const errorGuardar = enRedes ? guardarRedes.error : guardar.error;
 
   return (
     <>
@@ -70,43 +121,46 @@ export function Contenido() {
         <div>
           <h1>Contenido del sitio</h1>
           <p className="texto-suave" style={{ margin: 0 }}>
-            Lo que aquí edites es lo que ve el público en la página del área y en el carrusel.
+            Lo que aquí edites es lo que ve el público en la página del área, el carrusel y el
+            pie del sitio.
           </p>
         </div>
         <button
           type="button"
           className="btn"
-          onClick={() => guardar.mutate()}
-          disabled={guardar.isPending || !activa}
+          onClick={() => (enRedes ? guardarRedes.mutate() : guardar.mutate())}
+          disabled={guardando || (!enRedes && !activa)}
         >
-          {guardar.isPending ? 'Guardando…' : 'Guardar cambios'}
+          {guardando ? 'Guardando…' : 'Guardar cambios'}
         </button>
       </div>
 
-      {guardar.error != null && <ErrorAviso error={guardar.error} />}
+      {errorGuardar != null && <ErrorAviso error={errorGuardar} />}
       {guardado && <div className="aviso aviso-ok">Cambios guardados y publicados.</div>}
 
-      <div className="barra-filtros">
-        <label htmlFor="area-editar" style={{ fontWeight: 600, fontSize: '0.9rem' }}>
-          Área
-        </label>
-        <select
-          id="area-editar"
-          value={activa?.id ?? ''}
-          onChange={(e) => setAreaId(e.target.value)}
-        >
-          {areas.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.nombre}
-            </option>
-          ))}
-        </select>
-        {activa && hayIcono(activa.slug) && (
-          <span style={{ color: activa.color ?? 'var(--guinda)' }}>
-            <Icono nombre={activa.slug} className="icono icono-lg" />
-          </span>
-        )}
-      </div>
+      {!enRedes && (
+        <div className="barra-filtros">
+          <label htmlFor="area-editar" style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+            Área
+          </label>
+          <select
+            id="area-editar"
+            value={activa?.id ?? ''}
+            onChange={(e) => setAreaId(e.target.value)}
+          >
+            {areas.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.nombre}
+              </option>
+            ))}
+          </select>
+          {activa && hayIcono(activa.slug) && (
+            <span style={{ color: activa.color ?? 'var(--guinda)' }}>
+              <Icono nombre={activa.slug} className="icono icono-lg" />
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="pestanas">
         <button
@@ -123,9 +177,42 @@ export function Contenido() {
         >
           <Icono nombre="imagen" /> Imágenes ({galeria.length})
         </button>
+        <button
+          type="button"
+          className={pestana === 'redes' ? 'activa' : ''}
+          onClick={() => setPestana('redes')}
+        >
+          <Icono nombre="instagram" /> Redes sociales
+        </button>
       </div>
 
-      {pestana === 'textos' ? (
+      {pestana === 'redes' ? (
+        <div className="tarjeta">
+          <div className="tarjeta-cuerpo">
+            <h3>Redes sociales</h3>
+            <p className="texto-suave" style={{ fontSize: '0.9rem' }}>
+              Aparecen en el pie del sitio público, solo las que tengan liga. Deja vacía la que
+              no uses.
+            </p>
+            <div className="campos-2">
+              {REDES.map((r) => (
+                <div className="campo" key={r.campo}>
+                  <label htmlFor={`red-${r.campo}`}>
+                    <Icono nombre={r.icono} /> {r.etiqueta}
+                  </label>
+                  <input
+                    id={`red-${r.campo}`}
+                    type="url"
+                    placeholder={r.placeholder}
+                    value={redes[r.campo]}
+                    onChange={(e) => setRedes({ ...redes, [r.campo]: e.target.value })}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : pestana === 'textos' ? (
         <div className="tarjeta">
           <div className="tarjeta-cuerpo">
             <div className="campo">
