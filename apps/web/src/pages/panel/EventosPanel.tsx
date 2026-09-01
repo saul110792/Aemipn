@@ -78,7 +78,10 @@ export function EventosPanel() {
     reset,
     formState: { errors },
   } = useForm<Formulario>({
-    defaultValues: { modalidad: 'PRESENCIAL', visibilidad: 'PUBLICO', kind: 'TALLER', publicado: true },
+    // El default es la opcion mas restrictiva a proposito: quien de verdad
+    // quiera abrirlo a la asociacion o al publico lo elige, en vez de que
+    // una salida privada quede expuesta por no haber tocado el campo.
+    defaultValues: { modalidad: 'PRESENCIAL', visibilidad: 'AREA', kind: 'TALLER', publicado: true },
   });
 
   const modalidad = watch('modalidad');
