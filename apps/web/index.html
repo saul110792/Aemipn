@@ -16,6 +16,14 @@
       rel="stylesheet"
     />
     <meta name="theme-color" content="#611232" />
+
+    <!-- Android/Chrome ya leen esto del manifest que agrega vite-plugin-pwa;
+         Safari en iOS no, y necesita estas etiquetas para "Agregar a inicio". -->
+    <link rel="icon" href="/iconos/icon-32.png" />
+    <link rel="apple-touch-icon" href="/iconos/icon-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AEMIPN" />
   </head>
   <body>
     <div id="root"></div>
