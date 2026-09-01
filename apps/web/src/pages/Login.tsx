@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../lib/auth';
 import { ErrorAviso } from '../components/Estado';
@@ -62,6 +62,10 @@ export function Login() {
           {isSubmitting ? 'Entrando…' : 'Entrar'}
         </button>
       </form>
+
+      <p className="texto-suave" style={{ fontSize: '0.87rem', marginTop: '1rem', textAlign: 'center' }}>
+        <Link to="/olvide-password">¿Olvidaste tu contraseña?</Link>
+      </p>
     </div>
   );
 }

@@ -130,6 +130,7 @@ model User {
   ultimoAcceso      DateTime?
 
   verificaciones EmailVerification[]
+  recuperaciones PasswordReset[]
 
   /// Un usuario del panel normalmente corresponde a un miembro.
   member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
@@ -609,6 +610,25 @@ model EmailVerification {
 
   @@index([userId, usadoEn])
   @@map("email_verifications")
+}
+
+/// "Olvidé mi contraseña": misma mecánica que EmailVerification (liga larga
+/// + código corto, ambos de un solo uso), pero termina fijando una nueva
+/// contraseña en vez de activar la cuenta.
+model PasswordReset {
+  id         String    @id @default(cuid())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  tokenHash  String    @unique
+  codigoHash String
+  expiraEn   DateTime
+  usadoEn    DateTime?
+  intentos   Int       @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, usadoEn])
+  @@map("password_resets")
 }
 
 /// Curso que un miembro declara haber tomado, a la espera de que su area lo

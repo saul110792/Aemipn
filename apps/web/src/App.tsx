@@ -12,6 +12,8 @@ import { Unete } from './pages/Unete';
 import { Verificar } from './pages/Verificar';
 import { Eventos } from './pages/Eventos';
 import { Login } from './pages/Login';
+import { OlvidePassword } from './pages/OlvidePassword';
+import { Restablecer } from './pages/Restablecer';
 import { AvisoPrivacidad } from './pages/AvisoPrivacidad';
 import { InstalarApp } from './pages/InstalarApp';
 
@@ -55,6 +57,8 @@ export function App() {
         <Route path="aviso-de-privacidad" element={<AvisoPrivacidad />} />
         <Route path="instalar" element={<InstalarApp />} />
         <Route path="login" element={<Login />} />
+        <Route path="olvide-password" element={<OlvidePassword />} />
+        <Route path="restablecer" element={<Restablecer />} />
       </Route>
 
       {/* Panel de gestion, requiere sesion */}

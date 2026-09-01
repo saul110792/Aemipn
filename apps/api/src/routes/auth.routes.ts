@@ -4,10 +4,11 @@ import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
-import { conflict, unauthorized } from '../lib/errors.js';
+import { badRequest, conflict, unauthorized } from '../lib/errors.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth } from '../middleware/auth.js';
-import { isProd } from '../lib/env.js';
+import { exponeCodigosDePrueba, isProd } from '../lib/env.js';
+import { crearYEnviarRecuperacion, resolverRecuperacion } from '../lib/recuperacion.js';
 import {
   REFRESH_COOKIE,
   signAccessToken,
@@ -42,6 +43,35 @@ const changePasswordSchema = z.object({
   actual: z.string().min(1),
   nueva: z.string().min(8, 'La nueva contrasena debe tener al menos 8 caracteres'),
 });
+
+/** Mismo freno que el registro: no es un login, pero igual manda correos. */
+const recuperacionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 8,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Demasiados intentos desde este equipo. Intenta mas tarde.' },
+});
+
+const olvidePasswordSchema = z.object({ email: z.string().email('Correo invalido') });
+
+const restablecerPasswordSchema = z
+  .object({
+    token: z.string().optional(),
+    codigo: z.string().optional(),
+    email: z.string().email().optional(),
+    nueva: z.string().min(8, 'La nueva contrasena debe tener al menos 8 caracteres'),
+  })
+  .refine((d) => d.token || (d.codigo && d.email), {
+    message: 'Hace falta la liga de recuperacion, o el codigo junto con tu correo',
+  });
+
+const MOTIVOS_RECUPERACION: Record<string, string> = {
+  NO_ENCONTRADA: 'La liga o el codigo no son validos.',
+  EXPIRADA: 'La liga vencio. Pide otra desde "olvidé mi contraseña".',
+  YA_USADA: 'Esta liga ya se uso. Pide otra si sigues sin poder entrar.',
+  DEMASIADOS_INTENTOS: 'Demasiados intentos con este codigo. Pide uno nuevo.',
+};
 
 const refreshCookieOptions = {
   httpOnly: true,
@@ -240,5 +270,60 @@ authRouter.post(
     });
 
     res.json({ ok: true });
+  }),
+);
+
+/**
+ * POST /api/auth/olvide-password
+ *
+ * La respuesta es igual exista o no esa cuenta: si dijera "no existe" o "esa
+ * cuenta esta desactivada" cualquiera podria usarlo para saber quien esta
+ * registrado, igual que en /registro.
+ */
+authRouter.post(
+  '/olvide-password',
+  recuperacionLimiter,
+  validate(olvidePasswordSchema),
+  asyncHandler(async (req, res) => {
+    const email = (req.body.email as string).toLowerCase();
+    const user = await prisma.user.findUnique({ where: { email }, include: { member: true } });
+
+    let pruebas: { token: string; codigo: string } | undefined;
+    if (user && user.activo) {
+      const r = await crearYEnviarRecuperacion(user.id, email, user.member?.nombre ?? 'hola');
+      pruebas = { token: r.token, codigo: r.codigo };
+    }
+
+    res.json({
+      ok: true,
+      mensaje: 'Si esa cuenta existe, te enviamos un correo con la liga para restablecer tu contrasena.',
+      // Solo con EXPONER_CODIGOS_DE_PRUEBA=true, y nunca en produccion.
+      ...(exponeCodigosDePrueba && pruebas ? { _pruebas: pruebas } : {}),
+    });
+  }),
+);
+
+/** POST /api/auth/restablecer-password — por liga o por codigo, fija la nueva contrasena. */
+authRouter.post(
+  '/restablecer-password',
+  recuperacionLimiter,
+  validate(restablecerPasswordSchema),
+  asyncHandler(async (req, res) => {
+    const d = req.body as z.infer<typeof restablecerPasswordSchema>;
+
+    const r = await resolverRecuperacion(
+      d.token ? { token: d.token } : { codigo: d.codigo!, email: d.email! },
+    );
+    if (!r.ok) throw badRequest(MOTIVOS_RECUPERACION[r.motivo] ?? 'No se pudo restablecer la contrasena.');
+
+    await prisma.$transaction([
+      prisma.passwordReset.update({ where: { id: r.registroId }, data: { usadoEn: new Date() } }),
+      prisma.user.update({
+        where: { id: r.userId },
+        data: { passwordHash: await bcrypt.hash(d.nueva, 12) },
+      }),
+    ]);
+
+    res.json({ ok: true, mensaje: 'Contrasena actualizada. Ya puedes iniciar sesion.' });
   }),
 );

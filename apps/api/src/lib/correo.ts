@@ -80,6 +80,47 @@ export function plantillaVerificacion({
   `);
 }
 
+/** Correo de "olvidé mi contraseña", con la liga y el código a la vista. */
+export function plantillaRecuperacion({
+  nombre,
+  liga,
+  codigo,
+  horasVigencia,
+}: {
+  nombre: string;
+  liga: string;
+  codigo: string;
+  horasVigencia: number;
+}) {
+  return plantillaCorreo(`
+    <h1 style="font-size:19px;margin:0 0 16px;color:#611232;">Restablece tu contraseña</h1>
+    <p style="margin:0 0 12px;">Hola, ${nombre}:</p>
+    <p style="margin:0 0 20px;">
+      Pediste restablecer tu contraseña en el panel de la AEMIPN. Para elegir una nueva, entra
+      al siguiente botón:
+    </p>
+    <p style="text-align:center;margin:0 0 20px;">
+      <a href="${liga}" style="background:#611232;color:#ffffff;text-decoration:none;padding:12px 30px;border-radius:8px;font-weight:700;display:inline-block;">
+        Elegir nueva contraseña
+      </a>
+    </p>
+    <p style="font-size:12.5px;color:#7a6169;margin:0 0 20px;word-break:break-all;">
+      Si el botón no funciona, copia y pega esta liga en tu navegador:<br />
+      <a href="${liga}" style="color:#932352;">${liga}</a>
+    </p>
+    <p style="margin:0 0 8px;">O escribe este código en el sitio:</p>
+    <p style="text-align:center;margin:0 0 20px;">
+      <span style="display:inline-block;background:#f6eaef;color:#611232;font-family:'Courier New',monospace;font-size:22px;font-weight:700;letter-spacing:0.18em;padding:10px 20px;border-radius:8px;">
+        ${codigo}
+      </span>
+    </p>
+    <p style="font-size:12.5px;color:#7a6169;margin:24px 0 0;">
+      La liga y el código sirven durante ${horasVigencia} horas. Si no fuiste tú, ignora este
+      mensaje: tu contraseña actual sigue siendo válida.
+    </p>
+  `);
+}
+
 /** Separa "AEMIPN <no-responder@aemipn.mx>" en nombre y correo. */
 function partirRemitente(remitente: string) {
   const m = remitente.match(/^(.*?)\s*<(.+)>$/);
