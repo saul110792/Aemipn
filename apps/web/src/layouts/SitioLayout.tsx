@@ -117,7 +117,8 @@ export function SitioLayout() {
               · <button type="button" className="enlace-boton" onClick={() => setMostrarContacto(true)}>
                 Contáctanos
               </button>{' '}
-              · <Link to="/aviso-de-privacidad">Aviso de privacidad</Link>
+              · <Link to="/aviso-de-privacidad">Aviso de privacidad</Link> ·{' '}
+              <Link to="/instalar">Instalar la app</Link>
             </p>
 
             {redesActivas.length > 0 && (

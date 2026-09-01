@@ -218,6 +218,9 @@ tbody tr:hover { background: var(--guinda-100); }
 .aviso-ok { background: var(--exito-fondo); border-color: #b9dfc9; color: #1b4332; }
 .aviso-info { background: var(--info-fondo); border-color: #c3dcec; color: #144a71; }
 
+.pasos-instalar { padding-left: 1.3rem; }
+.pasos-instalar li { margin-bottom: 0.7rem; line-height: 1.5; }
+
 /* ---------- Panel ---------- */
 .panel { display: grid; grid-template-columns: 236px 1fr; min-height: calc(100vh - 62px); }
 .panel-lateral { background: var(--guinda-800); padding: 1.25rem 0.75rem; }

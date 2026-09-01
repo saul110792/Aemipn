@@ -59,6 +59,7 @@ export function PanelLayout() {
 
           <div id="menu-panel" className={abierto ? 'nav-links abierto' : 'nav-links'}>
             <Campana />
+            <Link to="/instalar">Instalar la app</Link>
             <Link to="/">Ver sitio público</Link>
             <span style={{ opacity: 0.75, fontSize: '0.88rem' }}>
               {user?.nombre ?? user?.email} · {etiqueta(user?.role)}
