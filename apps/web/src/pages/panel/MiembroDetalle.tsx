@@ -80,6 +80,11 @@ export function MiembroDetalle() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['member', id] }),
   });
 
+  const registrarConsentimiento = useMutation({
+    mutationFn: () => api.patch(`/members/${id}`, { consentimiento: true }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['member', id] }),
+  });
+
   const reenviarCorreo = useMutation({
     mutationFn: () => api.post(`/members/${id}/reenviar-verificacion`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['member', id] }),
@@ -173,9 +178,55 @@ export function MiembroDetalle() {
               <dl style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '0.9rem', margin: 0 }}>
                 <Dato titulo="Tipo de sangre" valor={miembro.tipoSangre} />
                 <Dato titulo="Alergias" valor={miembro.alergias?.length ? miembro.alergias.join(', ') : null} />
+                <Dato titulo="Servicio médico" valor={miembro.servicioMedico} />
+                <Dato titulo="Número de afiliación" valor={miembro.numeroAfiliacion} />
                 <Dato titulo="Contacto de emergencia" valor={miembro.contactoEmergencia} />
                 <Dato titulo="Teléfono de emergencia" valor={miembro.telefonoEmergencia} />
+                {(miembro.contactoEmergencia2 || miembro.telefonoEmergencia2) && (
+                  <>
+                    <Dato titulo="Segundo contacto" valor={miembro.contactoEmergencia2} />
+                    <Dato titulo="Teléfono del segundo contacto" valor={miembro.telefonoEmergencia2} />
+                  </>
+                )}
               </dl>
+
+              <div style={{ marginTop: '1rem', paddingTop: '0.9rem', borderTop: '1px solid var(--borde)' }}>
+                {miembro.consentimientoDatosSensiblesEn ? (
+                  <span className="texto-suave" style={{ fontSize: '0.85rem' }}>
+                    Consintió el tratamiento de sus datos sensibles el{' '}
+                    {fmtFechaCorta(miembro.consentimientoDatosSensiblesEn)}.
+                  </span>
+                ) : (
+                  <>
+                    <span className="texto-suave" style={{ fontSize: '0.85rem' }}>
+                      Sin consentimiento registrado para el tratamiento de sus datos sensibles.
+                    </span>
+                    {esAdmin && (
+                      <div style={{ marginTop: '0.4rem' }}>
+                        <button
+                          type="button"
+                          className="btn btn-borde btn-sm"
+                          disabled={registrarConsentimiento.isPending}
+                          onClick={() => {
+                            if (
+                              confirm(
+                                '¿Confirmas que esta persona ya dio su consentimiento (por ejemplo, firmó un formato en papel)?',
+                              )
+                            ) {
+                              registrarConsentimiento.mutate();
+                            }
+                          }}
+                        >
+                          Registrar consentimiento
+                        </button>
+                        {registrarConsentimiento.error != null && (
+                          <ErrorAviso error={registrarConsentimiento.error} />
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </section>
 

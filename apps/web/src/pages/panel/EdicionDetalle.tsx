@@ -324,6 +324,12 @@ export function EdicionDetalle() {
                             Alergias: {i.member.alergias.join(', ')}
                           </div>
                         )}
+                        {i.member?.servicioMedico && (
+                          <div className="texto-suave" style={{ fontSize: '0.78rem' }}>
+                            {i.member.servicioMedico}
+                            {i.member.numeroAfiliacion && ` · ${i.member.numeroAfiliacion}`}
+                          </div>
+                        )}
                       </td>
                       <td className="texto-suave" style={{ fontSize: '0.86rem' }}>
                         {i.member?.email}
@@ -332,6 +338,12 @@ export function EdicionDetalle() {
                       <td className="texto-suave" style={{ fontSize: '0.86rem' }}>
                         {i.member?.contactoEmergencia ?? '—'}
                         {i.member?.telefonoEmergencia && <div>{i.member.telefonoEmergencia}</div>}
+                        {(i.member?.contactoEmergencia2 || i.member?.telefonoEmergencia2) && (
+                          <div style={{ marginTop: '0.25rem' }}>
+                            {i.member?.contactoEmergencia2}
+                            {i.member?.telefonoEmergencia2 && ` · ${i.member.telefonoEmergencia2}`}
+                          </div>
+                        )}
                       </td>
                       <td>
                         {esAdmin ? (
