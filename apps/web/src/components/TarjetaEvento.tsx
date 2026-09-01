@@ -20,7 +20,7 @@ export function TarjetaEvento({ evento, mostrarVisibilidad = false }: { evento: 
             <span className="mes">
               {inicio.toLocaleDateString('es-MX', { month: 'short' }).replace('.', '')}
             </span>
-            <span className="anio">{inicio.getFullYear()}</span>
+            <span className="evento-anio">{inicio.getFullYear()}</span>
           </div>
 
           <div>
