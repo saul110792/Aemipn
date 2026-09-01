@@ -1,4 +1,5 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { etiqueta } from '../lib/format';
 import { Marca } from '../components/Marca';
@@ -9,6 +10,8 @@ import { useNotificaciones } from '../lib/notificaciones';
 export function PanelLayout() {
   const { user, logout, esAdmin } = useAuth();
   const { data: pendientes } = useNotificaciones();
+  const { pathname } = useLocation();
+  const [abierto, setAbierto] = useState(false);
 
   // El padron trae datos personales: lo ven la mesa directiva y quien
   // encabeza un area. Un miembro consulta su propio expediente.
@@ -25,6 +28,11 @@ export function PanelLayout() {
 
   const clase = ({ isActive }: { isActive: boolean }) => (isActive ? 'activo' : '');
 
+  // Al navegar, el menu superior (en movil) se cierra solo -- igual que en
+  // el sitio publico, sin esto "Salir" quedaba inaccesible en pantalla
+  // chica: la regla que oculta .nav-links en movil esperaba este boton.
+  useEffect(() => setAbierto(false), [pathname]);
+
   return (
     <div className="app">
       <div className="pleca" />
@@ -33,7 +41,23 @@ export function PanelLayout() {
           <Link to="/panel" className="marca">
             <Marca subtitulo="Panel de gestión" />
           </Link>
-          <div className="nav-links">
+
+          <button
+            type="button"
+            className="nav-boton"
+            aria-expanded={abierto}
+            aria-controls="menu-panel"
+            aria-label={abierto ? 'Cerrar menú' : 'Abrir menú'}
+            onClick={() => setAbierto((v) => !v)}
+          >
+            <span className={abierto ? 'hamburguesa abierta' : 'hamburguesa'} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+          </button>
+
+          <div id="menu-panel" className={abierto ? 'nav-links abierto' : 'nav-links'}>
             <Campana />
             <Link to="/">Ver sitio público</Link>
             <span style={{ opacity: 0.75, fontSize: '0.88rem' }}>
@@ -45,6 +69,9 @@ export function PanelLayout() {
           </div>
         </div>
       </nav>
+
+      {/* Velo que cierra el menú al tocar fuera, igual que en el sitio público. */}
+      {abierto && <button type="button" className="velo" aria-hidden="true" tabIndex={-1} onClick={() => setAbierto(false)} />}
 
       <div className="panel">
         <aside className="panel-lateral">
