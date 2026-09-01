@@ -248,7 +248,7 @@ function AvisoCim() {
   const faltan = restantes.length - visibles.length;
 
   return (
-    <div className="aviso aviso-info" style={{ margin: 0, textAlign: 'left' }}>
+    <div className="aviso aviso-info" style={{ marginBottom: 0, textAlign: 'left' }}>
       <strong>
         <Icono nombre="brujula" /> No se te olvide apoyar en el CIM
       </strong>
@@ -292,7 +292,7 @@ function BienvenidaMiembro() {
           Mientras te integras, esto es lo que puedes hacer:
         </p>
 
-        <div className="pila" style={{ textAlign: 'left', marginTop: '1.75rem', gap: '0.6rem' }}>
+        <div className="pila" style={{ textAlign: 'left', marginTop: '1.75rem' }}>
           <Link to="/panel/perfil" className="btn btn-verde">
             <Icono nombre="miembros" /> Completa tu expediente y declara tus cursos
           </Link>
