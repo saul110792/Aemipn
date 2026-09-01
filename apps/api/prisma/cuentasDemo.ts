@@ -149,7 +149,9 @@ export async function sembrarCuentasDemo(
         tipoSangre: 'O+',
         contactoEmergencia: 'Contacto de prueba',
         telefonoEmergencia: '5555555555',
-        numeroSeguroSocial: '00000000000',
+        servicioMedico: 'IMSS',
+        numeroAfiliacion: '00000000000',
+        consentimientoDatosSensiblesEn: new Date(),
         notas: 'Cuenta de prueba creada por el seed.',
       },
       // El expediente es el punto: un cargo cuelga de alguien con teléfono y

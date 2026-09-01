@@ -160,17 +160,29 @@ model Member {
 
   // Datos que la logística de salidas necesita a la mano.
   /// Uno de los ocho grupos del catálogo, o nulo si no se sabe.
-  tipoSangre         String?
+  tipoSangre    String?
   /// Varias, cada una por separado: en campo se consultan de un vistazo y
   /// una cadena suelta obliga a leer para encontrar lo importante.
-  alergias           String[]
-  padecimientos      String?
+  alergias      String[]
+  padecimientos String?
+  /// Institución (IMSS, ISSSTE, un seguro de gastos médicos mayores...) y el
+  /// número bajo esa institución. Reemplaza al NSS suelto: no todos tienen
+  /// IMSS, y el dato sin decir de dónde es no sirve en una emergencia.
+  servicioMedico     String?
+  numeroAfiliacion   String?
   contactoEmergencia String?
   telefonoEmergencia String?
-  numeroSeguroSocial String?
-  direccion          String?
+  /// Segundo contacto, opcional: el primero puede no contestar.
+  contactoEmergencia2 String?
+  telefonoEmergencia2 String?
+  direccion           String?
   /// Lesiones u operaciones que puedan influir en la montaña.
-  lesiones           String?
+  lesiones            String?
+
+  /// Cuándo aceptó el aviso de privacidad para el tratamiento de sus datos
+  /// sensibles (tipo de sangre, alergias, padecimientos, servicio médico).
+  /// Sin fecha, no se ha guardado consentimiento explícito.
+  consentimientoDatosSensiblesEn DateTime?
 
   status       MemberStatus @default(ASPIRANTE)
   fechaIngreso DateTime     @default(now())

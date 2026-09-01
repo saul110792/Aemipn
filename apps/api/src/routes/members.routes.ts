@@ -54,12 +54,19 @@ const memberBase = z.object({
     })
     .optional(),
   padecimientos: z.string().optional().nullable(),
+  servicioMedico: z.string().optional().nullable(),
+  numeroAfiliacion: z.string().optional().nullable(),
   contactoEmergencia: z.string().optional().nullable(),
   telefonoEmergencia: z.string().optional().nullable(),
-  numeroSeguroSocial: z.string().optional().nullable(),
+  contactoEmergencia2: z.string().optional().nullable(),
+  telefonoEmergencia2: z.string().optional().nullable(),
   status: z.enum(['ASPIRANTE', 'ACTIVO', 'INACTIVO', 'BAJA']).optional(),
   fotoUrl: z.string().url().optional().nullable(),
   notas: z.string().optional().nullable(),
+  /// Para cuando la mesa directiva captura desde un formato en papel ya
+  /// firmado: registra que hay consentimiento, sin ser un requisito para
+  /// guardar (a diferencia de /api/perfil, donde lo firma la propia persona).
+  consentimiento: z.boolean().optional(),
 });
 
 const listQuery = z.object({
@@ -188,9 +195,13 @@ membersRouter.post(
   requireRole('ADMIN', 'STAFF'),
   validate(memberBase),
   asyncHandler(async (req, res) => {
-    const data = req.body as z.infer<typeof memberBase>;
+    const { consentimiento, ...data } = req.body as z.infer<typeof memberBase>;
     const member = await prisma.member.create({
-      data: { ...data, email: data.email.toLowerCase() },
+      data: {
+        ...data,
+        email: data.email.toLowerCase(),
+        ...(consentimiento ? { consentimientoDatosSensiblesEn: new Date() } : {}),
+      },
     });
     res.status(201).json(member);
   }),
@@ -201,10 +212,25 @@ membersRouter.patch(
   requireRole('ADMIN', 'STAFF'),
   validate(memberBase.partial()),
   asyncHandler(async (req, res) => {
-    const data = req.body as Partial<z.infer<typeof memberBase>>;
+    const { consentimiento, ...data } = req.body as Partial<z.infer<typeof memberBase>>;
+
+    // No se pisa una fecha de consentimiento ya registrada.
+    const yaConsintio = consentimiento
+      ? Boolean(
+          (await prisma.member.findUnique({
+            where: { id: req.params.id },
+            select: { consentimientoDatosSensiblesEn: true },
+          }))?.consentimientoDatosSensiblesEn,
+        )
+      : true;
+
     const member = await prisma.member.update({
       where: { id: req.params.id },
-      data: { ...data, ...(data.email ? { email: data.email.toLowerCase() } : {}) },
+      data: {
+        ...data,
+        ...(data.email ? { email: data.email.toLowerCase() } : {}),
+        ...(consentimiento && !yaConsintio ? { consentimientoDatosSensiblesEn: new Date() } : {}),
+      },
     });
     res.json(member);
   }),

@@ -42,7 +42,8 @@ perfilRouter.get(
 
     // Datos que la logística de salidas necesita antes de dejar salir a nadie.
     const faltantes = [
-      !member.numeroSeguroSocial && 'numeroSeguroSocial',
+      !member.servicioMedico && 'servicioMedico',
+      !member.numeroAfiliacion && 'numeroAfiliacion',
       !member.contactoEmergencia && 'contactoEmergencia',
       !member.telefonoEmergencia && 'telefonoEmergencia',
     ].filter((x): x is string => Boolean(x));
@@ -56,9 +57,14 @@ const perfilSchema = z.object({
   fechaNacimiento: z.coerce.date().optional().nullable(),
   boleta: z.string().optional().nullable(),
   escuela: z.string().optional().nullable(),
-  numeroSeguroSocial: z.string().min(1, 'El NSS es obligatorio'),
+  servicioMedico: z.string().min(1, 'Indica tu servicio médico'),
+  numeroAfiliacion: z.string().min(1, 'El número de afiliación es obligatorio'),
   contactoEmergencia: z.string().min(1, 'El contacto de emergencia es obligatorio'),
   telefonoEmergencia: z.string().min(1, 'El telefono de emergencia es obligatorio'),
+  /// El segundo contacto es un respaldo por si el primero no contesta: no
+  /// todos tienen a alguien más que poner, así que no se exige.
+  contactoEmergencia2: z.string().optional().nullable(),
+  telefonoEmergencia2: z.string().optional().nullable(),
   direccion: z.string().optional().nullable(),
   lesiones: z.string().max(2000).optional().nullable(),
   tipoSangre: z
@@ -81,7 +87,21 @@ const perfilSchema = z.object({
     })
     .optional(),
   padecimientos: z.string().optional().nullable(),
+  /// No se guarda tal cual: solo dispara que se registre la fecha de
+  /// consentimiento, la primera vez que llega en true.
+  consentimiento: z.boolean().optional(),
 });
+
+/// Campos "sensibles" bajo la LFPDPPP: exigen consentimiento explícito antes
+/// de guardarse, no solo estar disponibles en el formulario.
+const CAMPOS_SENSIBLES = [
+  'tipoSangre',
+  'alergias',
+  'padecimientos',
+  'servicioMedico',
+  'numeroAfiliacion',
+  'lesiones',
+] as const;
 
 /** PATCH /api/perfil — completar los datos propios. */
 perfilRouter.patch(
@@ -90,10 +110,28 @@ perfilRouter.patch(
   asyncHandler(async (req, res) => {
     if (!req.user!.memberId) throw notFound('Tu cuenta no tiene ficha de miembro');
 
+    const { consentimiento, ...datos } = req.body as Partial<z.infer<typeof perfilSchema>>;
+
+    const actual = await prisma.member.findUnique({
+      where: { id: req.user!.memberId },
+      select: { consentimientoDatosSensiblesEn: true },
+    });
+    const yaConsintio = Boolean(actual?.consentimientoDatosSensiblesEn);
+    const tocaSensibles = CAMPOS_SENSIBLES.some((c) => c in datos);
+
+    if (tocaSensibles && !yaConsintio && !consentimiento) {
+      throw badRequest(
+        'Antes de guardar tus datos médicos, acepta el aviso de privacidad.',
+      );
+    }
+
     res.json(
       await prisma.member.update({
         where: { id: req.user!.memberId },
-        data: req.body,
+        data: {
+          ...datos,
+          ...(consentimiento && !yaConsintio ? { consentimientoDatosSensiblesEn: new Date() } : {}),
+        },
       }),
     );
   }),
