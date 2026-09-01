@@ -77,7 +77,7 @@ export const ETIQUETAS: Record<string, string> = {
   EN_LINEA: 'En línea',
   HIBRIDA: 'Híbrida',
   PUBLICO: 'Público',
-  MIEMBROS: 'Solo miembros',
+  MIEMBROS: 'Abierto a la asociación',
   AREA: 'Privado del área',
   CLASE_TEORICA: 'Clase teórica',
   SALIDA_1_DIA: 'Salida de 1 día',

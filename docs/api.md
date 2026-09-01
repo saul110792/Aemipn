@@ -75,11 +75,11 @@ Todas requieren sesión. `ADMIN`/`STAFF` donde se indica.
 Cada evento declara quién puede verlo, y la API lo hace cumplir en los tres caminos
 (listado, detalle por id y endpoint público):
 
-| Visibilidad | Quién lo ve |
+| Visibilidad | Quién lo ve y puede asistir |
 |---|---|
-| `PUBLICO` | Cualquier visitante. Es lo único que sale por `/public/eventos`. |
-| `MIEMBROS` | Cualquier miembro con sesión iniciada. |
-| `AREA` | Solo los miembros activos del área del evento. Un miembro de otra área recibe 403 aunque tenga el id. |
+| `PUBLICO` | Cualquier visitante, sin ser de la asociación ni tener el CIM — pensado para invitar, por ejemplo, a estudiantes de vocacionales u otras escuelas del IPN. Es lo único que sale por `/public/eventos`. |
+| `MIEMBROS` | Abierto a toda la asociación: cualquier miembro con sesión iniciada, sea o no del área que organiza. |
+| `AREA` | Privado: solo los miembros activos del área del evento. Un miembro de otra área recibe 403 aunque tenga el id. |
 
 ADMIN y STAFF ven todo, publicado o no.
 

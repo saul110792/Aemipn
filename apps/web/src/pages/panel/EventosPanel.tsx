@@ -221,16 +221,19 @@ export function EventosPanel() {
               )}
 
               <div className="campo">
-                <label htmlFor="e-vis">Quién puede verlo</label>
+                <label htmlFor="e-vis">Quién puede verlo y asistir</label>
                 <select id="e-vis" {...register('visibilidad')}>
                   {VISIBILIDADES.map((v) => (
                     <option key={v} value={v}>{etiqueta(v)}</option>
                   ))}
                 </select>
                 <span className="texto-suave" style={{ fontSize: '0.83rem' }}>
-                  {visibilidad === 'PUBLICO' && 'Aparece en el sitio público, sin necesidad de sesión.'}
-                  {visibilidad === 'MIEMBROS' && 'Solo lo ven los miembros con sesión iniciada.'}
-                  {visibilidad === 'AREA' && 'Solo lo ven los miembros del área elegida arriba. Debes elegir un área.'}
+                  {visibilidad === 'PUBLICO' &&
+                    'Cualquiera puede verlo y asistir, sin ser de la asociación ni tener el CIM — para invitar, por ejemplo, a estudiantes de vocacionales u otras escuelas del IPN.'}
+                  {visibilidad === 'MIEMBROS' &&
+                    'Abierto a toda la asociación: cualquier miembro puede asistir, sea o no de esta área.'}
+                  {visibilidad === 'AREA' &&
+                    'Privado: solo los miembros del área elegida arriba pueden verlo y asistir. Debes elegir un área.'}
                 </span>
               </div>
 
