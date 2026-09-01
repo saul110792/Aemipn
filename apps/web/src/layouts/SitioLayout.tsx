@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../lib/auth';
+import { api } from '../lib/api';
+import type { SiteSettings } from '../lib/types';
 import { LogoIPN, Marca } from '../components/Marca';
+import { Icono, type NombreIcono } from '../components/Icono';
+import { ModalContacto } from '../components/ModalContacto';
 
 const enlaces = [
   { to: '/areas', texto: 'Áreas' },
@@ -11,10 +16,37 @@ const enlaces = [
   { to: '/unete', texto: 'Únete' },
 ];
 
+/** Solo se muestra el icono de la red cuyo campo trae URL. */
+const REDES: { icono: NombreIcono; campo: keyof SiteSettings; etiqueta: string }[] = [
+  { icono: 'facebook', campo: 'facebookUrl', etiqueta: 'Facebook' },
+  { icono: 'instagram', campo: 'instagramUrl', etiqueta: 'Instagram' },
+  { icono: 'x', campo: 'xUrl', etiqueta: 'X' },
+  { icono: 'youtube', campo: 'youtubeUrl', etiqueta: 'YouTube' },
+  { icono: 'tiktok', campo: 'tiktokUrl', etiqueta: 'TikTok' },
+  { icono: 'whatsapp', campo: 'whatsappUrl', etiqueta: 'WhatsApp' },
+];
+
+const TECNOLOGIAS: { nombre: string; icono: NombreIcono }[] = [
+  { nombre: 'React', icono: 'react' },
+  { nombre: 'Vite', icono: 'vite' },
+  { nombre: 'TypeScript', icono: 'typescript' },
+  { nombre: 'Node.js', icono: 'nodejs' },
+  { nombre: 'Express', icono: 'express' },
+  { nombre: 'PostgreSQL', icono: 'postgresql' },
+  { nombre: 'Prisma', icono: 'prisma' },
+];
+
 export function SitioLayout() {
   const { user } = useAuth();
   const { pathname } = useLocation();
   const [abierto, setAbierto] = useState(false);
+  const [mostrarContacto, setMostrarContacto] = useState(false);
+
+  const { data: config } = useQuery({
+    queryKey: ['public', 'configuracion'],
+    queryFn: () => api.get<SiteSettings>('/public/configuracion'),
+  });
+  const redesActivas = REDES.filter((r) => config?.[r.campo]);
 
   // Al navegar, el menú desplegable debe cerrarse solo.
   useEffect(() => setAbierto(false), [pathname]);
@@ -80,9 +112,29 @@ export function SitioLayout() {
             <p style={{ marginTop: '0.5rem' }}>
               Ocho disciplinas de montaña · Curso Introductorio al Montañismo (CIM) varias veces al año
             </p>
-            <p style={{ marginBottom: 0 }}>
-              <Link to="/unete">Quiero unirme</Link> · <Link to="/login">Acceso de miembros</Link>
+            <p style={{ marginBottom: redesActivas.length ? '0.9rem' : 0 }}>
+              <Link to="/unete">Quiero unirme</Link> · <Link to="/login">Acceso de miembros</Link>{' '}
+              · <button type="button" className="enlace-boton" onClick={() => setMostrarContacto(true)}>
+                Contáctanos
+              </button>
             </p>
+
+            {redesActivas.length > 0 && (
+              <div className="redes-sociales">
+                {redesActivas.map((r) => (
+                  <a
+                    key={r.campo}
+                    href={config![r.campo]!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={r.etiqueta}
+                    title={r.etiqueta}
+                  >
+                    <Icono nombre={r.icono} className="icono" />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* La asociación pertenece al Politécnico: su escudo cierra el pie. */}
@@ -90,7 +142,35 @@ export function SitioLayout() {
             <LogoIPN />
           </div>
         </div>
+
+        <div
+          className="contenedor"
+          style={{
+            borderTop: '1px solid rgba(255,255,255,.14)',
+            marginTop: '1.5rem',
+            paddingTop: '1.1rem',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '0.9rem',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,.55)' }}>
+            Desarrollado por Enrique Saúl Ramírez González
+          </span>
+          <div className="tecnologias">
+            {TECNOLOGIAS.map((t) => (
+              <span key={t.nombre}>
+                <Icono nombre={t.icono} className="icono" />
+                {t.nombre}
+              </span>
+            ))}
+          </div>
+        </div>
       </footer>
+
+      {mostrarContacto && <ModalContacto onCerrar={() => setMostrarContacto(false)} />}
     </div>
   );
 }
