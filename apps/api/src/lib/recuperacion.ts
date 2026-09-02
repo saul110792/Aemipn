@@ -39,24 +39,30 @@ export async function crearYEnviarRecuperacion(userId: string, email: string, no
 
   const liga = `${env.APP_URL}/restablecer?token=${token}`;
 
-  await enviarCorreo({
-    para: email,
-    asunto: 'Restablece tu contraseña · AEMIPN',
-    texto: [
-      `Hola, ${nombre}:`,
-      '',
-      'Pediste restablecer tu contraseña en el panel de la AEMIPN.',
-      'Para elegir una nueva abre esta liga:',
-      '',
-      liga,
-      '',
-      `O escribe este código en el sitio: ${codigo}`,
-      '',
-      `La liga y el código sirven durante ${HORAS_VIGENCIA_RECUPERACION} horas.`,
-      'Si no fuiste tú, ignora este mensaje: tu contraseña actual sigue siendo válida.',
-    ].join('\n'),
-    html: plantillaRecuperacion({ nombre, liga, codigo, horasVigencia: HORAS_VIGENCIA_RECUPERACION }),
-  });
+  try {
+    await enviarCorreo({
+      para: email,
+      asunto: 'Restablece tu contraseña · AEMIPN',
+      texto: [
+        `Hola, ${nombre}:`,
+        '',
+        'Pediste restablecer tu contraseña en el panel de la AEMIPN.',
+        'Para elegir una nueva abre esta liga:',
+        '',
+        liga,
+        '',
+        `O escribe este código en el sitio: ${codigo}`,
+        '',
+        `La liga y el código sirven durante ${HORAS_VIGENCIA_RECUPERACION} horas.`,
+        'Si no fuiste tú, ignora este mensaje: tu contraseña actual sigue siendo válida.',
+      ].join('\n'),
+      html: plantillaRecuperacion({ nombre, liga, codigo, horasVigencia: HORAS_VIGENCIA_RECUPERACION }),
+    });
+  } catch (err) {
+    // Igual que en el registro: un correo que no sale no debe tumbar la
+    // solicitud con un 500. El token ya quedo creado y sirve si se pide otro.
+    console.error('[recuperacion] No se pudo enviar el correo de recuperación:', err);
+  }
 
   return { token, codigo, expiraEn };
 }

@@ -40,24 +40,31 @@ export async function crearYEnviarVerificacion(userId: string, email: string, no
 
   const liga = `${env.APP_URL}/verificar?token=${token}`;
 
-  await enviarCorreo({
-    para: email,
-    asunto: 'Confirma tu cuenta · AEMIPN',
-    texto: [
-      `Hola, ${nombre}:`,
-      '',
-      'Recibimos tu registro en la Asociación de Excursionismo y Montañismo del IPN.',
-      'Para activar tu cuenta abre esta liga:',
-      '',
-      liga,
-      '',
-      `O escribe este código en el sitio: ${codigo}`,
-      '',
-      `La liga y el código sirven durante ${HORAS_VIGENCIA} horas.`,
-      'Si no fuiste tú, ignora este mensaje: la cuenta no se activa sola.',
-    ].join('\n'),
-    html: plantillaVerificacion({ nombre, liga, codigo, horasVigencia: HORAS_VIGENCIA }),
-  });
+  try {
+    await enviarCorreo({
+      para: email,
+      asunto: 'Confirma tu cuenta · AEMIPN',
+      texto: [
+        `Hola, ${nombre}:`,
+        '',
+        'Recibimos tu registro en la Asociación de Excursionismo y Montañismo del IPN.',
+        'Para activar tu cuenta abre esta liga:',
+        '',
+        liga,
+        '',
+        `O escribe este código en el sitio: ${codigo}`,
+        '',
+        `La liga y el código sirven durante ${HORAS_VIGENCIA} horas.`,
+        'Si no fuiste tú, ignora este mensaje: la cuenta no se activa sola.',
+      ].join('\n'),
+      html: plantillaVerificacion({ nombre, liga, codigo, horasVigencia: HORAS_VIGENCIA }),
+    });
+  } catch (err) {
+    // Un correo que no sale no debe tumbar el registro con un 500: la cuenta
+    // y el token ya quedaron creados, solo no le llegó el aviso. Puede pedir
+    // otro con /registro/reenviar en cuanto el correo vuelva a funcionar.
+    console.error('[verificacion] No se pudo enviar el correo de confirmación:', err);
+  }
 
   // Se devuelven para poder probarlo sin buzón; nunca salen por la API.
   return { token, codigo, expiraEn };
