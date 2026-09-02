@@ -227,6 +227,17 @@ export interface SiteSettings {
   whatsappUrl: string | null;
 }
 
+export interface Anuncio {
+  id: string;
+  titulo: string;
+  descripcion: string | null;
+  imagenUrl: string | null;
+  enlaceUrl: string | null;
+  enlaceTexto: string | null;
+  publicado?: boolean;
+  orden?: number;
+}
+
 export interface ContactMessage {
   id: string;
   nombre: string;

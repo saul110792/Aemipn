@@ -25,6 +25,7 @@ import { CARPETA_SUBIDAS, mediaRouter } from './routes/media.routes.js';
 import { contactoRouter } from './routes/contacto.routes.js';
 import { configuracionRouter } from './routes/configuracion.routes.js';
 import { pushRouter } from './routes/push.routes.js';
+import { anunciosRouter } from './routes/anuncios.routes.js';
 
 export function createApp() {
   const app = express();
@@ -77,6 +78,7 @@ export function createApp() {
   app.use('/api/contacto', contactoRouter);
   app.use('/api/configuracion', configuracionRouter);
   app.use('/api/push', pushRouter);
+  app.use('/api/anuncios', anunciosRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

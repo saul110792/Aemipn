@@ -710,6 +710,26 @@ model SiteSettings {
   @@map("site_settings")
 }
 
+/// Anuncio del carrusel de la portada: felicitaciones, presentaciones de fin
+/// de curso, exploraciones, o cualquier cosa que merezca destacarse aparte
+/// de la agenda de eventos -- esto es promocional, no tiene fecha ni lugar.
+model Anuncio {
+  id          String  @id @default(cuid())
+  titulo      String
+  descripcion String?
+  imagenUrl   String?
+  enlaceUrl   String?
+  enlaceTexto String?
+  publicado   Boolean @default(true)
+  /// Orden manual en el carrusel; menor sale primero.
+  orden       Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("anuncios")
+}
+
 /// Mensaje del formulario público "Contáctanos".
 ///
 /// Sin área: va dirigido a la mesa directiva. Con área: al jefe/tesorero de

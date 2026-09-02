@@ -144,6 +144,23 @@ publicRouter.get(
   }),
 );
 
+/** GET /api/public/anuncios — carrusel de la portada, solo lo publicado. */
+publicRouter.get(
+  '/anuncios',
+  asyncHandler(async (_req, res) => {
+    res.json(
+      await prisma.anuncio.findMany({
+        where: { publicado: true },
+        orderBy: [{ orden: 'asc' }, { createdAt: 'asc' }],
+        select: {
+          id: true, titulo: true, descripcion: true, imagenUrl: true,
+          enlaceUrl: true, enlaceTexto: true,
+        },
+      }),
+    );
+  }),
+);
+
 /** GET /api/public/configuracion — redes sociales del pie del sitio. */
 publicRouter.get(
   '/configuracion',

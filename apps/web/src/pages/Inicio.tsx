@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
-import type { Area, CourseEdition, Evento } from '../lib/types';
+import type { Anuncio, Area, CourseEdition, Evento } from '../lib/types';
 import { fmtRango } from '../lib/format';
 import { TarjetaArea } from '../components/TarjetaArea';
 import { Icono } from '../components/Icono';
 import { TarjetaEvento } from '../components/TarjetaEvento';
 import { AvisoBeta } from '../components/AvisoBeta';
+import { BannerAnuncios } from '../components/BannerAnuncios';
 import { useAuth } from '../lib/auth';
 
 export function Inicio() {
@@ -28,6 +29,11 @@ export function Inicio() {
   const { data: eventos } = useQuery({
     queryKey: ['public', 'eventos', 'portada'],
     queryFn: () => api.get<Evento[]>('/public/eventos?limite=3'),
+  });
+
+  const { data: anuncios } = useQuery({
+    queryKey: ['public', 'anuncios'],
+    queryFn: () => api.get<Anuncio[]>('/public/anuncios'),
   });
 
   const proxima = cim?.[0];
@@ -53,6 +59,12 @@ export function Inicio() {
           </div>
         </div>
       </header>
+
+      {anuncios && anuncios.length > 0 && (
+        <div className="contenedor" style={{ paddingTop: '1.5rem' }}>
+          <BannerAnuncios anuncios={anuncios} />
+        </div>
+      )}
 
       <div className="contenedor" style={{ paddingTop: '1.25rem' }}>
         <AvisoBeta />

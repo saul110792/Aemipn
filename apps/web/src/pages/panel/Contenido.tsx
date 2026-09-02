@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
-import type { Area, SiteSettings } from '../../lib/types';
+import type { Anuncio, Area, SiteSettings } from '../../lib/types';
 import { Cargando, ErrorAviso } from '../../components/Estado';
 import { SelectorImagen } from '../../components/SelectorImagen';
 import { Icono, hayIcono, type NombreIcono } from '../../components/Icono';
@@ -23,7 +23,7 @@ const REDES: { campo: keyof SiteSettings; icono: NombreIcono; etiqueta: string; 
 export function Contenido() {
   const qc = useQueryClient();
   const [areaId, setAreaId] = useState<string>('');
-  const [pestana, setPestana] = useState<'textos' | 'imagenes' | 'redes'>('textos');
+  const [pestana, setPestana] = useState<'textos' | 'imagenes' | 'anuncios' | 'redes'>('textos');
   const [guardado, setGuardado] = useState(false);
 
   const [form, setForm] = useState({ nombre: '', descripcion: '', contenido: '', color: '' });
@@ -112,6 +112,10 @@ export function Contenido() {
     setGaleria((g) => (g.includes(url) ? g.filter((x) => x !== url) : [...g, url]));
 
   const enRedes = pestana === 'redes';
+  const enAnuncios = pestana === 'anuncios';
+  // Anuncios administra sus propios anuncios uno por uno: el boton de arriba
+  // no le aplica, cada tarjeta se guarda o borra por su cuenta.
+  const manejaSuPropioGuardado = enRedes || enAnuncios;
   const guardando = enRedes ? guardarRedes.isPending : guardar.isPending;
   const errorGuardar = enRedes ? guardarRedes.error : guardar.error;
 
@@ -125,20 +129,22 @@ export function Contenido() {
             pie del sitio.
           </p>
         </div>
-        <button
-          type="button"
-          className="btn"
-          onClick={() => (enRedes ? guardarRedes.mutate() : guardar.mutate())}
-          disabled={guardando || (!enRedes && !activa)}
-        >
-          {guardando ? 'Guardando…' : 'Guardar cambios'}
-        </button>
+        {!enAnuncios && (
+          <button
+            type="button"
+            className="btn"
+            onClick={() => (enRedes ? guardarRedes.mutate() : guardar.mutate())}
+            disabled={guardando || (!enRedes && !activa)}
+          >
+            {guardando ? 'Guardando…' : 'Guardar cambios'}
+          </button>
+        )}
       </div>
 
-      {errorGuardar != null && <ErrorAviso error={errorGuardar} />}
-      {guardado && <div className="aviso aviso-ok">Cambios guardados y publicados.</div>}
+      {!enAnuncios && errorGuardar != null && <ErrorAviso error={errorGuardar} />}
+      {!enAnuncios && guardado && <div className="aviso aviso-ok">Cambios guardados y publicados.</div>}
 
-      {!enRedes && (
+      {!manejaSuPropioGuardado && (
         <div className="barra-filtros">
           <label htmlFor="area-editar" style={{ fontWeight: 600, fontSize: '0.9rem' }}>
             Área
@@ -179,6 +185,13 @@ export function Contenido() {
         </button>
         <button
           type="button"
+          className={pestana === 'anuncios' ? 'activa' : ''}
+          onClick={() => setPestana('anuncios')}
+        >
+          <Icono nombre="calendario" /> Anuncios
+        </button>
+        <button
+          type="button"
           className={pestana === 'redes' ? 'activa' : ''}
           onClick={() => setPestana('redes')}
         >
@@ -186,7 +199,9 @@ export function Contenido() {
         </button>
       </div>
 
-      {pestana === 'redes' ? (
+      {pestana === 'anuncios' ? (
+        <TabAnuncios />
+      ) : pestana === 'redes' ? (
         <div className="tarjeta">
           <div className="tarjeta-cuerpo">
             <h3>Redes sociales</h3>
@@ -329,5 +344,259 @@ export function Contenido() {
         </div>
       )}
     </>
+  );
+}
+
+interface AnuncioForm {
+  titulo: string;
+  descripcion: string;
+  imagenUrl: string | null;
+  enlaceUrl: string;
+  enlaceTexto: string;
+  publicado: boolean;
+  orden: number;
+}
+
+const anuncioVacio: AnuncioForm = {
+  titulo: '', descripcion: '', imagenUrl: null, enlaceUrl: '', enlaceTexto: '', publicado: true, orden: 0,
+};
+
+/**
+ * Anuncios del banner de la portada: felicitaciones, presentaciones de fin
+ * de curso, exploraciones — promocional, sin fecha ni lugar como un evento.
+ * Cada tarjeta se crea, edita o borra por su cuenta, aparte del resto de
+ * pestañas de esta pantalla.
+ */
+function TabAnuncios() {
+  const qc = useQueryClient();
+  const [editando, setEditando] = useState<string | 'nuevo' | null>(null);
+  const [form, setForm] = useState<AnuncioForm>(anuncioVacio);
+
+  const { data: anuncios, isLoading } = useQuery({
+    queryKey: ['anuncios'],
+    queryFn: () => api.get<Anuncio[]>('/anuncios'),
+  });
+
+  const refrescar = () => {
+    qc.invalidateQueries({ queryKey: ['anuncios'] });
+    qc.invalidateQueries({ queryKey: ['public', 'anuncios'] });
+  };
+
+  const cerrar = () => {
+    setEditando(null);
+    setForm(anuncioVacio);
+  };
+
+  const limpiar = (f: AnuncioForm) => ({
+    titulo: f.titulo,
+    descripcion: f.descripcion || null,
+    imagenUrl: f.imagenUrl,
+    enlaceUrl: f.enlaceUrl || null,
+    enlaceTexto: f.enlaceTexto || null,
+    publicado: f.publicado,
+    orden: Number.isFinite(f.orden) ? f.orden : 0,
+  });
+
+  const crear = useMutation({
+    mutationFn: () => api.post('/anuncios', limpiar(form)),
+    onSuccess: () => {
+      refrescar();
+      cerrar();
+    },
+  });
+  const actualizar = useMutation({
+    mutationFn: () => api.patch(`/anuncios/${editando}`, limpiar(form)),
+    onSuccess: () => {
+      refrescar();
+      cerrar();
+    },
+  });
+  const borrar = useMutation({
+    mutationFn: (id: string) => api.delete(`/anuncios/${id}`),
+    onSuccess: refrescar,
+  });
+
+  const abrirNuevo = () => {
+    setForm({ ...anuncioVacio, orden: anuncios?.length ?? 0 });
+    setEditando('nuevo');
+  };
+
+  const abrirEditar = (a: Anuncio) => {
+    setForm({
+      titulo: a.titulo,
+      descripcion: a.descripcion ?? '',
+      imagenUrl: a.imagenUrl,
+      enlaceUrl: a.enlaceUrl ?? '',
+      enlaceTexto: a.enlaceTexto ?? '',
+      publicado: a.publicado ?? true,
+      orden: a.orden ?? 0,
+    });
+    setEditando(a.id);
+  };
+
+  const guardando = crear.isPending || actualizar.isPending;
+  const error = crear.error ?? actualizar.error;
+
+  if (isLoading) return <Cargando />;
+
+  return (
+    <div className="pila">
+      <div className="tarjeta">
+        <div className="tarjeta-cuerpo">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <div>
+              <h3 style={{ marginBottom: '0.25rem' }}>Anuncios de la portada</h3>
+              <p className="texto-suave" style={{ margin: 0, fontSize: '0.9rem' }}>
+                Presentaciones de fin de curso, exploraciones u organización: aparecen como banner
+                en la portada, público y abierto, aparte de la agenda de eventos. El de menor
+                orden sale primero.
+              </p>
+            </div>
+            {editando === null && (
+              <button type="button" className="btn btn-sm" onClick={abrirNuevo}>
+                Nuevo anuncio
+              </button>
+            )}
+          </div>
+
+          {editando === null && (!anuncios || anuncios.length === 0) && (
+            <div className="vacio" style={{ marginTop: '1rem' }}>Todavía no hay anuncios.</div>
+          )}
+
+          {editando === null && anuncios && anuncios.length > 0 && (
+            <div className="pila" style={{ marginTop: '1rem' }}>
+              {anuncios.map((a) => (
+                <div
+                  key={a.id}
+                  style={{
+                    display: 'flex', gap: '1rem', alignItems: 'center',
+                    padding: '0.75rem 1rem', border: '1px solid var(--borde)', borderRadius: 'var(--radio)',
+                  }}
+                >
+                  {a.imagenUrl ? (
+                    <img src={a.imagenUrl} alt="" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 60, height: 60, borderRadius: 8, background: 'var(--arena)', flexShrink: 0 }} />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <strong>{a.titulo}</strong>{' '}
+                    {!a.publicado && <span className="insignia insignia-ambar">Oculto</span>}
+                    {a.descripcion && (
+                      <p
+                        className="texto-suave"
+                        style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                      >
+                        {a.descripcion}
+                      </p>
+                    )}
+                  </div>
+                  <button type="button" className="btn btn-borde btn-sm" onClick={() => abrirEditar(a)}>
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-borde btn-sm"
+                    onClick={() => {
+                      if (confirm(`¿Borrar «${a.titulo}»?`)) borrar.mutate(a.id);
+                    }}
+                  >
+                    Borrar
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {editando !== null && (
+        <div className="tarjeta">
+          <div className="tarjeta-cuerpo">
+            <h3>{editando === 'nuevo' ? 'Nuevo anuncio' : 'Editar anuncio'}</h3>
+            {error != null && <ErrorAviso error={error} />}
+
+            <div className="campo">
+              <label htmlFor="a-titulo">Título *</label>
+              <input id="a-titulo" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
+            </div>
+
+            <div className="campo">
+              <label htmlFor="a-desc">Descripción</label>
+              <textarea
+                id="a-desc"
+                maxLength={400}
+                style={{ minHeight: 70 }}
+                value={form.descripcion}
+                onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+              />
+            </div>
+
+            <div className="campos-2">
+              <div className="campo">
+                <label htmlFor="a-enlace">Liga — opcional</label>
+                <input
+                  id="a-enlace"
+                  type="url"
+                  placeholder="https://…"
+                  value={form.enlaceUrl}
+                  onChange={(e) => setForm({ ...form, enlaceUrl: e.target.value })}
+                />
+              </div>
+              <div className="campo">
+                <label htmlFor="a-enlace-texto">Texto del botón</label>
+                <input
+                  id="a-enlace-texto"
+                  placeholder="Ver más"
+                  value={form.enlaceTexto}
+                  onChange={(e) => setForm({ ...form, enlaceTexto: e.target.value })}
+                />
+              </div>
+              <div className="campo">
+                <label htmlFor="a-orden">Orden</label>
+                <input
+                  id="a-orden"
+                  type="number"
+                  value={form.orden}
+                  onChange={(e) => setForm({ ...form, orden: Number(e.target.value) })}
+                />
+              </div>
+              <div className="campo" style={{ justifyContent: 'flex-end' }}>
+                <label htmlFor="a-publicado" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <input
+                    id="a-publicado"
+                    type="checkbox"
+                    checked={form.publicado}
+                    onChange={(e) => setForm({ ...form, publicado: e.target.checked })}
+                  />
+                  Publicado (visible en la portada)
+                </label>
+              </div>
+            </div>
+
+            <div className="campo">
+              <label>Imagen del banner — opcional</label>
+              <SelectorImagen
+                seleccionadas={form.imagenUrl ? [form.imagenUrl] : []}
+                onElegir={(url) => setForm({ ...form, imagenUrl: form.imagenUrl === url ? null : url })}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.6rem', marginTop: '1rem' }}>
+              <button
+                type="button"
+                className="btn"
+                disabled={guardando || !form.titulo.trim()}
+                onClick={() => (editando === 'nuevo' ? crear.mutate() : actualizar.mutate())}
+              >
+                {guardando ? 'Guardando…' : 'Guardar anuncio'}
+              </button>
+              <button type="button" className="btn btn-borde" onClick={cerrar}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
