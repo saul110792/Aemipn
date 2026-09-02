@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Trans } from 'react-i18next';
 
 /**
  * Recordatorio de que el sitio sigue en ajustes, no es la versión final.
@@ -7,9 +8,7 @@ import { Link } from 'react-router-dom';
 export function AvisoBeta() {
   return (
     <div className="aviso aviso-info" style={{ marginBottom: '1.25rem' }}>
-      Este sitio está en fase de estabilización: no es su versión final, así que puede tener
-      ajustes o cambios en camino. Ya está disponible en computadora, Android y iPhone —{' '}
-      <Link to="/instalar">instálalo aquí</Link>.
+      <Trans i18nKey="beta.aviso" components={{ link: <Link to="/instalar" /> }} />
     </div>
   );
 }

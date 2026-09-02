@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
@@ -49,6 +50,7 @@ interface Resumen {
 }
 
 export function Dashboard() {
+  const { t } = useTranslation();
   const { user, esAdmin } = useAuth();
   // El resumen es para quien dirige: la mesa directiva y quien encabeza un
   // area. La API lo rechaza igual para cualquier otro, asi que ni se pide.
@@ -80,10 +82,10 @@ export function Dashboard() {
       <AvisoBeta />
       <div className="panel-encabezado">
         <div>
-          <h1>Resumen</h1>
+          <h1>{t('dashboard.titulo')}</h1>
           {!esMesa && (
             <p className="texto-suave" style={{ margin: 0 }}>
-              Cifras de {misAreas || 'tu área'}.
+              {t('dashboard.cifrasDeArea', { area: misAreas || t('dashboard.tuArea') })}
             </p>
           )}
         </div>
@@ -93,32 +95,32 @@ export function Dashboard() {
         <Metrica
           icono="miembros"
           valor={data.miembros.total}
-          etiqueta={esMesa ? 'Miembros registrados' : 'Miembros del área'}
+          etiqueta={esMesa ? t('dashboard.miembrosRegistrados') : t('dashboard.miembrosDelArea')}
         />
-        <Metrica icono="brujula" valor={data.miembros.porStatus.ACTIVO ?? 0} etiqueta="Activos" />
+        <Metrica icono="brujula" valor={data.miembros.porStatus.ACTIVO ?? 0} etiqueta={t('dashboard.activos')} />
         {esMesa ? (
-          <Metrica icono="solicitudes" valor={data.solicitudesNuevas} etiqueta="Solicitudes por revisar" />
+          <Metrica icono="solicitudes" valor={data.solicitudesNuevas} etiqueta={t('dashboard.solicitudesPorRevisar')} />
         ) : (
-          <Metrica icono="solicitudes" valor={data.declaracionesPendientes} etiqueta="Cursos por validar" />
+          <Metrica icono="solicitudes" valor={data.declaracionesPendientes} etiqueta={t('dashboard.cursosPorValidar')} />
         )}
-        <Metrica icono="pago" valor={data.pagosPendientes} etiqueta="Pagos pendientes" />
+        <Metrica icono="pago" valor={data.pagosPendientes} etiqueta={t('dashboard.pagosPendientes')} />
       </div>
 
       {esMesa && data.solicitudesNuevas > 0 && (
         <div className="aviso aviso-info" style={{ marginTop: '1.25rem' }}>
-          Hay {data.solicitudesNuevas} solicitud(es) de ingreso esperando revisión.{' '}
-          <Link to="/panel/solicitudes">Revisarlas ahora →</Link>
+          {t('dashboard.solicitudesNuevas', { count: data.solicitudesNuevas })}{' '}
+          <Link to="/panel/solicitudes">{t('dashboard.revisarlasAhora')}</Link>
         </div>
       )}
 
       {!esMesa && data.declaracionesPendientes > 0 && (
         <div className="aviso aviso-info" style={{ marginTop: '1.25rem' }}>
-          Tienes {data.declaracionesPendientes} declaración(es) de curso esperando tu visto bueno.{' '}
-          <Link to="/panel/validaciones">Revisarlas ahora →</Link>
+          {t('dashboard.declaracionesPendientes', { count: data.declaracionesPendientes })}{' '}
+          <Link to="/panel/validaciones">{t('dashboard.revisarlasAhora')}</Link>
         </div>
       )}
 
-      <h2 style={{ marginTop: '2rem' }}>{esMesa ? 'Miembros por área' : 'Tu área'}</h2>
+      <h2 style={{ marginTop: '2rem' }}>{esMesa ? t('dashboard.miembrosPorArea') : t('dashboard.tuAreaTitulo')}</h2>
       <div className="rejilla rejilla-4">
         {data.areas.map((a) => (
           <div key={a.id} className="metrica" style={{ borderLeft: `4px solid ${a.color ?? 'var(--roca)'}` }}>
@@ -139,21 +141,21 @@ export function Dashboard() {
 
       <BloqueCim cim={data.cim} esMesa={esMesa} />
 
-      <h2 style={{ marginTop: '2rem' }}>Ediciones en marcha</h2>
+      <h2 style={{ marginTop: '2rem' }}>{t('dashboard.edicionesEnMarcha')}</h2>
       {data.edicionesActivas.length === 0 ? (
         <div className="vacio">
-          No hay ediciones abiertas. <Link to="/panel/ediciones">Crear una →</Link>
+          {t('dashboard.sinEdicionesAbiertas')} <Link to="/panel/ediciones">{t('dashboard.crearUna')}</Link>
         </div>
       ) : (
         <div className="tabla-envoltura">
           <table>
             <thead>
               <tr>
-                <th>Clave</th>
-                <th>Curso</th>
-                <th>Fechas</th>
-                <th>Inscritos</th>
-                <th>Estado</th>
+                <th>{t('dashboard.clave')}</th>
+                <th>{t('dashboard.curso')}</th>
+                <th>{t('dashboard.fechas')}</th>
+                <th>{t('dashboard.inscritosCol')}</th>
+                <th>{t('dashboard.estado')}</th>
               </tr>
             </thead>
             <tbody>
@@ -180,19 +182,19 @@ export function Dashboard() {
         </div>
       )}
 
-      <h2 style={{ marginTop: '2rem' }}>Próximas salidas</h2>
+      <h2 style={{ marginTop: '2rem' }}>{t('dashboard.proximasSalidas')}</h2>
       {data.proximasActividades.length === 0 ? (
-        <div className="vacio">Sin actividades programadas.</div>
+        <div className="vacio">{t('dashboard.sinActividades')}</div>
       ) : (
         <div className="tabla-envoltura">
           <table>
             <thead>
               <tr>
-                <th>Cuándo</th>
-                <th>Actividad</th>
-                <th>Área</th>
-                <th>Edición</th>
-                <th>Responsable</th>
+                <th>{t('dashboard.cuando')}</th>
+                <th>{t('dashboard.actividad')}</th>
+                <th>{t('dashboard.area')}</th>
+                <th>{t('dashboard.edicion')}</th>
+                <th>{t('dashboard.responsable')}</th>
               </tr>
             </thead>
             <tbody>
@@ -203,7 +205,7 @@ export function Dashboard() {
                   <td>{a.area?.nombre ?? '—'}</td>
                   <td className="texto-suave">{a.edition?.clave}</td>
                   <td className="texto-suave">
-                    {a.responsable ? `${a.responsable.nombre} ${a.responsable.apellidoPaterno}` : 'Sin asignar'}
+                    {a.responsable ? `${a.responsable.nombre} ${a.responsable.apellidoPaterno}` : t('dashboard.sinAsignar')}
                   </td>
                 </tr>
               ))}
@@ -234,6 +236,7 @@ interface EdicionCimPublica {
  * el sitio informativo muestra, así que un miembro raso lo ve igual.
  */
 function AvisoCim() {
+  const { t } = useTranslation();
   const { data } = useQuery({
     queryKey: ['public', 'cim'],
     queryFn: () => api.get<EdicionCimPublica[]>('/public/cim'),
@@ -248,7 +251,7 @@ function AvisoCim() {
   if (!data || data.length === 0) {
     return (
       <Link to="/cim" className="btn btn-borde">
-        <Icono nombre="brujula" /> Conoce el Curso Introductorio al Montañismo
+        <Icono nombre="brujula" /> {t('cim.conoceElCim')}
       </Link>
     );
   }
@@ -259,7 +262,7 @@ function AvisoCim() {
   return (
     <div className="aviso aviso-info" style={{ marginBottom: 0, textAlign: 'left' }}>
       <strong>
-        <Icono nombre="brujula" /> No se te olvide apoyar en el CIM
+        <Icono nombre="brujula" /> {t('cim.noOlvides')}
       </strong>
       {visibles.length > 0 ? (
         <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.2rem' }}>
@@ -269,13 +272,13 @@ function AvisoCim() {
               <strong>{s.titulo}</strong> — {fmtFecha(s.fechaInicio)}
             </li>
           ))}
-          {faltan > 0 && <li className="texto-suave">y {faltan} más…</li>}
+          {faltan > 0 && <li className="texto-suave">{t('cim.yMas', { count: faltan })}</li>}
         </ul>
       ) : (
-        <p style={{ margin: '0.35rem 0 0' }}>Ya no quedan salidas pendientes en esta edición.</p>
+        <p style={{ margin: '0.35rem 0 0' }}>{t('cim.sinSalidasPendientes')}</p>
       )}
       <Link to="/cim" style={{ display: 'inline-block', marginTop: '0.5rem', fontSize: '0.88rem' }}>
-        Ver la convocatoria completa →
+        {t('cim.verConvocatoria')}
       </Link>
     </div>
   );
@@ -287,6 +290,7 @@ function AvisoCim() {
  * panel es peor bienvenida que no mostrarle nada.
  */
 function BienvenidaMiembro() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const primerNombre = user?.nombre?.split(' ')[0];
 
@@ -295,19 +299,19 @@ function BienvenidaMiembro() {
       <div className="tarjeta-cuerpo" style={{ padding: '2.5rem 2rem' }}>
         <Emblema tamano={52} />
         <h1 style={{ marginTop: '1rem', fontSize: '1.4rem' }}>
-          ¡Bienvenido{primerNombre ? `, ${primerNombre}` : ''}!
+          {primerNombre ? t('bienvenida.titulo', { nombre: primerNombre }) : t('bienvenida.tituloSinNombre')}
         </h1>
         <p className="texto-suave" style={{ maxWidth: '38ch', margin: '0 auto' }}>
-          Mientras te integras, esto es lo que puedes hacer:
+          {t('bienvenida.subtitulo')}
         </p>
 
         <div className="pila" style={{ textAlign: 'left', marginTop: '1.75rem' }}>
           <Link to="/panel/perfil" className="btn btn-verde">
-            <Icono nombre="miembros" /> Completa tu expediente y declara tus cursos
+            <Icono nombre="miembros" /> {t('bienvenida.completarExpediente')}
           </Link>
           {/* btn-peligro es la unica roja del sistema; aqui es solo color, no advertencia. */}
           <Link to="/panel/calendario" className="btn btn-peligro">
-            <Icono nombre="calendario" /> Ve el calendario de actividades
+            <Icono nombre="calendario" /> {t('bienvenida.verCalendario')}
           </Link>
           <AvisoCim />
         </div>
@@ -323,28 +327,29 @@ function BienvenidaMiembro() {
  * necesita ver cuántos vienen y cuándo le toca, aunque todavía no sean suyos.
  */
 function BloqueCim({ cim, esMesa }: { cim: Resumen['cim']; esMesa: boolean }) {
+  const { t } = useTranslation();
   const abiertas = cim.ediciones;
 
   return (
     <>
       <h2 style={{ marginTop: '2rem' }}>
-        Curso Introductorio al Montañismo
+        {t('dashboard.cimTitulo')}
         <span className="texto-suave" style={{ fontWeight: 400, fontSize: '.9rem' }}>
-          {' '}— de aquí salen los nuevos miembros
+          {' '}{t('dashboard.cimSubtitulo')}
         </span>
       </h2>
 
       {abiertas.length === 0 && cim.historial.length === 0 ? (
         <div className="vacio">
-          No hay ediciones del CIM registradas. <Link to="/panel/ediciones">Programar una →</Link>
+          {t('dashboard.cimSinEdiciones')} <Link to="/panel/ediciones">{t('dashboard.programarUna')}</Link>
         </div>
       ) : (
         <>
           <div className="rejilla rejilla-4">
-            <Metrica icono="miembros" valor={cim.interesados} etiqueta="Interesados en curso" />
-            <Metrica icono="brujula" valor={cim.nuevos} etiqueta="Aún sin área" />
-            <Metrica icono="cursos" valor={cim.porEstado.INSCRITO ?? 0} etiqueta="Inscripción confirmada" />
-            <Metrica icono="cursos" valor={cim.porEstado.ACREDITADO ?? 0} etiqueta="Ya acreditados" />
+            <Metrica icono="miembros" valor={cim.interesados} etiqueta={t('dashboard.interesadosEnCurso')} />
+            <Metrica icono="brujula" valor={cim.nuevos} etiqueta={t('dashboard.aunSinArea')} />
+            <Metrica icono="cursos" valor={cim.porEstado.INSCRITO ?? 0} etiqueta={t('dashboard.inscripcionConfirmada')} />
+            <Metrica icono="cursos" valor={cim.porEstado.ACREDITADO ?? 0} etiqueta={t('dashboard.yaAcreditados')} />
           </div>
 
           {abiertas.map((ed) => {
@@ -359,7 +364,8 @@ function BloqueCim({ cim, esMesa }: { cim: Resumen['cim']; esMesa: boolean }) {
                     <Insignia valor={ed.estado} texto={etiqueta(ed.estado)} />
                     <span className="texto-suave">{fmtRango(ed.fechaInicio, ed.fechaFin)}</span>
                     <span className="texto-suave">
-                      {ed.inscritos} inscrito(s){ed.cupo ? ` de ${ed.cupo}` : ''}
+                      {t('dashboard.inscritos', { count: ed.inscritos })}
+                      {ed.cupo ? t('dashboard.deCupo', { cupo: ed.cupo }) : ''}
                     </span>
                   </div>
 
@@ -367,15 +373,15 @@ function BloqueCim({ cim, esMesa }: { cim: Resumen['cim']; esMesa: boolean }) {
                     <p style={{ margin: '.75rem 0 0' }}>
                       {propias.length === 0 ? (
                         <span className="texto-suave">
-                          Tu área no tiene salida asignada en esta edición.
+                          {t('dashboard.sinSalidaAsignada')}
                         </span>
                       ) : (
                         <>
-                          Te toca:{' '}
+                          {t('dashboard.teToca')}
                           {propias.map((s, i) => (
                             <span key={s.id}>
                               {i > 0 && ', '}
-                              <strong>{s.titulo}</strong> el {fmtFecha(s.fechaInicio)}
+                              <strong>{s.titulo}</strong>{t('dashboard.elDia', { fecha: fmtFecha(s.fechaInicio) })}
                             </span>
                           ))}
                         </>
@@ -409,17 +415,17 @@ function BloqueCim({ cim, esMesa }: { cim: Resumen['cim']; esMesa: boolean }) {
 
           {cim.historial.length > 0 && (
             <>
-              <h3 style={{ marginTop: '1.5rem', fontSize: '1rem' }}>Ediciones anteriores</h3>
+              <h3 style={{ marginTop: '1.5rem', fontSize: '1rem' }}>{t('dashboard.edicionesAnteriores')}</h3>
               <div className="tabla-envoltura">
                 <table>
                   <thead>
                     <tr>
-                      <th>Clave</th>
-                      <th>Inició</th>
-                      <th>Inscritos</th>
-                      <th>Acreditaron</th>
-                      <th>Desertaron</th>
-                      <th>Reprobaron</th>
+                      <th>{t('dashboard.clave')}</th>
+                      <th>{t('dashboard.inicio')}</th>
+                      <th>{t('dashboard.inscritosCol')}</th>
+                      <th>{t('dashboard.acreditaron')}</th>
+                      <th>{t('dashboard.desertaron')}</th>
+                      <th>{t('dashboard.reprobaron')}</th>
                     </tr>
                   </thead>
                   <tbody>

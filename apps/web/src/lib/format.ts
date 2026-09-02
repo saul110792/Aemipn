@@ -1,3 +1,5 @@
+import i18n from './i18n';
+
 const fechaLarga = new Intl.DateTimeFormat('es-MX', {
   day: 'numeric',
   month: 'long',
@@ -37,70 +39,20 @@ export const nombreCompleto = (m: {
   apellidoMaterno?: string | null;
 }) => [m.nombre, m.apellidoPaterno, m.apellidoMaterno].filter(Boolean).join(' ');
 
-/** Etiquetas legibles para los enums que vienen de la API. */
-export const ETIQUETAS: Record<string, string> = {
-  ADMIN: 'Administrador',
-  STAFF: 'Apoyo',
-  MIEMBRO: 'Miembro',
-  JEFE_DE_AREA: 'Jefe de área',
-  JEFE_INTERINO: 'Jefe interino',
-  TESORERO: 'Tesorero',
-  ASPIRANTE: 'Aspirante',
-  APROBADA: 'Aprobada',
-  JEFE_CIM: 'Jefe del CIM',
-  ACTIVO: 'Activo',
-  INACTIVO: 'Inactivo',
-  BAJA: 'Baja',
-  NUEVA: 'Nueva',
-  EN_REVISION: 'En revisión',
-  ACEPTADA: 'Aceptada',
-  RECHAZADA: 'Rechazada',
-  BORRADOR: 'Borrador',
-  INSCRIPCIONES_ABIERTAS: 'Inscripciones abiertas',
-  EN_CURSO: 'En curso',
-  CONCLUIDA: 'Concluida',
-  CANCELADA: 'Cancelada',
-  PREINSCRITO: 'Preinscrito',
-  INSCRITO: 'Inscrito',
-  ACREDITADO: 'Aprobó',
-  NO_ACREDITADO: 'Reprobó',
-  DESERTO: 'Desertó',
-  PENDIENTE: 'Pendiente',
-  CIM: 'CIM',
-  CURSO: 'Curso',
-  TALLER: 'Taller',
-  SALIDA: 'Salida',
-  REUNION: 'Reunión',
-  CONVOCATORIA: 'Convocatoria',
-  OTRO: 'Otro',
-  PRESENCIAL: 'Presencial',
-  EN_LINEA: 'En línea',
-  HIBRIDA: 'Híbrida',
-  PUBLICO: 'Público',
-  MIEMBROS: 'Abierto a la asociación',
-  AREA: 'Privado del área',
-  CLASE_TEORICA: 'Clase teórica',
-  SALIDA_1_DIA: 'Salida de 1 día',
-  CAMPAMENTO: 'Campamento',
-  EXAMEN_TEORICO: 'Examen teórico',
-  EXAMEN_PRACTICO: 'Examen práctico',
-  PRESENTACION_FINAL: 'Presentación final',
-  OTRA: 'Otra',
-  CERTIFICACION: 'Certificación',
-};
-
-export const etiqueta = (v: string | null | undefined) => (v ? (ETIQUETAS[v] ?? v) : '—');
+/**
+ * Etiquetas legibles para los enums que vienen de la API, vía i18next.
+ *
+ * Es una función plana (no un hook) para poder llamarla desde cualquier
+ * lado sin reescribir cada punto de uso; el cambio de idioma se refleja
+ * igual porque ConIdioma (main.tsx) reconstruye todo el árbol al cambiarlo.
+ */
+export const etiqueta = (v: string | null | undefined) =>
+  v ? i18n.t(`enum.${v}`, { defaultValue: v }) : '—';
 
 /**
- * Tipos de curso, con mapa aparte a proposito: 'AREA' es tambien un valor de
- * EventVisibility ("Privado del área") y en un mapa plano uno pisaria al otro.
+ * Tipos de curso, con namespace aparte a propósito: 'AREA' es también un
+ * valor de EventVisibility ("Privado del área") y compartir un solo mapa
+ * pisaría uno con el otro.
  */
-const TIPOS_DE_CURSO: Record<string, string> = {
-  CIM: 'CIM',
-  AREA: 'Curso de área',
-  TALLER: 'Taller',
-  CERTIFICACION: 'Certificación',
-};
-
 export const etiquetaTipoCurso = (v: string | null | undefined) =>
-  v ? (TIPOS_DE_CURSO[v] ?? v) : '—';
+  v ? i18n.t(`enumCurso.${v}`, { defaultValue: v }) : '—';
