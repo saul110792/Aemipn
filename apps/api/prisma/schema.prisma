@@ -165,7 +165,7 @@ model Member {
   tipoSangre    String?
   /// Varias, cada una por separado: en campo se consultan de un vistazo y
   /// una cadena suelta obliga a leer para encontrar lo importante.
-  alergias      String[]
+  alergias      String[] @default([])
   padecimientos String?
   /// Institución (IMSS, ISSSTE, un seguro de gastos médicos mayores...) y el
   /// número bajo esa institución. Reemplaza al NSS suelto: no todos tienen
@@ -223,7 +223,7 @@ model MembershipApplication {
   escuela         String?
   boleta          String?
   /// Áreas de interés declaradas en el formulario (slugs).
-  areasInteres    String[]
+  areasInteres    String[] @default([])
   experiencia     String?
   mensaje         String?
 
@@ -256,7 +256,7 @@ model Area {
   contenido   String?
   imagenUrl   String?
   /// Fotos de la actividad del área, para el carrusel del sitio público.
-  galeria     String[]
+  galeria     String[] @default([])
   color       String? // acento para la UI
   orden       Int      @default(0)
   activa      Boolean  @default(true)
