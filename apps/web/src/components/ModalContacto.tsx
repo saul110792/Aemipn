@@ -4,6 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import type { Area } from '../lib/types';
 import { ErrorAviso } from './Estado';
+import { CampoTelefono } from './CampoTelefono';
 
 interface Formulario {
   nombre: string;
@@ -31,6 +32,8 @@ export function ModalContacto({ onCerrar }: { onCerrar: () => void }) {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<Formulario>({ defaultValues: { areaId: '' } });
 
@@ -90,7 +93,7 @@ export function ModalContacto({ onCerrar }: { onCerrar: () => void }) {
                 </div>
                 <div className="campo">
                   <label htmlFor="c-tel">Teléfono</label>
-                  <input id="c-tel" type="tel" {...register('telefono')} />
+                  <CampoTelefono id="c-tel" value={watch('telefono') ?? ''} onChange={(v) => setValue('telefono', v)} />
                 </div>
               </div>
 

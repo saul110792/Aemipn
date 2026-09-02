@@ -9,6 +9,7 @@ import { etiqueta, fmtFechaCorta, nombreCompleto } from '../../lib/format';
 import { useAuth } from '../../lib/auth';
 import { TIPOS_DE_SANGRE } from '../../lib/catalogos';
 import { SelectorEscuela } from '../../components/SelectorEscuela';
+import { CampoTelefono } from '../../components/CampoTelefono';
 
 const ESTADOS: MemberStatus[] = ['ASPIRANTE', 'ACTIVO', 'INACTIVO', 'BAJA'];
 
@@ -228,7 +229,7 @@ function FormularioMiembro({
             </div>
             <div className="campo">
               <label htmlFor="n-tel">Teléfono</label>
-              <input id="n-tel" type="tel" {...register('telefono')} />
+              <CampoTelefono id="n-tel" value={watch('telefono') ?? ''} onChange={(v) => setValue('telefono', v)} />
             </div>
             <div className="campo">
               <label htmlFor="n-boleta">Boleta</label>
@@ -265,7 +266,7 @@ function FormularioMiembro({
             </div>
             <div className="campo">
               <label htmlFor="n-telemerg">Teléfono de emergencia</label>
-              <input id="n-telemerg" type="tel" {...register('telefonoEmergencia')} />
+              <CampoTelefono id="n-telemerg" value={watch('telefonoEmergencia') ?? ''} onChange={(v) => setValue('telefonoEmergencia', v)} />
             </div>
           </div>
 

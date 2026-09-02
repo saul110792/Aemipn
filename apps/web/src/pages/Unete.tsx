@@ -5,6 +5,7 @@ import { api } from '../lib/api';
 import { ErrorAviso } from '../components/Estado';
 import { Icono } from '../components/Icono';
 import { SelectorEscuela } from '../components/SelectorEscuela';
+import { CampoTelefono } from '../components/CampoTelefono';
 
 interface Formulario {
   nombre: string;
@@ -117,7 +118,11 @@ export function Unete() {
             </div>
             <div className="campo">
               <label htmlFor="r-tel">Teléfono / WhatsApp</label>
-              <input id="r-tel" type="tel" autoComplete="tel" {...register('telefono')} />
+              <CampoTelefono
+                id="r-tel"
+                value={watch('telefono') ?? ''}
+                onChange={(v) => setValue('telefono', v)}
+              />
             </div>
             <div className="campo">
               <label htmlFor="r-boleta">Boleta (si eres del IPN)</label>

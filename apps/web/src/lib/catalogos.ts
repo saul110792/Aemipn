@@ -8,6 +8,32 @@ export const TIPOS_DE_SANGRE = [
   'O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-',
 ] as const;
 
+/**
+ * Claves lada para el campo de teléfono. Es solo para separar visualmente el
+ * país al capturar -la API sigue guardando el teléfono como texto libre, sin
+ * validar la lada como enum-, así que la lista no necesita ser exhaustiva:
+ * cubre de dónde viene la membresía real y deja "Otra" para lo demás.
+ */
+export const LADAS = [
+  { codigo: '52', pais: 'México' },
+  { codigo: '1', pais: 'EE. UU. / Canadá' },
+  { codigo: '502', pais: 'Guatemala' },
+  { codigo: '503', pais: 'El Salvador' },
+  { codigo: '504', pais: 'Honduras' },
+  { codigo: '505', pais: 'Nicaragua' },
+  { codigo: '506', pais: 'Costa Rica' },
+  { codigo: '507', pais: 'Panamá' },
+  { codigo: '34', pais: 'España' },
+  { codigo: '54', pais: 'Argentina' },
+  { codigo: '56', pais: 'Chile' },
+  { codigo: '57', pais: 'Colombia' },
+  { codigo: '51', pais: 'Perú' },
+  { codigo: '58', pais: 'Venezuela' },
+] as const;
+
+/** La asociación es del IPN, en México: por default se asume esa lada. */
+export const LADA_DEFECTO = '52';
+
 export type TipoDeSangre = (typeof TIPOS_DE_SANGRE)[number];
 
 /**

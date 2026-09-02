@@ -7,6 +7,7 @@ import { Cargando, ErrorAviso, Insignia } from '../../components/Estado';
 import { Icono, hayIcono } from '../../components/Icono';
 import { etiqueta, fmtFecha } from '../../lib/format';
 import { CampoEtiquetas } from '../../components/CampoEtiquetas';
+import { CampoTelefono } from '../../components/CampoTelefono';
 import { NotificacionesPush } from '../../components/NotificacionesPush';
 import {
   ALERGIAS_SUGERIDAS,
@@ -202,8 +203,8 @@ export function Perfil() {
             </div>
             <div className="campo">
               <label htmlFor="p-tel">Tu teléfono</label>
-              <input id="p-tel" type="tel" value={f.telefono}
-                onChange={(e) => setF({ ...f, telefono: e.target.value })} />
+              <CampoTelefono id="p-tel" value={f.telefono}
+                onChange={(v) => setF({ ...f, telefono: v })} />
             </div>
             <div className="campo">
               <label htmlFor="p-sangre">Tipo de sangre</label>
@@ -225,8 +226,8 @@ export function Perfil() {
             </div>
             <div className="campo">
               <label htmlFor="p-te">Contacto de emergencia · teléfono *</label>
-              <input id="p-te" type="tel" value={f.telefonoEmergencia}
-                onChange={(e) => setF({ ...f, telefonoEmergencia: e.target.value })} />
+              <CampoTelefono id="p-te" value={f.telefonoEmergencia}
+                onChange={(v) => setF({ ...f, telefonoEmergencia: v })} />
             </div>
             <div className="campo">
               <label htmlFor="p-ce2">
@@ -241,8 +242,8 @@ export function Perfil() {
                 Segundo contacto · teléfono
                 <span className="texto-suave" style={{ fontWeight: 400 }}> — opcional</span>
               </label>
-              <input id="p-te2" type="tel" value={f.telefonoEmergencia2}
-                onChange={(e) => setF({ ...f, telefonoEmergencia2: e.target.value })} />
+              <CampoTelefono id="p-te2" value={f.telefonoEmergencia2}
+                onChange={(v) => setF({ ...f, telefonoEmergencia2: v })} />
             </div>
           </div>
 
