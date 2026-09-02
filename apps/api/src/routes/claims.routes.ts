@@ -6,6 +6,7 @@ import { conflict, forbidden, notFound } from '../lib/errors.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth } from '../middleware/auth.js';
 import { CARGOS_DE_MANDO, areasConCargo } from '../lib/jefaturas.js';
+import { enviarPush } from '../lib/push.js';
 
 export const claimsRouter = Router();
 claimsRouter.use(requireAuth);
@@ -143,6 +144,22 @@ claimsRouter.post(
 
       return { ...actualizada, integraAlArea };
     });
+
+    // Avisarle a quien lo declaró, no a quien lo aprobó: es su curso el que
+    // acaba de quedar oficial.
+    const cuenta = await prisma.user.findUnique({
+      where: { memberId: resultado.memberId },
+      select: { id: true },
+    });
+    if (cuenta) {
+      void enviarPush([cuenta.id], {
+        titulo: 'Curso aprobado',
+        cuerpo: resultado.integraAlArea
+          ? `Ya eres parte de ${resultado.course.area?.nombre ?? 'tu área'}: se aprobó tu curso «${resultado.course.nombre}».`
+          : `Se aprobó tu curso «${resultado.course.nombre}».`,
+        url: '/panel/perfil',
+      });
+    }
 
     res.json(resultado);
   }),
