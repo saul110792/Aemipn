@@ -170,19 +170,13 @@ export function SitioLayout() {
             alignItems: 'center',
           }}
         >
-          <span
-            className="credito-dev"
-            role="img"
-            aria-label="Desarrollado por Enrique Saúl Ramírez González"
-            title="Desarrollado por Enrique Saúl Ramírez González"
-          >
-            <Icono nombre="codigo" className="icono" />
+          <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,.55)' }}>
+            Desarrollado por Enrique Saúl Ramírez González
           </span>
           <div className="tecnologias">
             {TECNOLOGIAS.map((t) => (
-              <span key={t.nombre}>
+              <span key={t.nombre} className="badge-pie" title={t.nombre} aria-label={t.nombre}>
                 <Icono nombre={t.icono} className="icono" />
-                {t.nombre}
               </span>
             ))}
           </div>

@@ -26,7 +26,6 @@ export type NombreIcono =
   | 'video'
   | 'imagen'
   | 'texto'
-  | 'codigo'
   // --- Redes sociales ---
   | 'facebook'
   | 'instagram'
@@ -210,13 +209,6 @@ const TRAZOS: Record<NombreIcono, JSX.Element> = {
       <path d="M4 11h16" />
       <path d="M4 16h10" />
       <path d="M4 21h7" />
-    </>
-  ),
-  // Signo de "código": < >.
-  codigo: (
-    <>
-      <path d="M8 6L2 12l6 6" />
-      <path d="M16 6l6 6-6 6" />
     </>
   ),
 
