@@ -170,8 +170,13 @@ export function SitioLayout() {
             alignItems: 'center',
           }}
         >
-          <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,.55)' }}>
-            Desarrollado por Enrique Saúl Ramírez González
+          <span
+            className="credito-dev"
+            role="img"
+            aria-label="Desarrollado por Enrique Saúl Ramírez González"
+            title="Desarrollado por Enrique Saúl Ramírez González"
+          >
+            <Icono nombre="codigo" className="icono" />
           </span>
           <div className="tecnologias">
             {TECNOLOGIAS.map((t) => (
