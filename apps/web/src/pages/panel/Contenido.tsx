@@ -6,7 +6,7 @@ import { Cargando, ErrorAviso } from '../../components/Estado';
 import { SelectorImagen } from '../../components/SelectorImagen';
 import { Icono, hayIcono, type NombreIcono } from '../../components/Icono';
 
-const REDES: { campo: keyof SiteSettings; icono: NombreIcono; etiqueta: string; placeholder: string }[] = [
+const REDES: { campo: Exclude<keyof SiteSettings, 'tema'>; icono: NombreIcono; etiqueta: string; placeholder: string }[] = [
   { campo: 'facebookUrl', icono: 'facebook', etiqueta: 'Facebook', placeholder: 'https://facebook.com/…' },
   { campo: 'instagramUrl', icono: 'instagram', etiqueta: 'Instagram', placeholder: 'https://instagram.com/…' },
   { campo: 'xUrl', icono: 'x', etiqueta: 'X (Twitter)', placeholder: 'https://x.com/…' },
