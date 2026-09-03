@@ -24,6 +24,7 @@ const schema = z.object({
   youtubeUrl: urlOpcional,
   tiktokUrl: urlOpcional,
   whatsappUrl: urlOpcional,
+  tema: z.enum(['clasico', 'aventura', 'vivido']).optional(),
 });
 
 configuracionRouter.patch(

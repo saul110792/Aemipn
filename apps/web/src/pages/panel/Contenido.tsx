@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
-import type { Anuncio, Area, SiteSettings } from '../../lib/types';
+import type { Anuncio, Area, SiteSettings, Tema } from '../../lib/types';
 import { Cargando, ErrorAviso } from '../../components/Estado';
 import { SelectorImagen } from '../../components/SelectorImagen';
 import { Icono, hayIcono, type NombreIcono } from '../../components/Icono';
@@ -15,6 +15,27 @@ const REDES: { campo: keyof SiteSettings; icono: NombreIcono; etiqueta: string; 
   { campo: 'whatsappUrl', icono: 'whatsapp', etiqueta: 'WhatsApp', placeholder: 'https://wa.me/52…' },
 ];
 
+const TEMAS: { valor: Tema; nombre: string; descripcion: string; muestra: string[] }[] = [
+  {
+    valor: 'clasico',
+    nombre: 'Clásico',
+    descripcion: 'El guinda institucional del IPN. Formal y sobrio — el de siempre.',
+    muestra: ['#3f0b20', '#611232', '#932352', '#f6eaef'],
+  },
+  {
+    valor: 'aventura',
+    nombre: 'Aventura',
+    descripcion: 'Verde bosque, formas redondeadas y una tipografía cálida. Para exteriores.',
+    muestra: ['#16301c', '#2f5233', '#588a5b', '#e9f3e6'],
+  },
+  {
+    valor: 'vivido',
+    nombre: 'Vívido',
+    descripcion: 'Morado enérgico y tipografía moderna. Dinámico y llamativo.',
+    muestra: ['#2b1055', '#5b21b6', '#9061e0', '#f1ebfe'],
+  },
+];
+
 /**
  * Gestion de contenido: los textos e imagenes que ve el publico.
  * Edita el area elegida y su galeria del carrusel, y las redes sociales del
@@ -23,15 +44,16 @@ const REDES: { campo: keyof SiteSettings; icono: NombreIcono; etiqueta: string; 
 export function Contenido() {
   const qc = useQueryClient();
   const [areaId, setAreaId] = useState<string>('');
-  const [pestana, setPestana] = useState<'textos' | 'imagenes' | 'anuncios' | 'redes'>('textos');
+  const [pestana, setPestana] = useState<'textos' | 'imagenes' | 'anuncios' | 'redes' | 'estilo'>('textos');
   const [guardado, setGuardado] = useState(false);
 
   const [form, setForm] = useState({ nombre: '', descripcion: '', contenido: '', color: '' });
   const [galeria, setGaleria] = useState<string[]>([]);
   const [portada, setPortada] = useState<string | null>(null);
-  const [redes, setRedes] = useState<Record<keyof SiteSettings, string>>({
+  const [redes, setRedes] = useState<Record<Exclude<keyof SiteSettings, 'tema'>, string>>({
     facebookUrl: '', instagramUrl: '', xUrl: '', youtubeUrl: '', tiktokUrl: '', whatsappUrl: '',
   });
+  const [tema, setTema] = useState<Tema>('clasico');
 
   const { data: areas, isLoading } = useQuery({
     queryKey: ['areas'],
@@ -54,6 +76,7 @@ export function Contenido() {
       tiktokUrl: config.tiktokUrl ?? '',
       whatsappUrl: config.whatsappUrl ?? '',
     });
+    setTema(config.tema ?? 'clasico');
   }, [config]);
 
   const activa = areas?.find((a) => a.id === areaId) ?? areas?.[0];
@@ -105,6 +128,14 @@ export function Contenido() {
     },
   });
 
+  const guardarEstilo = useMutation({
+    mutationFn: () => api.patch('/configuracion', { tema }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['public', 'configuracion'] });
+      setGuardado(true);
+    },
+  });
+
   if (isLoading) return <Cargando />;
   if (!areas?.length) return <div className="vacio">No hay áreas registradas.</div>;
 
@@ -113,11 +144,13 @@ export function Contenido() {
 
   const enRedes = pestana === 'redes';
   const enAnuncios = pestana === 'anuncios';
+  const enEstilo = pestana === 'estilo';
   // Anuncios administra sus propios anuncios uno por uno: el boton de arriba
   // no le aplica, cada tarjeta se guarda o borra por su cuenta.
-  const manejaSuPropioGuardado = enRedes || enAnuncios;
-  const guardando = enRedes ? guardarRedes.isPending : guardar.isPending;
-  const errorGuardar = enRedes ? guardarRedes.error : guardar.error;
+  const manejaSuPropioGuardado = enRedes || enAnuncios || enEstilo;
+  const accionGuardar = enRedes ? guardarRedes : enEstilo ? guardarEstilo : guardar;
+  const guardando = accionGuardar.isPending;
+  const errorGuardar = accionGuardar.error;
 
   return (
     <>
@@ -133,8 +166,8 @@ export function Contenido() {
           <button
             type="button"
             className="btn"
-            onClick={() => (enRedes ? guardarRedes.mutate() : guardar.mutate())}
-            disabled={guardando || (!enRedes && !activa)}
+            onClick={() => accionGuardar.mutate()}
+            disabled={guardando || (!manejaSuPropioGuardado && !activa)}
           >
             {guardando ? 'Guardando…' : 'Guardar cambios'}
           </button>
@@ -197,10 +230,61 @@ export function Contenido() {
         >
           <Icono nombre="instagram" /> Redes sociales
         </button>
+        <button
+          type="button"
+          className={pestana === 'estilo' ? 'activa' : ''}
+          onClick={() => setPestana('estilo')}
+        >
+          <Icono nombre="brujula" /> Estilo
+        </button>
       </div>
 
       {pestana === 'anuncios' ? (
         <TabAnuncios />
+      ) : pestana === 'estilo' ? (
+        <div className="tarjeta">
+          <div className="tarjeta-cuerpo">
+            <h3>Estilo de la app</h3>
+            <p className="texto-suave" style={{ fontSize: '0.9rem' }}>
+              Cambia los colores, la tipografía y las formas de todo el sitio —portada y
+              panel— sin tocar código. Se ve así para todos en cuanto guardes.
+            </p>
+            <div className="rejilla rejilla-3" style={{ marginTop: '1rem' }}>
+              {TEMAS.map((t) => (
+                <button
+                  key={t.valor}
+                  type="button"
+                  onClick={() => setTema(t.valor)}
+                  style={{
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    padding: 0,
+                    border: tema === t.valor ? `2px solid ${t.muestra[1]}` : '1px solid var(--borde)',
+                    borderRadius: 'var(--radio)',
+                    overflow: 'hidden',
+                    background: 'var(--blanco)',
+                    font: 'inherit',
+                  }}
+                >
+                  <div style={{ display: 'flex', height: 10 }}>
+                    {t.muestra.map((color, i) => (
+                      <span key={i} style={{ flex: 1, background: color }} />
+                    ))}
+                  </div>
+                  <div style={{ padding: '0.9rem' }}>
+                    <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
+                      {t.nombre}
+                      {tema === t.valor && <span className="insignia insignia-verde">Activo</span>}
+                    </strong>
+                    <span className="texto-suave" style={{ fontSize: '0.85rem' }}>
+                      {t.descripcion}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       ) : pestana === 'redes' ? (
         <div className="tarjeta">
           <div className="tarjeta-cuerpo">

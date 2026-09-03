@@ -705,6 +705,10 @@ model SiteSettings {
   tiktokUrl    String?
   whatsappUrl  String?
 
+  /// Paleta y tipografía de todo el sitio (público y panel). El admin lo
+  /// cambia en Contenido > Estilo; "clasico" es el guinda institucional.
+  tema String @default("clasico")
+
   updatedAt DateTime @updatedAt
 
   @@map("site_settings")

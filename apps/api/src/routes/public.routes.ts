@@ -173,6 +173,7 @@ publicRouter.get(
       youtubeUrl: s?.youtubeUrl ?? null,
       tiktokUrl: s?.tiktokUrl ?? null,
       whatsappUrl: s?.whatsappUrl ?? null,
+      tema: s?.tema ?? 'clasico',
     });
   }),
 );

@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './lib/auth';
+import { useAplicarTema } from './lib/tema';
 import { SitioLayout } from './layouts/SitioLayout';
 import { PanelLayout } from './layouts/PanelLayout';
 
@@ -42,6 +43,8 @@ function RutaPrivada({ children }: { children: React.ReactNode }) {
 }
 
 export function App() {
+  useAplicarTema();
+
   return (
     <Routes>
       {/* Sitio informativo, abierto al publico */}

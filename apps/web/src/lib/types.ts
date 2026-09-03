@@ -218,6 +218,8 @@ export interface Evento {
   registroUrl: string | null;
 }
 
+export type Tema = 'clasico' | 'aventura' | 'vivido';
+
 export interface SiteSettings {
   facebookUrl: string | null;
   instagramUrl: string | null;
@@ -225,6 +227,7 @@ export interface SiteSettings {
   youtubeUrl: string | null;
   tiktokUrl: string | null;
   whatsappUrl: string | null;
+  tema: Tema;
 }
 
 export interface Anuncio {

@@ -845,3 +845,62 @@ tbody tr:hover { background: var(--guinda-100); }
   border-radius: 8px;
 }
 .editar-sesion .campo { margin-bottom: 0.8rem; }
+
+/* ===========================================================================
+   Temas
+   Tres variantes sobre la misma hoja de estilo: cada una solo redefine las
+   variables de :root, así que todos los componentes de arriba (botones,
+   tarjetas, tablas, panel, calendario...) se retiñen solos, sin CSS propio.
+   El admin elige en Contenido > Estilo (apps/web/src/pages/panel/Contenido.tsx);
+   se aplica escribiendo data-tema en <html> (ver apps/web/src/lib/tema.ts).
+   Los semánticos (--exito, --alerta, --error, --info) se quedan igual en los
+   tres: son significado (aprobado/pendiente/rechazado), no marca.
+   =========================================================================== */
+
+/* ---------- Aventura: verde bosque, cálido y redondeado ---------- */
+:root[data-tema='aventura'] {
+  --guinda: #2f5233;
+  --guinda-900: #16301c;
+  --guinda-800: #1f3f26;
+  --guinda-700: #2f5233;
+  --guinda-600: #3c6a3f;
+  --guinda-500: #588a5b;
+  --guinda-100: #e9f3e6;
+
+  --arena: #f6f1e6;
+  --fondo: #faf7ef;
+  --borde: #e4dac8;
+  --texto: #251f13;
+  --texto-suave: #6d6250;
+  --roca-clara: #ece5d5;
+
+  --radio: 18px;
+  --sombra: 0 1px 2px rgba(47, 33, 10, 0.08), 0 4px 14px rgba(47, 33, 10, 0.09);
+  --sombra-alta: 0 12px 30px rgba(47, 33, 10, 0.16);
+
+  --fuente-titulo: 'Fraunces', 'Red Hat Display', system-ui, -apple-system, 'Segoe UI', serif;
+}
+
+/* ---------- Vívido: morado enérgico, moderno y muy redondeado ---------- */
+:root[data-tema='vivido'] {
+  --guinda: #5b21b6;
+  --guinda-900: #2b1055;
+  --guinda-800: #3c1876;
+  --guinda-700: #5b21b6;
+  --guinda-600: #7c3aed;
+  --guinda-500: #9061e0;
+  --guinda-100: #f1ebfe;
+
+  --arena: #f5f3ff;
+  --fondo: #fbfaff;
+  --borde: #e3dcfa;
+  --texto: #1c1033;
+  --texto-suave: #5c5370;
+  --roca-clara: #ece6fb;
+
+  --radio: 20px;
+  --sombra: 0 1px 2px rgba(60, 20, 120, 0.1), 0 6px 18px rgba(91, 33, 182, 0.14);
+  --sombra-alta: 0 14px 34px rgba(91, 33, 182, 0.24);
+
+  --fuente-titulo: 'Space Grotesk', 'Red Hat Display', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
