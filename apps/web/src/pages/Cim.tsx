@@ -12,6 +12,9 @@ export function Cim() {
   // El rol se queda en CIM hasta validar el curso base de un area: a partir
   // de ahi ya es miembro de verdad y "Únete" no le sirve de nada.
   const mostrarUnete = !user || user.role === 'CIM';
+  // Cuándo y Dónde de las salidas son para quien ya está dentro; al público
+  // solo le mostramos qué área participa y con qué actividad.
+  const estaLogueado = !!user;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['public', 'cim'],
@@ -95,8 +98,12 @@ export function Cim() {
                           <tr>
                             <th>Área</th>
                             <th>Actividad</th>
-                            <th>Cuándo</th>
-                            <th>Dónde</th>
+                            {estaLogueado && (
+                              <>
+                                <th>Cuándo</th>
+                                <th>Dónde</th>
+                              </>
+                            )}
                           </tr>
                         </thead>
                         <tbody>
@@ -112,8 +119,12 @@ export function Cim() {
                                 </span>
                               </td>
                               <td>{a.titulo}</td>
-                              <td className="texto-suave">{fmtFechaHora(a.fechaInicio)}</td>
-                              <td className="texto-suave">{a.lugar ?? '—'}</td>
+                              {estaLogueado && (
+                                <>
+                                  <td className="texto-suave">{fmtFechaHora(a.fechaInicio)}</td>
+                                  <td className="texto-suave">{a.lugar ?? '—'}</td>
+                                </>
+                              )}
                             </tr>
                           ))}
                         </tbody>
