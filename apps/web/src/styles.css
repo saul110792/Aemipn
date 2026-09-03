@@ -848,24 +848,26 @@ tbody tr:hover { background: var(--guinda-100); }
 
 /* ===========================================================================
    Temas
-   Tres variantes sobre la misma hoja de estilo: cada una solo redefine las
+   Cuatro variantes sobre la misma hoja de estilo: cada una solo redefine las
    variables de :root, así que todos los componentes de arriba (botones,
    tarjetas, tablas, panel, calendario...) se retiñen solos, sin CSS propio.
    El admin elige en Contenido > Estilo (apps/web/src/pages/panel/Contenido.tsx);
    se aplica escribiendo data-tema en <html> (ver apps/web/src/lib/tema.ts).
    Los semánticos (--exito, --alerta, --error, --info) se quedan igual en los
-   tres: son significado (aprobado/pendiente/rechazado), no marca.
+   cuatro: son significado (aprobado/pendiente/rechazado), no marca.
+   Aventura, Vívido y Zafiro toman su tono de los colores tradicionales de
+   ESIME (verde), ESIQIE (morado) y la Unidad Zacatenco/ESIA (azul).
    =========================================================================== */
 
-/* ---------- Aventura: verde bosque, cálido y redondeado ---------- */
+/* ---------- Aventura: verde de ESIME, cálido y redondeado ---------- */
 :root[data-tema='aventura'] {
-  --guinda: #2f5233;
-  --guinda-900: #16301c;
-  --guinda-800: #1f3f26;
-  --guinda-700: #2f5233;
-  --guinda-600: #3c6a3f;
-  --guinda-500: #588a5b;
-  --guinda-100: #e9f3e6;
+  --guinda: #1f7a40;
+  --guinda-900: #0f4021;
+  --guinda-800: #15552c;
+  --guinda-700: #1f7a40;
+  --guinda-600: #2a9651;
+  --guinda-500: #4db571;
+  --guinda-100: #e6f5eb;
 
   --arena: #f6f1e6;
   --fondo: #faf7ef;
@@ -881,15 +883,15 @@ tbody tr:hover { background: var(--guinda-100); }
   --fuente-titulo: 'Fraunces', 'Red Hat Display', system-ui, -apple-system, 'Segoe UI', serif;
 }
 
-/* ---------- Vívido: morado enérgico, moderno y muy redondeado ---------- */
+/* ---------- Vívido: morado de ESIQIE, moderno y muy redondeado ---------- */
 :root[data-tema='vivido'] {
-  --guinda: #5b21b6;
-  --guinda-900: #2b1055;
-  --guinda-800: #3c1876;
-  --guinda-700: #5b21b6;
-  --guinda-600: #7c3aed;
-  --guinda-500: #9061e0;
-  --guinda-100: #f1ebfe;
+  --guinda: #6a1b9a;
+  --guinda-900: #3a0e57;
+  --guinda-800: #4a1470;
+  --guinda-700: #6a1b9a;
+  --guinda-600: #8225b8;
+  --guinda-500: #a855d1;
+  --guinda-100: #f3e8fb;
 
   --arena: #f5f3ff;
   --fondo: #fbfaff;
@@ -903,4 +905,28 @@ tbody tr:hover { background: var(--guinda-100); }
   --sombra-alta: 0 14px 34px rgba(91, 33, 182, 0.24);
 
   --fuente-titulo: 'Space Grotesk', 'Red Hat Display', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* ---------- Zafiro: azul de Zacatenco (ESIA), limpio y profesional ---------- */
+:root[data-tema='zafiro'] {
+  --guinda: #1450a3;
+  --guinda-900: #0a2c5c;
+  --guinda-800: #0f3a78;
+  --guinda-700: #1450a3;
+  --guinda-600: #1f63c4;
+  --guinda-500: #4785d6;
+  --guinda-100: #e8f0fb;
+
+  --arena: #eef3fa;
+  --fondo: #f7fafd;
+  --borde: #d9e4f3;
+  --texto: #0f1f33;
+  --texto-suave: #52667f;
+  --roca-clara: #e2eaf5;
+
+  --radio: 12px;
+  --sombra: 0 1px 2px rgba(10, 40, 80, 0.08), 0 4px 14px rgba(20, 80, 160, 0.1);
+  --sombra-alta: 0 12px 30px rgba(20, 80, 160, 0.18);
+
+  --fuente-titulo: 'Outfit', 'Red Hat Display', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }

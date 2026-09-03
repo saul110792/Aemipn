@@ -218,7 +218,7 @@ export interface Evento {
   registroUrl: string | null;
 }
 
-export type Tema = 'clasico' | 'aventura' | 'vivido';
+export type Tema = 'clasico' | 'aventura' | 'vivido' | 'zafiro';
 
 export interface SiteSettings {
   facebookUrl: string | null;

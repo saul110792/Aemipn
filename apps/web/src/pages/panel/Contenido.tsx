@@ -25,14 +25,20 @@ const TEMAS: { valor: Tema; nombre: string; descripcion: string; muestra: string
   {
     valor: 'aventura',
     nombre: 'Aventura',
-    descripcion: 'Verde bosque, formas redondeadas y una tipografía cálida. Para exteriores.',
-    muestra: ['#16301c', '#2f5233', '#588a5b', '#e9f3e6'],
+    descripcion: 'Verde de ESIME, formas redondeadas y una tipografía cálida.',
+    muestra: ['#0f4021', '#1f7a40', '#4db571', '#e6f5eb'],
   },
   {
     valor: 'vivido',
     nombre: 'Vívido',
-    descripcion: 'Morado enérgico y tipografía moderna. Dinámico y llamativo.',
-    muestra: ['#2b1055', '#5b21b6', '#9061e0', '#f1ebfe'],
+    descripcion: 'Morado de ESIQIE, tipografía moderna. Dinámico y llamativo.',
+    muestra: ['#3a0e57', '#6a1b9a', '#a855d1', '#f3e8fb'],
+  },
+  {
+    valor: 'zafiro',
+    nombre: 'Zafiro',
+    descripcion: 'Azul de Zacatenco (ESIA), limpio y profesional.',
+    muestra: ['#0a2c5c', '#1450a3', '#4785d6', '#e8f0fb'],
   },
 ];
 
